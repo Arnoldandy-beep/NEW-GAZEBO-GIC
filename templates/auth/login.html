@@ -1,0 +1,49 @@
+﻿{% extends "base.html" %}
+{% block title %}Sign in - {{ CONFIG.CLUB_NAME }}{% endblock %}
+{% block auth_content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="mark">GIC</div>
+      <h1>{{ CONFIG.CLUB_NAME }}</h1>
+      <p>Member Portal &middot; Sign in</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category if category != 'message' else 'info' }} py-2 small">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('auth.login') }}">
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" autocomplete="username" autofocus required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Sign in</button>
+    </form>
+
+    <div class="text-center mt-3">
+      <small class="text-muted">{{ CONFIG.CLUB_LOCATION }} &middot; Established Aug 2025</small>
+    </div>
+  </div>
+</div>
+
+    <div class="alert alert-info mt-4 text-left small">
+      <strong>Login Instructions:</strong>
+      <ul class="mb-0" style="margin-top: 8px; padding-left: 20px;">
+        <li><strong>Member Portal:</strong> Use your member number (e.g., <code>GIC-010</code>) - view your account only</li>
+        <li><strong>Admin Access:</strong> Use your admin username (e.g., <code>ssekitto</code>) - full administrative access</li>
+      </ul>
+      <p style="margin-top: 8px; margin-bottom: 0;"><small>All passwords default to <code>gazebo123</code> (change on first login)</small></p>
+    </div>
+{% endblock %}
+
+

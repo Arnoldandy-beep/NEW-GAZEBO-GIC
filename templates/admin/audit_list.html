@@ -1,0 +1,31 @@
+﻿{% extends "base.html" %}
+{% block title %}Audit Log{% endblock %}
+{% block topbar %}Audit Log{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Audit Log</h1><div class="subtitle">Last 200 system actions</div></div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0 table-responsive">
+    {% if rows %}
+    <table class="table mb-0">
+      <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><small>{{ r.created_at|datetimefmt }}</small></td>
+          <td>{{ r.username or 'system' }}{% if r.full_name %}<div class="small text-muted">{{ r.full_name }}</div>{% endif %}</td>
+          <td><code>{{ r.action }}</code></td>
+          <td><small>{{ r.entity_type or '-' }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</small></td>
+          <td><small>{{ r.description or '-' }}</small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state"><i class="ph ph-shield-check"></i><div>Nothing logged yet.</div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}
+
+

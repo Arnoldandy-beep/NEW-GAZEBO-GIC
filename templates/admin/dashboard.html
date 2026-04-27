@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block topbar %}Administration Dashboard{% endblock %}
+{% block content %}
+
+<style>
+.dash-hero {
+  position: relative;
+  margin-bottom: 18px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #d7e0fb;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 56%, #f3fbff 100%);
+  box-shadow: 0 10px 24px rgba(41,74,144,.08);
+}
+.dash-hero h1 {
+  margin: 0;
+  font-size: 31px;
+  font-weight: 900;
+  letter-spacing: -.5px;
+  background: linear-gradient(135deg, #244f8e, #1565c0 60%, #0f7d94);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dash-hero .subtitle {
+  margin-top: 8px;
+  color: #607286;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.snapshot-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 12px rgba(44,33,20,.05);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.snapshot-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #2f6c8f;
+  background: #e8f0ff;
+}
+.snapshot-card .k {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  font-weight: 700;
+  color: #6f7f91;
+}
+.snapshot-card .v {
+  margin-top: 2px;
+  font-size: 34px;
+  font-weight: 800;
+  color: #20384b;
+  font-variant-numeric: tabular-nums;
+}
+.snapshot-card .s {
+  margin-top: 1px;
+  font-size: 12px;
+  color: #6b7886;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.dash-tile {
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(44,33,20,.05);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  display: block;
+}
+.dash-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(36, 87, 136, .12);
+  border-color: #bcd3ed;
+}
+.dash-tile .head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dash-tile .head .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  font-weight: 700;
+  color: #6f7f91;
+}
+.dash-tile .head i {
+  color: #3a6f9e;
+  font-size: 18px;
+}
+.dash-tile .value {
+  margin-top: 7px;
+  font-size: 25px;
+  font-weight: 800;
+  color: #24394d;
+  font-variant-numeric: tabular-nums;
+}
+.dash-tile .sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #6b7886;
+}
+
+.section-shell {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(44,33,20,.05);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.section-shell.attached-red {
+  border-color: #e06455;
+}
+.section-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #f9f7f3;
+  font-weight: 700;
+  font-size: 13px;
+}
+.section-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.section-table thead th {
+  background: #ece5d9;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.section-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ebe3d8;
+  font-size: 12.5px;
+}
+.section-table tbody tr:hover {
+  background: #f8fbff;
+}
+.notice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #c0392b;
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.notice-btn:hover { color: #fff; background: #a93024; }
+.status-chip-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #fbe3dc;
+  color: #c0392b;
+}
+
+.trend-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.trend-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(44,33,20,.05);
+  overflow: hidden;
+}
+.trend-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.trend-head span {
+  font-weight: 800;
+  color: #2a3e52;
+}
+.trend-body {
+  padding: 0 12px 14px;
+}
+.mini-bars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 6px;
+  align-items: end;
+  min-height: 150px;
+  border-bottom: 2px solid #dfe7f1;
+  padding: 18px 0 6px;
+}
+.mini-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 100%;
+}
+.mini-bar-fill {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  min-height: 8px;
+}
+.mini-bar-fill.month { background: #c9a94b; }
+.mini-bar-fill.year { background: #2a5acc; }
+.mini-bar-label {
+  margin-top: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #58697c;
+}
+.mini-bar-value {
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #45586c;
+}
+
+@media (max-width: 840px) {
+  .snapshot-grid { grid-template-columns: 1fr; }
+  .trend-row { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="dash-hero">
+  <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+    <div>
+      <h1>System Dashboard</h1>
+      <div class="subtitle">High-level operational snapshot for {{ CONFIG.CLUB_NAME }} in {{ current_period }}. Click any summary tile to open detailed records.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.savings_bulk') }}" class="btn btn-primary btn-sm"><i class="ph ph-bank"></i> Record Savings</a>
+      {% if session.role in ('IT_ADMIN', 'TREASURER') %}
+      <a href="{{ url_for('admin.loan_create') }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-hand-coins"></i> New Loan</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="snapshot-grid">
+  <a class="snapshot-card text-decoration-none" href="{{ url_for('admin.loans_list') }}">
+    <span class="snapshot-icon"><i class="ph ph-bank"></i></span>
+    <div>
+      <div class="k">Loan Cash Available</div>
+      <div class="v">{{ cash_available|money }}</div>
+      <div class="s">Net active pool (without locks)</div>
+    </div>
+  </a>
+  <a class="snapshot-card text-decoration-none" href="{{ url_for('admin.savings_list') }}">
+    <span class="snapshot-icon"><i class="ph ph-calendar-blank"></i></span>
+    <div>
+      <div class="k">This Month</div>
+      <div class="v">{{ month_savings_total|money }}</div>
+      <div class="s">{{ current_period }}</div>
+    </div>
+  </a>
+</div>
+
+<div class="dash-grid">
+  <a class="dash-tile" href="{{ url_for('admin.fees_list', year=current_year) }}">
+    <div class="head"><span class="label">Annual Fees Pool {{ current_year }}</span><i class="ph ph-receipt"></i></div>
+    <div class="value">{{ fees_pool|money }}</div>
+    <div class="sub">Paid: {{ fees_paid_members }} members | Outstanding: {{ fees_outstanding_members }} | Projection: {{ fees_projection|money }}</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.fines_list') }}">
+    <div class="head"><span class="label">Fines {{ current_year }}</span><i class="ph ph-warning-octagon"></i></div>
+    <div class="value">{{ fines_outstanding|money }}</div>
+    <div class="sub">Outstanding fines ({{ fines_unpaid_count }} records) | Collected: {{ fines_collected|money }}</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.minutes_list') }}">
+    <div class="head"><span class="label">Minutes Published</span><i class="ph ph-notepad"></i></div>
+    <div class="value">{{ minutes_published }}</div>
+    <div class="sub">Published out of {{ minutes_total }} records</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.reports') }}">
+    <div class="head"><span class="label">Operations (Fees + Fines)</span><i class="ph ph-chart-line-up"></i></div>
+    <div class="value">{{ operations_collected|money }}</div>
+    <div class="sub">Projection: {{ operations_projection|money }} | Outstanding: {{ operations_outstanding|money }}</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.savings_list') }}">
+    <div class="head"><span class="label">Current Month Savings</span><i class="ph ph-calendar-check"></i></div>
+    <div class="value">{{ month_paid_members }}/{{ total_members }}</div>
+    <div class="sub">Members covered | Outstanding amount: {{ month_outstanding_amount|money }}</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.loans_list') }}">
+    <div class="head"><span class="label">Loans Portfolio</span><i class="ph ph-hand-coins"></i></div>
+    <div class="value">{{ outstanding_principal|money }}</div>
+    <div class="sub">Interest + penalty outstanding: {{ (outstanding_interest + outstanding_penalty)|money }} | Overdue: {{ overdue_count }}</div>
+  </a>
+</div>
+
+<div class="section-shell">
+  <div class="section-head"><i class="ph ph-warning-circle"></i> Current Month Defaulters ({{ current_month_defaulters|length }})</div>
+  <div class="table-responsive">
+    {% if current_month_defaulters %}
+    <table class="section-table">
+      <thead><tr><th>No.</th><th>Member</th><th>Phone</th><th>Arrears</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for d in current_month_defaulters %}
+        <tr>
+          <td>{{ d.member_no }}</td>
+          <td><strong>{{ d.full_name }}</strong></td>
+          <td>{{ d.phone or '-' }}</td>
+          <td class="text-danger">{{ d.arrears_amount|money }}</td>
+          <td><span class="status-chip-mini"><i class="ph ph-warning"></i> Behind</span></td>
+          <td><a class="notice-btn" href="{{ url_for('admin.member_detail', member_id=d.id) }}"><i class="ph ph-megaphone"></i> Notice</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="small">No current month defaulters.</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section-shell attached-red">
+  <div class="section-head"><i class="ph ph-warning-octagon"></i> Overdue Loans ({{ overdue_loans|length }})</div>
+  <div class="table-responsive">
+    {% if overdue_loans %}
+    <table class="section-table">
+      <thead><tr><th>Loan</th><th>Borrower</th><th>Amount Owed</th><th>Initial Period</th><th>Overdue</th><th>Penalty</th><th></th></tr></thead>
+      <tbody>
+        {% for l in overdue_loans %}
+        <tr>
+          <td>{{ l.loan_no }}</td>
+          <td><strong>{{ l.full_name }}</strong></td>
+          <td class="text-danger">{{ l.amount_owed|money }}</td>
+          <td>{{ l.overdue_months }} month(s)</td>
+          <td><span class="status-chip-mini">{{ l.days_overdue }} day(s)</span></td>
+          <td class="text-danger">{{ l.penalty|money }}</td>
+          <td><a class="notice-btn" href="{{ url_for('admin.loan_detail', loan_id=l.id) }}"><i class="ph ph-megaphone"></i> Notice</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="small">No overdue loans at the moment.</div></div>
+    {% endif %}
+  </div>
+</div>
+
+{% set max_month_total = (trend|map(attribute='total')|max) or 1 %}
+{% set max_year_total = (yearly_trend|map(attribute='total')|max) or 1 %}
+<div class="trend-row">
+  <div class="trend-card">
+    <div class="trend-head">
+      <span>6-Month Savings Trend</span>
+      <a href="{{ url_for('admin.savings_list') }}" class="btn btn-sm btn-outline-secondary">View <i class="ph ph-arrow-right"></i></a>
+    </div>
+    <div class="trend-body">
+      <div class="mini-bars">
+        {% for t in trend %}
+        {% set t_total = t.total or 0 %}
+        <div class="mini-bar">
+          <div class="mini-bar-value">
+            {% if t_total >= 1000000 %}
+              {{ (t_total / 1000000)|round(1) }}M
+            {% elif t_total >= 1000 %}
+              {{ (t_total / 1000)|round(0)|int }}K
+            {% else %}
+              {{ t_total }}
+            {% endif %}
+          </div>
+          <div class="mini-bar-fill month" style="height: {{ ((t.total / max_month_total) * 100)|int if t.total else 5 }}%;"></div>
+          <div class="mini-bar-label">{{ t.label.split('-')[0] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="trend-card">
+    <div class="trend-head">
+      <span>5-Year Savings Trend</span>
+      <a href="{{ url_for('admin.savings_list') }}" class="btn btn-sm btn-outline-secondary">View <i class="ph ph-arrow-right"></i></a>
+    </div>
+    <div class="trend-body">
+      <div class="mini-bars">
+        {% for y in yearly_trend %}
+        {% set y_total = y.total or 0 %}
+        <div class="mini-bar">
+          <div class="mini-bar-value">
+            {% if y_total >= 1000000 %}
+              {{ (y_total / 1000000)|round(1) }}M
+            {% elif y_total >= 1000 %}
+              {{ (y_total / 1000)|round(0)|int }}K
+            {% else %}
+              {{ y_total }}
+            {% endif %}
+          </div>
+          <div class="mini-bar-fill year" style="height: {{ ((y.total / max_year_total) * 100)|int if y.total else 5 }}%;"></div>
+          <div class="mini-bar-label">{{ y.year }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-bell"></i> Notifications</div>
+      <div class="card-body p-0" style="max-height:260px;overflow:auto">
+        {% if unread_notifications %}
+          <ul class="list-group list-group-flush">
+            {% for n in unread_notifications %}
+            <li class="list-group-item small">
+              <div class="fw-semibold">{{ n.title }}</div>
+              <div class="text-muted">{{ n.message }}</div>
+              {% if n.link %}<a href="{{ n.link }}" class="small">Open</a>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state small">No unread notifications.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-clock-counter-clockwise"></i> Recent Activity</div>
+      <div class="card-body p-0" style="max-height:360px;overflow:auto">
+        {% if recent_audit %}
+          <ul class="list-group list-group-flush">
+            {% for a in recent_audit %}
+            <li class="list-group-item small">
+              <div class="d-flex justify-content-between">
+                <span><strong>{{ a.action }}</strong></span>
+                <span class="text-muted" style="font-size:11px">{{ a.created_at|datetimefmt }}</span>
+              </div>
+              <div class="text-muted">{{ a.description or a.entity_type or '' }} &middot; {{ a.full_name or 'system' }}</div>
+            </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state small">No recent activity.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

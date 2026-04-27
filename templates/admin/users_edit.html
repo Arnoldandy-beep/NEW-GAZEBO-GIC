@@ -1,0 +1,99 @@
+﻿{% extends "base.html" %}
+{% block title %}Edit User{% endblock %}
+{% block topbar %}Edit User{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Edit User: {{ user.username }}</h1><div class="subtitle">Update user account settings</div></div>
+  <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary"><i class="ph ph-caret-left"></i> Back</a>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-4">Account Information</h5>
+        
+        <div class="alert alert-info">
+          <strong>Username:</strong> <code>{{ user.username }}</code><br>
+          {% if user.member_id %}
+          <strong>Linked Member:</strong> <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}">{{ user.member_no }} - {{ user.member_name }}</a>
+          {% else %}
+          <strong>Linked Member:</strong> <em class="text-muted">Not linked</em>
+          {% endif %}<br>
+          <strong>Last Login:</strong> {{ user.last_login|datetimefmt if user.last_login else 'Never' }}
+        </div>
+        
+        <form method="post">
+          <div class="mb-3">
+            <label for="new_password" class="form-label">Reset Password</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="new_password" name="new_password" 
+                     placeholder="Leave blank to keep current password">
+              <span class="input-group-text">
+                <i class="ph ph-info" title="User will be required to change on next login"></i>
+              </span>
+            </div>
+            <small class="form-text text-muted">If you set a new password, the user will be required to change it on next login.</small>
+          </div>
+          
+          <div class="mb-3">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
+                     {% if user.is_active %}checked{% endif %} value="on">
+              <label class="form-check-label" for="is_active">
+                Account is Active
+              </label>
+            </div>
+            <small class="form-text text-muted">Inactive accounts cannot log in. Toggle here without deleting the account.</small>
+          </div>
+          
+          <div class="mb-3">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="must_change_pw" name="must_change_pw" 
+                     {% if user.must_change_pw %}checked{% endif %} value="on">
+              <label class="form-check-label" for="must_change_pw">
+                Force Password Change on Next Login
+              </label>
+            </div>
+            <small class="form-text text-muted">Check this to force the user to change their password before accessing the system.</small>
+          </div>
+          
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary"><i class="ph ph-check-circle"></i> Save Changes</button>
+            <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="card alert-warning">
+      <div class="card-header bg-warning text-dark">
+        <strong>Quick Actions</strong>
+      </div>
+      <div class="card-body">
+        <p><a href="{{ url_for('admin.users_list') }}" class="btn btn-sm btn-outline-secondary w-100 mb-2">
+          <i class="ph ph-list"></i> Back to User List
+        </a></p>
+        
+        {% if user.id != session.user_id %}
+        <p class="text-muted small my-3">Or delete this account:</p>
+        <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}"
+              onsubmit="return confirm('Permanently delete user {{ user.username }}? This cannot be undone.');">
+          <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+            <i class="ph ph-trash"></i> Delete User
+          </button>
+        </form>
+        {% else %}
+        <p class="alert alert-sm alert-info mb-0">
+          <small><i class="ph ph-info"></i> This is your account. You cannot delete it here.</small>
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

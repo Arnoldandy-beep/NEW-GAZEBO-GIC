@@ -1,0 +1,19 @@
+﻿{% extends "base.html" %}
+{% block title %}Forbidden{% endblock %}
+{% block topbar %}Access Denied{% endblock %}
+{% block content %}
+<div class="empty-state">
+  <i class="ph ph-shield-lock"></i>
+  <h2 class="h4">403 - Access denied</h2>
+  <p>You don't have permission to view this page.</p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Go to my dashboard</a>
+</div>
+{% endblock %}
+{% block auth_content %}
+<div class="auth-wrap"><div class="auth-card text-center">
+  <div class="auth-brand"><div class="mark">403</div><h1>Access denied</h1></div>
+  <a href="{{ url_for('auth.login') }}" class="btn btn-primary w-100">Sign in</a>
+</div></div>
+{% endblock %}
+
+

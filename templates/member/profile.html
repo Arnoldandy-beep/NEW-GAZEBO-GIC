@@ -1,0 +1,127 @@
+﻿{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block topbar %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>My Profile</h1><div class="subtitle">Your membership details (read-only)</div></div>
+  <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-key"></i> Change Password</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-user-circle"></i> Personal Details</div>
+      <div class="card-body">
+        <div class="member-profile-head">
+          {% if member.photo_url %}
+          <img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}" class="member-profile-photo">
+          {% else %}
+          <div class="member-profile-photo member-avatar-fallback">{{ (member.full_name or 'U')[0]|upper }}</div>
+          {% endif %}
+          <div>
+            <div class="h6 mb-0">{{ member.full_name }}</div>
+            <div class="small text-muted">{{ member.member_no }}</div>
+          </div>
+        </div>
+        <dl class="kv-list">
+          <dt>Member No.</dt><dd><strong>{{ member.member_no }}</strong></dd>
+          <dt>Full name</dt><dd>{{ member.full_name }}</dd>
+          <dt>Role</dt><dd><span class="role-badge role-{{ member.role|lower }}">{{ ROLES[member.role].name }}</span></dd>
+          <dt>Status</dt><dd><span class="badge-pill badge-active">{{ member.status }}</span></dd>
+          <dt>Phone</dt><dd>{{ member.phone or '-' }}</dd>
+          <dt>Email</dt><dd>{{ member.email or '-' }}</dd>
+          <dt>National ID</dt><dd>{{ member.national_id or '-' }}</dd>
+          <dt>District</dt><dd>{{ member.district or '-' }}</dd>
+          <dt>Next of Kin</dt><dd>{{ member.next_of_kin or '-' }}</dd>
+          <dt>NOK Phone</dt><dd>{{ member.nok_phone or '-' }}</dd>
+          <dt>Joined</dt><dd>{{ member.join_date|datefmt }}</dd>
+        </dl>
+        <p class="small text-muted mt-2 mb-0"><i class="ph ph-info"></i> Updates to your personal information should be requested through the Secretary.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-shield-lock"></i> Login Account</div>
+      <div class="card-body">
+        {% if user %}
+        <dl class="kv-list">
+          <dt>Username</dt><dd><strong>{{ user.username }}</strong></dd>
+          <dt>Status</dt><dd>{% if user.is_active %}<span class="badge-pill badge-active">Active</span>{% else %}<span class="badge-pill badge-defaulted">Disabled</span>{% endif %}</dd>
+          <dt>Last login</dt><dd>{{ user.last_login|datetimefmt if user.last_login else 'Never' }}</dd>
+        </dl>
+        {% else %}
+        <p>No login configured. Contact IT Admin.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><i class="ph ph-receipt"></i> Annual Fees</div>
+      <div class="card-body p-0">
+        {% if fees %}
+        <table class="table mb-0">
+          <thead><tr><th>Year</th><th>Amount</th><th>Status</th><th>Paid On</th></tr></thead>
+          <tbody>
+            {% for f in fees %}
+            <tr>
+              <td>{{ f.year }}</td>
+              <td class="table-money">{{ f.amount|money }}</td>
+              <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
+              <td>{{ f.paid_date|datefmt if f.paid_date else '-' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <div class="empty-state small">No fee records.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if fines %}
+    <div class="card mt-3">
+      <div class="card-header"><i class="ph ph-warning"></i> Fines</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th>Date</th><th>Violation</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for f in fines %}
+            <tr>
+              <td>{{ f.fine_date|datefmt }}</td>
+              <td>{{ f.violation }}</td>
+              <td class="table-money">{{ f.amount|money }}</td>
+              <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if payouts %}
+    <div class="card mt-3">
+      <div class="card-header"><i class="ph ph-chart-line-up"></i> Dividend History</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th>Year</th><th>Amount</th><th>Distributed</th></tr></thead>
+          <tbody>
+            {% for p in payouts %}
+            <tr>
+              <td>{{ p.year }}{% if p.is_top_saver %} <i class="ph ph-trophy text-warning"></i>{% endif %}</td>
+              <td class="table-money">{{ p.amount|money }}</td>
+              <td>{{ p.distribution_date|datefmt }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,207 @@
+﻿{% extends "base.html" %}
+{% block title %}{% if minutes %}Edit{% else %}New{% endif %} Minutes{% endblock %}
+{% block topbar %}{% if minutes %}Edit{% else %}Record{% endif %} Meeting Minutes{% endblock %}
+{% block content %}
+<style>
+.minutes-form-hero {
+  position: relative;
+  margin-bottom: 22px;
+  padding: 22px 20px;
+  border-radius: 16px;
+  border: 1px solid #d7e0fb;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 56%, #f3fbff 100%);
+  box-shadow: 0 10px 24px rgba(41, 74, 144, 0.08);
+}
+.minutes-form-hero h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -.5px;
+  background: linear-gradient(135deg, #244f8e, #1565c0 60%, #0f7d94);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.minutes-form-subtitle {
+  margin-top: 8px;
+  color: #607286;
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 760px;
+}
+.minutes-form-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 16px;
+}
+.minutes-panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(44,33,20,.05);
+  overflow: hidden;
+}
+.minutes-panel-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, #f8fbff 0%, #f2f7fd 100%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #35506a;
+}
+.field-note {
+  font-size: 11px;
+  color: #708195;
+  margin-top: 4px;
+}
+.upload-box {
+  padding: 12px;
+  border: 1px dashed #bfd4ec;
+  border-radius: 10px;
+  background: #f9fbff;
+}
+.upload-state {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #607286;
+}
+.minutes-side-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #526476;
+  background: linear-gradient(135deg, #f9fbff 0%, #f3f9ff 100%);
+  border: 1px solid #d6e4f4;
+  border-radius: 10px;
+  padding: 12px;
+}
+.minutes-side-note strong { color: #1f4f77; }
+.minutes-attendees {
+  max-height: 420px;
+  overflow: auto;
+}
+.minutes-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+@media (max-width: 980px) {
+  .minutes-form-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="minutes-form-hero">
+  <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+    <div>
+      <h1><i class="ph ph-note-pencil"></i> {% if minutes %}Edit Quarterly Minutes{% else %}Record Quarterly Minutes{% endif %}</h1>
+      <div class="minutes-form-subtitle">
+        Secretary and IT Admin can capture the meeting record, upload the signed copy, and keep the published version readable in both the admin side and the member portal.
+      </div>
+    </div>
+    <a href="{{ url_for('admin.minutes_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back</a>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  <div class="minutes-form-grid">
+    <div>
+      <div class="minutes-panel mb-3">
+        <div class="minutes-panel-head"><i class="ph ph-calendar-blank"></i> Meeting Details</div>
+        <div class="card-body row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Meeting Date <span class="text-danger">*</span></label>
+            <input type="date" name="meeting_date" class="form-control" value="{{ minutes.meeting_date if minutes else today.isoformat() }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Venue</label>
+            <input type="text" name="venue" class="form-control" value="{{ minutes.venue if minutes else '' }}" placeholder="e.g. Club office or host location">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Meeting Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" value="{{ minutes.title if minutes else '' }}" required placeholder="e.g. Q2 2026 Review Meeting">
+            <div class="field-note">Use a clear quarterly title so members can find it easily later.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Chaired By</label>
+            <select name="chaired_by" class="form-select">
+              <option value="">-- None --</option>
+              {% for m in members %}
+              <option value="{{ m.id }}" {% if minutes and minutes.chaired_by == m.id %}selected{% endif %}>{{ m.member_no }} - {{ m.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Next Meeting</label>
+            <input type="date" name="next_meeting" class="form-control" value="{{ minutes.next_meeting if minutes else '' }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="minutes-panel mb-3">
+        <div class="minutes-panel-head"><i class="ph ph-file-text"></i> Meeting Content</div>
+        <div class="card-body row g-3">
+          <div class="col-12">
+            <label class="form-label">Agenda</label>
+            <textarea name="agenda" rows="4" class="form-control" placeholder="One agenda item per line">{{ minutes.agenda if minutes else '' }}</textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Discussion</label>
+            <textarea name="discussion" rows="6" class="form-control" placeholder="Key discussion points and deliberations">{{ minutes.discussion if minutes else '' }}</textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Resolutions</label>
+            <textarea name="resolutions" rows="4" class="form-control" placeholder="Approved decisions and action points">{{ minutes.resolutions if minutes else '' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="minutes-panel">
+        <div class="minutes-panel-head"><i class="ph ph-seal-check"></i> Signed Minutes Copy</div>
+        <div class="card-body">
+          <div class="upload-box">
+            <label class="form-label">Upload Signed Copy</label>
+            <input type="file" name="signed_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp">
+            <div class="field-note">Accepted formats: PDF, JPG, PNG, WEBP. The signed copy will be readable directly inside the app.</div>
+            {% if minutes and minutes.signed_file %}
+            <div class="upload-state"><strong>Current file:</strong> available and linked on the detail page.</div>
+            {% else %}
+            <div class="upload-state">No signed copy uploaded yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="minutes-panel mb-3">
+        <div class="minutes-panel-head"><i class="ph ph-users-three"></i> Attendees</div>
+        <div class="card-body minutes-attendees">
+          {% set selected = selected_attendees if selected_attendees is defined else [] %}
+          {% for m in members %}
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="attendance" value="{{ m.id }}" id="att{{ m.id }}" {% if m.id in selected %}checked{% endif %}>
+            <label class="form-check-label small" for="att{{ m.id }}"><strong>{{ m.member_no }}</strong> - {{ m.full_name }}</label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="minutes-panel">
+        <div class="minutes-panel-head"><i class="ph ph-info"></i> Publishing Guidance</div>
+        <div class="card-body">
+          <div class="minutes-side-note">
+            <strong>Operational note:</strong> members read published minutes from their portal. Keep titles consistent by quarter, upload the signed copy once approved, and ensure agenda, discussion, and resolutions are complete enough to stand alone even before the file is opened.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="minutes-actions">
+    <a href="{{ url_for('admin.minutes_list') }}" class="btn btn-outline-secondary">Cancel</a>
+    <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> Save Minutes</button>
+  </div>
+</form>
+{% endblock %}
+
+

@@ -1,0 +1,176 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ member.full_name }}{% endblock %}
+{% block topbar %}{{ member.full_name }} ({{ member.member_no }}){% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ member.full_name }}</h1>
+    <div class="subtitle">{{ member.member_no }} &middot; <span class="role-badge role-{{ member.role|lower }}">{{ ROLES[member.role].name }}</span> &middot;
+      <span class="badge-pill badge-{% if member.status == 'Active' %}active{% else %}defaulted{% endif %}">{{ member.status }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.member_edit', member_id=member.id) }}" class="btn btn-outline-primary"><i class="ph ph-pencil-simple"></i> Edit</a>
+    <form method="post" action="{{ url_for('admin.member_delete', member_id=member.id) }}"
+          onsubmit="return confirm('Remove member {{ member.member_no }}? Members with history will be archived and hidden from the default members list; clean records will be fully deleted.');">
+      <button type="submit" class="btn btn-outline-danger"><i class="ph ph-user-minus"></i> Delete Member</button>
+    </form>
+    <a href="{{ url_for('admin.members_list') }}" class="btn btn-outline-secondary"><i class="ph ph-arrow-left"></i> Back</a>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card accent">
+    <div class="label">Total Savings</div>
+    <div class="value">{{ total_savings|money }}</div>
+  </div>
+  <div class="stat-card warn">
+    <div class="label">Locked (Collateral)</div>
+    <div class="value">{{ locked|money }}</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Available</div>
+    <div class="value">{{ available|money }}</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="label">Loans</div>
+    <div class="value">{{ loans|length }}</div>
+    <div class="sub">{{ loans|selectattr('status', 'equalto', 'Active')|list|length }} active</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-user"></i> Profile</div>
+      <div class="card-body">
+        <dl class="kv-list">
+          <dt>Phone</dt><dd>{{ member.phone or '-' }}</dd>
+          <dt>Email</dt><dd>{{ member.email or '-' }}</dd>
+          <dt>National ID</dt><dd>{{ member.national_id or '-' }}</dd>
+          <dt>District</dt><dd>{{ member.district or '-' }}</dd>
+          <dt>Next of Kin</dt><dd>{{ member.next_of_kin or '-' }} {% if member.nok_phone %}({{ member.nok_phone }}){% endif %}</dd>
+          <dt>Joined</dt><dd>{{ member.join_date|datefmt }}</dd>
+          <dt>Notes</dt><dd>{{ member.notes or '-' }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-bank"></i> Savings History</div>
+      <div class="card-body p-0 table-responsive" style="max-height:380px;overflow:auto">
+        {% if history %}
+        <table class="table mb-0">
+          <thead><tr><th>Period</th><th>Status</th><th>Amount</th><th>Paid On</th></tr></thead>
+          <tbody>
+            {% for h in history %}
+            <tr>
+              <td>{{ h.label }}</td>
+              <td>{% if h.paid %}<span class="badge-pill badge-paid">Paid</span>{% else %}<span class="badge-pill badge-unpaid">Unpaid</span>{% endif %}</td>
+              <td class="table-money">{{ h.amount|money if h.paid else '-' }}</td>
+              <td>{{ h.payment_date|datefmt if h.payment_date else '-' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty-state small">No savings history.</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="ph ph-hand-coins"></i> Loan History</div>
+      <div class="card-body p-0 table-responsive">
+        {% if loans %}
+        <table class="table mb-0">
+          <thead><tr><th>Loan #</th><th>Issued</th><th>Principal</th><th>Term</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for l in loans %}
+            <tr>
+              <td>{{ l.loan_no }}</td>
+              <td>{{ l.issued_date|datefmt }}</td>
+              <td class="table-money">{{ l.principal|money }}</td>
+              <td>{{ l.term_months }}m</td>
+              <td><span class="badge-pill badge-{{ l.status|lower }}">{{ l.status }}</span></td>
+              <td><a href="{{ url_for('admin.loan_detail', loan_id=l.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty-state small">No loans.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="ph ph-shield-lock"></i> Login Account</span>
+      </div>
+      <div class="card-body">
+        {% if user_row %}
+        <dl class="kv-list mb-3">
+          <dt>Username</dt><dd><strong>{{ user_row.username }}</strong></dd>
+          <dt>Status</dt><dd>{% if user_row.is_active %}<span class="badge-pill badge-active">Active</span>{% else %}<span class="badge-pill badge-defaulted">Disabled</span>{% endif %}</dd>
+          <dt>Must change</dt><dd>{% if user_row.must_change_pw %}<span class="badge-pill badge-pending">Yes</span>{% else %}No{% endif %}</dd>
+          <dt>Last login</dt><dd>{{ user_row.last_login|datetimefmt if user_row.last_login else 'Never' }}</dd>
+        </dl>
+        <form method="post" action="{{ url_for('admin.member_reset_password', member_id=member.id) }}"
+              data-confirm="Reset this user's password to a temporary value?">
+          <div class="input-group input-group-sm">
+            <input type="text" name="new_password" class="form-control" placeholder="New temp password" required>
+            <button type="submit" class="btn btn-warning"><i class="ph ph-arrow-clockwise"></i> Reset</button>
+          </div>
+        </form>
+        {% else %}
+        <p class="small text-muted">No login account configured.</p>
+        <form method="post" action="{{ url_for('admin.member_create_login', member_id=member.id) }}">
+          <div class="row g-2">
+            <div class="col-7"><input type="text" name="username" class="form-control form-control-sm" placeholder="username (optional)"></div>
+            <div class="col-5"><button type="submit" class="btn btn-primary btn-sm w-100"><i class="ph ph-key"></i> Create login</button></div>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if fees %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-receipt"></i> Annual Fees</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th>Year</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for f in fees %}
+          <tr><td>{{ f.year }}</td><td class="table-money">{{ f.amount|money }}</td><td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if fines %}
+    <div class="card">
+      <div class="card-header"><i class="ph ph-warning"></i> Fines</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th>Date</th><th>Violation</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for f in fines %}
+          <tr>
+            <td>{{ f.fine_date|datefmt }}</td>
+            <td>{{ f.violation }}</td>
+            <td class="table-money">{{ f.amount|money }}</td>
+            <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+

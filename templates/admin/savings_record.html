@@ -1,0 +1,78 @@
+﻿{% extends "base.html" %}
+{% block title %}Record Savings{% endblock %}
+{% block topbar %}Record Savings{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Record a Savings Deposit</h1><div class="subtitle">Backlog-first auto allocation from Aug-2025</div></div>
+  <a href="{{ url_for('admin.savings_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back</a>
+</div>
+
+<form method="post">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Payment Details</div>
+        <div class="card-body row g-3">
+          <div class="col-12">
+            <label class="form-label">Member <span class="text-danger">*</span></label>
+            <select name="member_id" class="form-select" required>
+              <option value="">-- Select member --</option>
+              {% for m in members %}
+              <option value="{{ m.id }}" {% if request.args.get('member_id')|int == m.id %}selected{% endif %}>{{ m.member_no }} - {{ m.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Amount (UGX) <span class="text-danger">*</span></label>
+            <input type="number" name="amount" class="form-control" value="{{ default_amount }}" min="100000" step="1000" required>
+            <div class="form-text">Each {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} covers exactly one month.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Deposit Date</label>
+            <input type="date" name="payment_date" class="form-control" value="{{ today.isoformat() }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Allocation Rule</label>
+            <input type="text" class="form-control" value="Start from Aug-2025 unpaid month, then move forward" disabled>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Method</label>
+            <select name="payment_method" class="form-select">
+              <option>Cash</option><option>Mobile Money</option><option selected>Bank Transfer</option><option>Cheque</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Reference / TXN ID</label>
+            <input type="text" name="reference_no" class="form-control" placeholder="MoMo / receipt #">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Notes</label>
+            <textarea name="notes" rows="2" class="form-control"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header"><i class="ph ph-info"></i> Allocation Example</div>
+        <div class="card-body">
+          <ul class="small mb-0">
+            <li>If member deposits <strong>800,000</strong>, system creates <strong>8 months</strong> at <strong>{{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }}</strong> each.</li>
+            <li>Coverage starts from earliest unpaid month since <strong>Aug-2025</strong>.</li>
+            <li>If backlog is fully cleared, extra months are posted into future periods automatically.</li>
+            <li>If the remainder is below {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }}, it is flagged as unallocated balance.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <a href="{{ url_for('admin.savings_list') }}" class="btn btn-outline-secondary">Cancel</a>
+    <button type="submit" class="btn btn-primary"><i class="ph ph-check"></i> Record Payment</button>
+  </div>
+</form>
+{% endblock %}
+
+

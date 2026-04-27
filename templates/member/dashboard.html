@@ -1,0 +1,224 @@
+﻿{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block topbar %}My Dashboard{% endblock %}
+{% block content %}
+<style>
+.member-hero {
+  position: relative;
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #d7e0fb;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 56%, #f3fbff 100%);
+  box-shadow: 0 10px 24px rgba(41,74,144,.08);
+}
+.member-hero h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -.5px;
+  background: linear-gradient(135deg, #244f8e, #1565c0 60%, #0f7d94);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.member-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.member-dash-tile {
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(44,33,20,.05);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  display: block;
+}
+.member-dash-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(36,87,136,.12);
+  border-color: #bcd3ed;
+}
+.member-dash-tile .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.member-dash-tile .head .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  font-weight: 700;
+  color: #6f7f91;
+}
+.member-dash-tile .head i { color: #3a6f9e; font-size: 18px; }
+.member-dash-tile .value {
+  margin-top: 7px;
+  font-size: 25px;
+  font-weight: 800;
+  color: #24394d;
+  font-variant-numeric: tabular-nums;
+}
+.member-dash-tile .sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #6b7886;
+}
+
+.member-loan-mini {
+  margin-top: 18px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(44,33,20,.05);
+}
+.member-loan-mini-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.member-loan-mini-item {
+  border: 1px solid #dbe5ef;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f9fbff;
+  text-align: center;
+}
+.member-loan-mini-item .k { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #708195; font-weight: 700; }
+.member-loan-mini-item .v { margin-top: 4px; font-size: 20px; font-weight: 800; color: #214764; }
+
+@media (max-width: 780px) {
+  .member-loan-mini-row { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="member-hero">
+  <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+    <div class="member-dashboard-head">
+      {% if member.photo_url %}
+      <img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}" class="member-profile-photo member-profile-photo-sm">
+      {% else %}
+      <div class="member-profile-photo member-profile-photo-sm member-avatar-fallback">{{ (member.full_name or 'U')[0]|upper }}</div>
+      {% endif %}
+      <div>
+        <h1>Welcome, {{ member.full_name.split()[0] }}</h1>
+        <div class="subtitle">Member {{ member.member_no }} &middot; {{ cur_period_pretty }} summary</div>
+      </div>
+    </div>
+  </div>
+  <div class="read-only-banner mt-3">
+    <i class="ph ph-info"></i> Personal read-only view: your savings, loans, fees, fines, and published minutes.
+  </div>
+</div>
+
+<div class="member-dash-grid">
+  <a class="member-dash-tile" href="{{ url_for('member.savings_statement') }}">
+    <div class="head"><span class="label">Savings Pool</span><i class="ph ph-bank"></i></div>
+    <div class="value">{{ total_savings|money }}</div>
+    <div class="sub">Locked: {{ locked|money }} | Available: {{ available|money }}</div>
+  </a>
+
+  <a class="member-dash-tile" href="{{ url_for('member.savings_statement') }}">
+    <div class="head"><span class="label">Current Month Savings</span><i class="ph ph-calendar-check"></i></div>
+    <div class="value">{% if my_month_savings_paid %}Paid{% else %}Pending{% endif %}</div>
+    <div class="sub">Outstanding this month: {{ my_month_savings_outstanding|money }} | Arrears: {{ arrears_amount|money }}</div>
+  </a>
+
+  <a class="member-dash-tile" href="{{ url_for('member.profile') }}">
+    <div class="head"><span class="label">Annual Fee {{ current_year }}</span><i class="ph ph-receipt"></i></div>
+    <div class="value">{% if my_fee_paid %}Paid{% else %}Pending{% endif %}</div>
+    <div class="sub">Fee amount: {{ my_fee_amount|money }} | Deadline: {{ my_fee_deadline|datefmt }}</div>
+  </a>
+
+  <a class="member-dash-tile" href="{{ url_for('member.profile') }}">
+    <div class="head"><span class="label">My Fines {{ current_year }}</span><i class="ph ph-warning-octagon"></i></div>
+    <div class="value">{{ my_fines_outstanding|money }}</div>
+    <div class="sub">Outstanding fines ({{ my_fines_unpaid_count }} records) | Collected: {{ my_fines_collected|money }}</div>
+  </a>
+
+  <a class="member-dash-tile" href="{{ url_for('member.minutes') }}">
+    <div class="head"><span class="label">Minutes Published</span><i class="ph ph-notepad"></i></div>
+    <div class="value">{{ published_minutes_count }}</div>
+    <div class="sub">Published records readable from your portal</div>
+  </a>
+
+  <a class="member-dash-tile" href="{{ url_for('member.profile') }}">
+    <div class="head"><span class="label">Operations (Fees + Fines)</span><i class="ph ph-chart-line-up"></i></div>
+    <div class="value">{{ operations_my_collected|money }}</div>
+    <div class="sub">Collected from you | Projection: {{ operations_my_projection|money }} | Outstanding: {{ operations_my_outstanding|money }}</div>
+  </a>
+</div>
+
+<div class="member-loan-mini">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="fw-semibold"><i class="ph ph-list-dashes"></i> My Loan Status (Compact)</div>
+    <a href="{{ url_for('member.loans') }}" class="small">Open loans &rarr;</a>
+  </div>
+  <div class="member-loan-mini-row">
+    <div class="member-loan-mini-item"><div class="k">Active</div><div class="v">{{ my_loans_active_count }}</div></div>
+    <div class="member-loan-mini-item"><div class="k">Pending</div><div class="v">{{ my_loans_pending_count }}</div></div>
+    <div class="member-loan-mini-item"><div class="k">Overdue</div><div class="v">{{ my_loans_overdue_count }}</div></div>
+  </div>
+</div>
+
+{% if active_loans %}
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="ph ph-hand-coins"></i> My Active Loans</span>
+    <a href="{{ url_for('member.loans') }}" class="small">View all &rarr;</a>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr>
+        <th>Loan #</th><th>Principal</th><th>Outstanding</th><th>Due</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        {% for l in active_loans %}
+        <tr>
+          <td>{{ l.loan_no }}</td>
+          <td class="table-money">{{ l.principal|money }}</td>
+          <td class="table-money">
+            {{ l.total_outstanding|money }}
+            {% if l.is_overdue %}<span class="badge-pill badge-overdue ms-1">Overdue</span>{% endif %}
+          </td>
+          <td>{{ l.due_date|datefmt }}</td>
+          <td><span class="badge-pill badge-{{ l.status|lower }}">{{ l.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if latest_minutes %}
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="ph ph-notepad"></i> Latest Published Minutes</span>
+    <a href="{{ url_for('member.minutes') }}" class="small">All minutes &rarr;</a>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr><th>Meeting Date</th><th>Title</th><th></th></tr></thead>
+      <tbody>
+        {% for m in latest_minutes %}
+        <tr>
+          <td>{{ m.meeting_date|datefmt }}</td>
+          <td>{{ m.title }}</td>
+          <td><a href="{{ url_for('member.minutes_detail', minutes_id=m.id) }}" class="btn btn-sm btn-outline-primary">Read</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+

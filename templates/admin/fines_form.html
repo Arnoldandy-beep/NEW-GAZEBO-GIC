@@ -1,0 +1,334 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ 'Edit Fine' if mode == 'edit' else 'New Fine' }}{% endblock %}
+{% block topbar %}{{ 'Edit Fine' if mode == 'edit' else 'Issue New Fine' }}{% endblock %}
+{% block content %}
+{% set is_edit = (mode == 'edit') %}
+<style>
+.fine-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.fine-form-header h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  background: linear-gradient(120deg, #9f2d2f 0%, #d74a2a 55%, #f18f2b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.fine-form-sub {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.fine-form-sub strong {
+  color: #8f2d2f;
+}
+
+.fine-layout {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 16px;
+}
+.fine-main-card,
+.fine-side-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(44, 33, 20, 0.05);
+  overflow: hidden;
+}
+.fine-main-head,
+.fine-side-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, #f9f0ea 0%, #f6ece1 100%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #5d4432;
+}
+.fine-main-body {
+  padding: 16px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #7a746b;
+  margin-bottom: 6px;
+}
+.field-help {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.preset-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.preset-chip {
+  border: 1px solid #efcabf;
+  background: #fff6f2;
+  color: #8f2d2f;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.preset-chip:hover {
+  background: #ffe8e0;
+  transform: translateY(-1px);
+}
+
+.amount-quick {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.amount-chip {
+  border: 1px solid #f0d7c6;
+  background: #fff9f4;
+  color: #7b4a32;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 8px;
+  text-align: center;
+  cursor: pointer;
+}
+.amount-chip:hover {
+  background: #ffeedd;
+}
+
+.form-actions {
+  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fine-side-body {
+  padding: 14px;
+}
+.policy-note {
+  background: linear-gradient(135deg, #fff7f2 0%, #fff2ea 100%);
+  border: 1px solid #f1d0c2;
+  border-radius: 10px;
+  padding: 12px;
+  color: #7b3a2f;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.policy-note strong {
+  color: #8f2d2f;
+}
+.policy-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+.policy-list li {
+  margin-bottom: 6px;
+}
+
+.review-box {
+  margin-top: 12px;
+  background: #f4f8fc;
+  border: 1px solid #d9e6f2;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12px;
+  color: #2e5069;
+}
+.review-box .k {
+  color: #60798f;
+  font-size: 11px;
+}
+.review-box .v {
+  font-weight: 700;
+  color: #214258;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 980px) {
+  .fine-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .amount-quick {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fine-form-header h1 {
+    font-size: 24px;
+  }
+}
+</style>
+
+<div class="fine-form-header">
+  <div>
+    <h1><i class="ph ph-warning-circle"></i> {{ 'Edit Discipline Fine' if is_edit else 'Issue Discipline Fine' }}</h1>
+    <div class="fine-form-sub">
+      {{ 'Amend a fine record while keeping governance history accurate and auditable.' if is_edit else 'Capture violations consistently and keep the register clean for follow-up and recovery.' }}
+      <br>
+      <strong>Note:</strong> fines are compliance penalties and do not alter member savings balances.
+    </div>
+  </div>
+  <a href="{{ url_for('admin.fines_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back to Register</a>
+</div>
+
+<form method="post" action="{{ form_action if form_action else url_for('admin.fines_create') }}">
+  <div class="fine-layout">
+    <div class="fine-main-card">
+      <div class="fine-main-head"><i class="ph ph-pencil-line"></i> {{ 'Fine Amendment Details' if is_edit else 'Fine Entry Details' }}</div>
+      <div class="fine-main-body row g-3">
+        <div class="col-12">
+          <label class="field-label">Member <span class="text-danger">*</span></label>
+          <select id="member_id" name="member_id" class="form-select" required>
+            <option value="">-- Select Member --</option>
+            {% for m in members %}
+            <option value="{{ m.id }}" data-member-no="{{ m.member_no }}" data-member-name="{{ m.full_name }}" {% if fine and fine.member_id == m.id %}selected{% endif %}>{{ m.member_no }} - {{ m.full_name }}</option>
+            {% endfor %}
+          </select>
+          <div class="field-help">Only active members are listed.</div>
+        </div>
+
+        <div class="col-lg-7">
+          <label class="field-label">Violation <span class="text-danger">*</span></label>
+          <input id="violation" type="text" name="violation" class="form-control" required placeholder="e.g. Late to meeting" value="{{ fine.violation if fine else '' }}">
+          <div class="preset-wrap">
+            <button type="button" class="preset-chip" data-violation="Late to meeting">Late to meeting</button>
+            <button type="button" class="preset-chip" data-violation="Absence without notice">Absence without notice</button>
+            <button type="button" class="preset-chip" data-violation="Late savings submission">Late savings submission</button>
+            <button type="button" class="preset-chip" data-violation="Code of conduct breach">Code of conduct breach</button>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <label class="field-label">Amount (UGX) <span class="text-danger">*</span></label>
+          <input id="amount" type="number" name="amount" class="form-control" min="0" step="500" required placeholder="50000" value="{{ fine.amount if fine else '' }}">
+          <div class="field-help">Use whole numbers in UGX.</div>
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+          <label class="field-label">Date</label>
+          <input id="fine_date" type="date" name="fine_date" class="form-control" value="{{ fine.fine_date if fine else today.isoformat() }}">
+        </div>
+
+        <div class="col-12">
+          <label class="field-label">Quick Amount Presets</label>
+          <div class="amount-quick">
+            <button type="button" class="amount-chip" data-amount="10000">UGX 10,000</button>
+            <button type="button" class="amount-chip" data-amount="20000">UGX 20,000</button>
+            <button type="button" class="amount-chip" data-amount="50000">UGX 50,000</button>
+            <button type="button" class="amount-chip" data-amount="100000">UGX 100,000</button>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="field-label">Notes</label>
+          <textarea id="notes" name="notes" rows="3" class="form-control" placeholder="Optional context for internal follow-up">{{ fine.notes if fine else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('admin.fines_list') }}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="ph ph-check"></i> {{ 'Save Changes' if is_edit else 'Issue Fine' }}</button>
+      </div>
+    </div>
+
+    <div class="fine-side-card">
+      <div class="fine-side-head"><i class="ph ph-info"></i> Guidance</div>
+      <div class="fine-side-body">
+        <div class="policy-note">
+          <strong>Best Practice:</strong> record a fine with clear violation wording and enforce timely settlement to maintain fairness across members.
+          <ul class="policy-list">
+            <li>Use specific and factual violation text.</li>
+            <li>Confirm amount before submission.</li>
+            <li>Add notes when context may be reviewed later.</li>
+            <li>Chairman, Treasurer, Secretary, and IT Admin can edit fines.</li>
+          </ul>
+        </div>
+
+        <div class="review-box">
+          <div class="k">Selected Member</div>
+          <div id="rvMember" class="v">-</div>
+          <div class="k" style="margin-top:8px;">Violation</div>
+          <div id="rvViolation" class="v">-</div>
+          <div class="k" style="margin-top:8px;">Amount</div>
+          <div id="rvAmount" class="v">UGX 0</div>
+          <div class="k" style="margin-top:8px;">Date</div>
+          <div id="rvDate" class="v">{{ today|datefmt }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+(function () {
+  const memberSelect = document.getElementById('member_id');
+  const violationInput = document.getElementById('violation');
+  const amountInput = document.getElementById('amount');
+  const dateInput = document.getElementById('fine_date');
+
+  const rvMember = document.getElementById('rvMember');
+  const rvViolation = document.getElementById('rvViolation');
+  const rvAmount = document.getElementById('rvAmount');
+  const rvDate = document.getElementById('rvDate');
+
+  function formatUg(amount) {
+    const n = Number(amount || 0);
+    return 'UGX ' + n.toLocaleString();
+  }
+
+  function syncReview() {
+    const selected = memberSelect.options[memberSelect.selectedIndex];
+    rvMember.textContent = selected && selected.value ? (selected.dataset.memberNo + ' - ' + selected.dataset.memberName) : '-';
+    rvViolation.textContent = violationInput.value.trim() || '-';
+    rvAmount.textContent = formatUg(amountInput.value);
+    rvDate.textContent = dateInput.value || '{{ today.isoformat() }}';
+  }
+
+  document.querySelectorAll('.preset-chip').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      violationInput.value = btn.dataset.violation || '';
+      syncReview();
+      violationInput.focus();
+    });
+  });
+
+  document.querySelectorAll('.amount-chip').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      amountInput.value = btn.dataset.amount || '';
+      syncReview();
+      amountInput.focus();
+    });
+  });
+
+  [memberSelect, violationInput, amountInput, dateInput].forEach(function (el) {
+    el.addEventListener('input', syncReview);
+    el.addEventListener('change', syncReview);
+  });
+
+  syncReview();
+})();
+</script>
+{% endblock %}
+
+

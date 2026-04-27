@@ -1,0 +1,446 @@
+﻿{% extends "base.html" %}
+{% block title %}Annual Fees {{ year }}{% endblock %}
+{% block topbar %}Annual Registration Fees{% endblock %}
+{% block content %}
+
+{% set total_collected = (rows|length) * fee_amount %}
+{% set total_members = rows|length + pending|length %}
+{% set collection_pct = (rows|length * 100 // total_members) if total_members > 0 else 0 %}
+
+<style>
+.fees-header {
+  position: relative;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #edf6ff 58%, #f5fbf8 100%);
+  border: 1px solid #d7e8fb;
+  border-radius: 16px;
+  padding: 26px 20px 22px;
+  box-shadow: 0 10px 24px rgba(36, 87, 136, 0.08);
+  overflow: hidden;
+}
+.fees-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(47,108,143,.14), transparent 42%),
+    radial-gradient(circle at 84% 14%, rgba(21,101,192,.12), transparent 40%);
+  pointer-events: none;
+}
+.fees-header-main {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto;
+}
+.fees-header-main h1 {
+  font-size: 36px; font-weight: 900; color: var(--text); margin: 0;
+  background: linear-gradient(135deg, #215e83, #1565c0 60%, #0b7d77);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; letter-spacing: -0.7px;
+}
+.fees-meta {
+  font-size: 14px; color: var(--text-muted); line-height: 1.75; margin-top: 8px;
+}
+.fees-meta strong { color: #1565c0; font-weight: 700; }
+.fees-meta .operational {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #e0f0ff; color: #01579b; padding: 6px 12px;
+  border-radius: 999px; font-weight: 700; font-size: 11px; margin-top: 10px;
+  border: 1px solid #b8daf6;
+}
+
+.fees-subgrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.fees-subcard {
+  text-align: center;
+  background: #ffffffcc;
+  border: 1px solid #d8e7f6;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+.fees-subcard .k {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #6f8092;
+  font-weight: 700;
+}
+.fees-subcard .v {
+  display: block;
+  font-size: 14px;
+  color: #234b68;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.year-selector { 
+  background: #fff; border: 1px solid #cde0f3; border-radius: 10px;
+  padding: 10px 13px; min-width: 150px; font-weight: 700;
+  color: #27577a;
+}
+.fees-year-wrap {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 2;
+}
+
+.stats-section {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+
+.stat-card-fee {
+  background: white; border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px; box-shadow: 0 3px 10px rgba(0,0,0,.05);
+  position: relative; overflow: hidden;
+}
+.stat-card-fee::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #2f6c8f, #1565c0);
+}
+.stat-card-fee.success::before { background: linear-gradient(90deg, var(--accent), #0f7d59); }
+.stat-card-fee.pending::before { background: linear-gradient(90deg, var(--warn), #d97706); }
+.stat-card-fee.deadline::before { background: linear-gradient(90deg, #e65100, #ff6f00); }
+
+.stat-label-fee { 
+  font-size: 10px; text-transform: uppercase; letter-spacing: .7px;
+  font-weight: 700; color: #888; display: flex; align-items: center; gap: 6px;
+}
+.stat-value-fee { 
+  font-size: 24px; font-weight: 800; color: var(--text); margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.stat-sub-fee { 
+  font-size: 12px; color: #666; margin-top: 4px;
+}
+
+.progress-section {
+  background: linear-gradient(135deg, rgba(47, 108, 143, .08) 0%, rgba(221, 245, 255, .06) 100%);
+  border: 1px solid rgba(47, 108, 143, .15); border-radius: 12px;
+  padding: 18px; margin-bottom: 24px;
+}
+.progress-label {
+  font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.progress-bar-container {
+  width: 100%; height: 24px; background: #e8eef5; border-radius: 12px;
+  overflow: hidden; border: 1px solid #d1dbe6;
+}
+.progress-bar-fill {
+  height: 100%; background: linear-gradient(90deg, #2f6c8f, #1565c0);
+  width: {{ (collection_pct if collection_pct else 0) }}%;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 10px; color: white; font-weight: 700; font-size: 11px;
+  transition: width .4s ease;
+}
+.progress-text {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px; font-size: 12px;
+}
+.progress-text strong { color: #2f6c8f; font-weight: 700; }
+
+.members-table-section {
+  background: white; border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.05);
+  overflow: hidden;
+}
+.table-header-enhanced {
+  background: linear-gradient(90deg, #f8f9fa 0%, #f0f4f8 100%);
+  padding: 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.table-header-enhanced h2 {
+  font-size: 16px; font-weight: 700; color: var(--text); margin: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.member-count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #2f6c8f, #1565c0);
+  color: white; font-weight: 700; font-size: 12px;
+  width: 30px; height: 30px; border-radius: 50%;
+}
+
+.fees-table {
+  width: 100%; border-collapse: collapse;
+}
+.fees-table tbody tr {
+  border-bottom: 1px solid #e9e2d7;
+  transition: all .15s;
+}
+.fees-table tbody tr:hover {
+  background: #f8f6f1;
+  box-shadow: inset 2px 0 0 #2f6c8f;
+}
+.fees-table thead th {
+  background: #ece5d9; font-weight: 700; font-size: 11.5px;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted);
+  border-bottom: 2px solid var(--border); padding: 12px;
+  text-align: left;
+}
+.fees-table td {
+  padding: 14px 12px; vertical-align: middle;
+}
+
+.member-badge-col {
+  display: flex; align-items: center; gap: 10px;
+}
+.member-num-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #e3f2fd; color: #0d47a1; font-weight: 700; font-size: 12px;
+  width: 28px; height: 28px; border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.member-info-col {
+  display: flex; flex-direction: column; min-width: 0;
+}
+.member-info-col strong { font-size: 13.5px; color: var(--text); font-weight: 700; }
+.member-info-col small { font-size: 11px; color: #999; margin-top: 2px; }
+
+.fee-amount-col {
+  font-weight: 800; font-size: 14px; color: #2e7d32;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-badge-col {
+  text-align: center;
+}
+.badge-paid {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #e8f5e9; color: #1b5e20; font-weight: 700; font-size: 11px;
+  padding: 5px 10px; border-radius: 16px; letter-spacing: .2px;
+  border: 1px solid #c8e6c9;
+}
+.badge-unpaid {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #fff3e0; color: #e65100; font-weight: 700; font-size: 11px;
+  padding: 5px 10px; border-radius: 16px; letter-spacing: .2px;
+  border: 1px solid #ffe0b2;
+}
+
+.date-paid-col {
+  font-size: 12px; color: #666; font-variant-numeric: tabular-nums;
+}
+
+.actions-col {
+  text-align: right; display: flex; gap: 6px; justify-content: flex-end;
+}
+.actions-col .btn {
+  font-size: 11px; padding: 5px 10px; white-space: nowrap;
+}
+
+.empty-state-fees {
+  text-align: center; padding: 40px 20px; color: var(--text-muted);
+}
+.empty-state-fees .icon {
+  font-size: 42px; color: var(--border); margin-bottom: 12px;
+}
+
+.info-box-fees {
+  background: linear-gradient(135deg, #e8eef5 0%, #e3f2fd 100%);
+  border: 1px solid #b3e5fc; border-radius: 10px; padding: 16px;
+  margin-top: 24px; color: #01579b; line-height: 1.6;
+}
+.info-box-fees i { margin-right: 6px; }
+.info-box-fees strong { color: #00396b; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .fees-header-main h1 { font-size: 30px; }
+  .fees-subgrid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .fees-header {
+    padding-top: 56px;
+  }
+  .fees-year-wrap {
+    right: 10px;
+    top: 10px;
+  }
+}
+</style>
+
+<div class="fees-header">
+  <form method="get" class="d-inline fees-year-wrap">
+    <select name="year" class="year-selector" onchange="this.form.submit()">
+      {% for y in range(2025, today.year + 2) %}
+      <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <div class="fees-header-main">
+    <h1><i class="ph ph-currency-circle-dollar"></i> Annual Registration Fees</h1>
+    <div class="fees-meta">
+      <span class="operational"><i class="ph ph-building"></i> Operational Funding</span>
+    </div>
+
+    <div class="fees-subgrid">
+      <div class="fees-subcard">
+        <span class="k">Year</span>
+        <span class="v">{{ year }}</span>
+      </div>
+      <div class="fees-subcard">
+        <span class="k">Membership Fee Per Member</span>
+        <span class="v">{{ fee_amount|money }}</span>
+      </div>
+      <div class="fees-subcard">
+        <span class="k">Collection Deadline</span>
+        <span class="v">30 June {{ year }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Key Statistics -->
+<div class="stats-section">
+  <div class="stat-card-fee success">
+    <div class="stat-label-fee"><i class="ph ph-check-circle"></i> Collected ({{ year }})</div>
+    <div class="stat-value-fee">{{ total_collected|money }}</div>
+    <div class="stat-sub-fee">{{ rows|length }} / {{ total_members }} members</div>
+  </div>
+  
+  <div class="stat-card-fee">
+    <div class="stat-label-fee"><i class="ph ph-users"></i> Paid Members</div>
+    <div class="stat-value-fee">{{ rows|length }}/{{ total_members }}</div>
+    <div class="stat-sub-fee">{{ collection_pct }}% collection rate</div>
+  </div>
+  
+  <div class="stat-card-fee pending">
+    <div class="stat-label-fee"><i class="ph ph-exclamation-circle"></i> Pending</div>
+    <div class="stat-value-fee">{{ pending|length }}</div>
+    <div class="stat-sub-fee">Outstanding payments</div>
+  </div>
+  
+  <div class="stat-card-fee deadline">
+    <div class="stat-label-fee"><i class="ph ph-calendar"></i> Days Remaining</div>
+    <div class="stat-value-fee">{{ days_remaining if days_remaining > 0 else 0 }}</div>
+    <div class="stat-sub-fee">Until 30 June deadline</div>
+  </div>
+</div>
+
+<!-- Collection Progress -->
+<div class="progress-section">
+  <div class="progress-label"><i class="ph ph-chart-bar"></i> Collection Progress</div>
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" style="width: {{ (collection_pct if collection_pct else 0) }}%">
+      {% if collection_pct > 15 %}<span>{{ collection_pct }}%</span>{% endif %}
+    </div>
+  </div>
+  <div class="progress-text">
+    <span><strong>{{ total_collected|money }}</strong> collected out of <strong>{{ (total_members * fee_amount)|money }}</strong> target</span>
+    <span>Need <strong>{{ ((total_members - rows|length) * fee_amount)|money }}</strong> more</span>
+  </div>
+</div>
+
+<!-- Members Table -->
+<div class="members-table-section">
+  <div class="table-header-enhanced">
+    <h2><i class="ph ph-list-ul"></i> Member Payments <span class="member-count-badge">{{ total_members }}</span></h2>
+  </div>
+  
+  {% if total_members > 0 %}
+  <div class="table-responsive">
+    <table class="fees-table">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Annual Fee</th>
+          <th>Status</th>
+          <th>Paid Date</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Paid members -->
+        {% for r in rows %}
+        <tr>
+          <td>
+            <div class="member-badge-col">
+              <div class="member-num-badge">{{ r.member_no }}</div>
+              <div class="member-info-col">
+                <strong>{{ r.full_name }}</strong>
+                <small>Member #{{ r.member_no }}</small>
+              </div>
+            </div>
+          </td>
+          <td><div class="fee-amount-col">{{ r.amount|money }}</div></td>
+          <td>
+            <div class="status-badge-col">
+              <span class="badge-paid"><i class="ph ph-check"></i> Paid</span>
+            </div>
+          </td>
+          <td><div class="date-paid-col">{{ r.paid_date|datefmt if r.paid_date else '-' }}</div></td>
+          <td>
+            <div class="actions-col">
+              <form method="post" action="{{ url_for('admin.fees_delete', fee_id=r.id) }}" style="display:inline;" onsubmit="return confirm('Delete this payment record? This cannot be undone.');">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete payment record"><i class="ph ph-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        
+        <!-- Pending members -->
+        {% for m in pending %}
+        <tr style="background: #fafaf8;">
+          <td>
+            <div class="member-badge-col">
+              <div class="member-num-badge">{{ m.member_no }}</div>
+              <div class="member-info-col">
+                <strong>{{ m.full_name }}</strong>
+                <small>Member #{{ m.member_no }}</small>
+              </div>
+            </div>
+          </td>
+          <td><div class="fee-amount-col">{{ fee_amount|money }}</div></td>
+          <td>
+            <div class="status-badge-col">
+              <span class="badge-unpaid"><i class="ph ph-clock"></i> Unpaid</span>
+            </div>
+          </td>
+          <td><div class="date-paid-col">—</div></td>
+          <td>
+            <div class="actions-col">
+              <form method="post" action="{{ url_for('admin.fees_record') }}" style="margin: 0;">
+                <input type="hidden" name="member_id" value="{{ m.id }}">
+                <input type="hidden" name="year" value="{{ year }}">
+                <input type="hidden" name="amount" value="{{ fee_amount }}">
+                <button type="submit" class="btn btn-sm btn-success" title="Mark this member as paid"><i class="ph ph-check-circle"></i> Mark Paid</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state-fees">
+    <div class="icon"><i class="ph ph-list"></i></div>
+    <p><strong>No members found</strong></p>
+    <p style="margin: 0;">There are no active members to record fees for this year.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Information Box -->
+<div class="info-box-fees">
+  <p><i class="ph ph-info"></i><strong>About Annual Registration Fees:</strong></p>
+  <p style="margin: 8px 0 0 0;">
+    Annual membership fees are <strong>operational costs</strong> that fund club administration and expenses. These fees are <strong>separate from member savings</strong> and are kept in a dedicated pool to cover day-to-day club operations. 
+    All members are required to pay <strong>{{ fee_amount|money }}</strong> by <strong>30 June {{ year }}</strong>. 
+    This policy was approved at the last club meeting and became effective as of {{ year }}.
+  </p>
+</div>
+
+{% endblock %}
+
+

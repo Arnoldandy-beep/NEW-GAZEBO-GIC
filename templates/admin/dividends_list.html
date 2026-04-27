@@ -1,0 +1,92 @@
+﻿{% extends "base.html" %}
+{% block title %}Dividends{% endblock %}
+{% block topbar %}Dividends &amp; Annual Distribution{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Dividends</h1>
+    <div class="subtitle">Annual distribution every 31st December &middot; {{ current_year }} smart pool tracking</div>
+  </div>
+  <a href="{{ url_for('admin.dividends_preview', year=current_year) }}" class="btn btn-primary"><i class="ph ph-eye"></i> Preview {{ current_year }}</a>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card accent">
+    <div class="label">{{ current_year }} Collected Interest</div>
+    <div class="value">{{ pool.interest_collected|money }}</div>
+    <div class="sub">Realized from repayments in {{ current_year }}</div>
+  </div>
+  <div class="stat-card warn">
+    <div class="label">Collected Penalties</div>
+    <div class="value">{{ pool.penalty_collected|money }}</div>
+    <div class="sub">Penalty recovered via repayments</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="label">Projected Total Pool ({{ current_year }})</div>
+    <div class="value">{{ pool.projected_total|money }}</div>
+    <div class="sub">{{ pool.projected_interest|money }} projected interest + {{ pool.projected_penalty|money }} projected penalties</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Projected Distributable</div>
+    <div class="value">{{ pool.distributable|money }}</div>
+    <div class="sub">After top saver award {{ pool.top_saver_award|money }}</div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <strong><i class="ph ph-chart-line-up"></i> Pool Coverage Progress</strong>
+        <div class="small text-muted">How much of projected pool has been actually collected so far.</div>
+      </div>
+      <div class="h5 mb-0">{{ pool.coverage_pct }}%</div>
+    </div>
+    <div class="loan-pool-progress mt-2" style="height:8px;">
+      <div class="loan-pool-progress-bar" style="width: {{ pool.coverage_pct }}%"></div>
+    </div>
+    <div class="small text-muted mt-1">Collected {{ pool.collected_total|money }} / Projected {{ pool.projected_total|money }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="ph ph-clock-counter-clockwise"></i> Past Distributions</div>
+  <div class="card-body p-0 table-responsive">
+    {% if runs %}
+    <table class="table mb-0">
+      <thead><tr><th>Year</th><th>Pool</th><th>Members</th><th>Per Member</th><th>Top Saver</th><th>Distributed</th><th></th></tr></thead>
+      <tbody>
+        {% for r in runs %}
+        <tr>
+          <td><strong>{{ r.year }}</strong></td>
+          <td class="table-money">{{ r.total_interest_pool|money }}</td>
+          <td>{{ r.member_count }}</td>
+          <td class="table-money">{{ r.per_member_amount|money }}</td>
+          <td>{{ r.top_saver_no }} - {{ r.top_saver_name or '-' }}</td>
+          <td>{{ r.distribution_date|datefmt }}</td>
+          <td><a href="{{ url_for('admin.dividends_detail', run_id=r.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><i class="ph ph-bank"></i><div>No dividend runs yet. Preview {{ current_year }} when ready.</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><i class="ph ph-info"></i> How dividends work</div>
+  <div class="card-body small">
+    <ol class="ps-3 mb-0">
+      <li>The dashboard now shows both collected pool and projected pool for the selected year.</li>
+      <li>Projected pool uses loan interest for loans in the year and year penalties.</li>
+      <li>The top saver of the year is awarded an extra <strong>{{ CONFIG.TOP_SAVER_AWARD|money }}</strong>.</li>
+      <li>The remaining amount is divided equally among all active members.</li>
+      <li>Admin and Treasurer can run or rerun yearly distribution to refresh projections.</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,75 @@
+﻿{% extends "base.html" %}
+{% block title %}Dividend Preview {{ year }}{% endblock %}
+{% block topbar %}Preview Dividend Run - {{ year }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Preview {{ year }}</h1><div class="subtitle">Review the distribution before running</div></div>
+  <a href="{{ url_for('admin.dividends_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back</a>
+</div>
+
+{% if existing %}
+<div class="alert alert-warning"><i class="ph ph-warning"></i> Dividends for {{ year }} were already distributed on {{ existing.distribution_date|datefmt }}. You can rerun to refresh using current projected figures.</div>
+{% endif %}
+
+<div class="stat-grid">
+  <div class="stat-card accent">
+    <div class="label">Projected Total Pool</div>
+    <div class="value">{{ pool.total_pool|money }}</div>
+    <div class="sub">{{ pool.projected_interest|money }} projected interest + {{ pool.projected_penalty|money }} projected penalty</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="label">Top Saver Award</div>
+    <div class="value">{{ pool.top_saver_award|money }}</div>
+    <div class="sub">Reserved bonus</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Per-Member Share</div>
+    <div class="value">{{ per_member|money }}</div>
+    <div class="sub">Projected after top saver award</div>
+  </div>
+  <div class="stat-card warn">
+    <div class="label">Top Saver</div>
+    <div class="value" style="font-size:14px">{{ top_saver.member_no }} - {{ top_saver.full_name }}</div>
+    <div class="sub">Saved {{ top_saver.year_savings|money }} this year</div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="small"><strong>Collected so far:</strong> {{ pool.collected_total|money }} ({{ pool.interest_collected|money }} interest + {{ pool.penalty_collected|money }} penalty)</div>
+      <div class="small"><strong>Coverage:</strong> {{ pool.coverage_pct }}%</div>
+    </div>
+    <div class="loan-pool-progress mt-2" style="height:6px;"><div class="loan-pool-progress-bar" style="width: {{ pool.coverage_pct }}%"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="ph ph-list-numbers"></i> Per-Member Distribution Plan</div>
+  <div class="card-body p-0 table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Member</th><th>{{ year }} Savings</th><th>Payout</th><th></th></tr></thead>
+      <tbody>
+        {% for p in payouts %}
+        <tr>
+          <td><strong>{{ p.member_no }}</strong> - {{ p.full_name }}</td>
+          <td class="table-money">{{ p.year_savings|money }}</td>
+          <td class="table-money money-positive"><strong>{{ p.amount|money }}</strong></td>
+          <td>{% if p.is_top_saver %}<span class="badge-pill" style="background:#fff8e1;color:#f57c00"><i class="ph ph-trophy"></i> Top Saver</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if pool.total_pool > 0 %}
+<form method="post" action="{{ url_for('admin.dividends_run') }}" data-confirm="Run the dividend distribution for {{ year }}? This will refresh current payouts." class="mt-3">
+  <input type="hidden" name="year" value="{{ year }}">
+  <input type="hidden" name="distribution_date" value="{{ year }}-12-31">
+  <button type="submit" class="btn btn-primary"><i class="ph ph-check-circle"></i> {% if existing %}Recalculate / Rerun{% else %}Run Distribution{% endif %}</button>
+</form>
+{% endif %}
+{% endblock %}
+
+

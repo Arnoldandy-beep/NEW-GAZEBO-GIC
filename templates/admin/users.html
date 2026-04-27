@@ -1,0 +1,191 @@
+﻿{% extends "base.html" %}
+{% block title %}System Users{% endblock %}
+{% block topbar %}System Users{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>System Users</h1><div class="subtitle">Manage login accounts and access. Deleting here removes login access only, not the member record.</div></div>
+  <a href="{{ url_for('admin.users_add') }}" class="btn btn-primary"><i class="ph ph-user-plus"></i> Add User</a>
+</div>
+
+<div class="alert alert-warning">
+  <strong>Important:</strong> System Users manages login accounts only. If you delete a user here, that person will still appear in the Members module until you deactivate or remove the member record there.
+</div>
+
+{% if admin_users %}
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="ph ph-shield-lock"></i> Administrative Users</h5>
+  </div>
+  <div class="card-body p-0 table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Username</th><th>Member</th><th>Member Role</th><th>Status</th><th>Last Login</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in admin_users %}
+        <tr>
+          <td><strong>{{ user.username }}</strong></td>
+          <td>
+            {% if user.member_id %}
+              <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}">{{ user.member_no }} - {{ user.member_name }}</a>
+            {% else %}
+              <em class="text-muted">Not linked</em>
+            {% endif %}
+          </td>
+          <td>
+            {% if user.member_role %}
+              <span class="role-badge role-{{ user.member_role|lower }}">{{ ROLES[user.member_role].name }}</span>
+            {% else %}
+              <em class="text-muted">-</em>
+            {% endif %}
+          </td>
+          <td>
+            {% if user.is_active %}
+              <span class="badge bg-success">Active</span>
+            {% else %}
+              <span class="badge bg-secondary">Inactive</span>
+            {% endif %}
+          </td>
+          <td>{{ user.last_login|datetimefmt if user.last_login else '-' }}</td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary" title="Edit">
+                <i class="ph ph-pencil-simple"></i>
+              </a>
+              {% if user.id != session.user_id %}
+                <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}" class="d-inline"
+                      onsubmit="return confirm('Toggle status for {{ user.username }}?');">
+                  <button type="submit" class="btn btn-outline-warning" title="Toggle Active">
+                    {% if user.is_active %}<i class="ph ph-lock"></i>{% else %}<i class="ph ph-lock-open"></i>{% endif %}
+                  </button>
+                </form>
+                <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}" class="d-inline"
+                      onsubmit="return confirm('Delete login {{ user.username }}? This removes system access only and does not delete the member record.');">
+                  <button type="submit" class="btn btn-outline-danger" title="Delete Login">
+                    <i class="ph ph-trash"></i>
+                  </button>
+                </form>
+                {% if user.member_id %}
+                <form method="post" action="{{ url_for('admin.users_delete_member', user_id=user.id) }}" class="d-inline"
+                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be archived and hidden from the default members list; clean records will be fully deleted.');">
+                  <button type="submit" class="btn btn-outline-dark" title="Delete Member Too">
+                    <i class="ph ph-user-minus"></i>
+                  </button>
+                </form>
+                {% endif %}
+              {% else %}
+                <span class="btn btn-outline-secondary disabled" title="Cannot manage own account">(Current)</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if member_users %}
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="ph ph-user"></i> Member Users</h5>
+  </div>
+  <div class="card-body p-0 table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Username</th><th>Member</th><th>Status</th><th>Last Login</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in member_users %}
+        <tr>
+          <td><strong>{{ user.username }}</strong></td>
+          <td>
+            {% if user.member_id %}
+              <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}">{{ user.member_no }} - {{ user.member_name }}</a>
+            {% else %}
+              <em class="text-muted">Not linked</em>
+            {% endif %}
+          </td>
+          <td>
+            {% if user.is_active %}
+              <span class="badge bg-success">Active</span>
+            {% else %}
+              <span class="badge bg-secondary">Inactive</span>
+            {% endif %}
+          </td>
+          <td>{{ user.last_login|datetimefmt if user.last_login else '-' }}</td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary" title="Edit">
+                <i class="ph ph-pencil-simple"></i>
+              </a>
+              {% if user.id != session.user_id %}
+                <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}" class="d-inline"
+                      onsubmit="return confirm('Toggle status for {{ user.username }}?');">
+                  <button type="submit" class="btn btn-outline-warning" title="Toggle Active">
+                    {% if user.is_active %}<i class="ph ph-lock"></i>{% else %}<i class="ph ph-lock-open"></i>{% endif %}
+                  </button>
+                </form>
+                <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}" class="d-inline"
+                      onsubmit="return confirm('Delete login {{ user.username }}? This removes system access only and does not delete the member record.');">
+                  <button type="submit" class="btn btn-outline-danger" title="Delete Login">
+                    <i class="ph ph-trash"></i>
+                  </button>
+                </form>
+                {% if user.member_id %}
+                <form method="post" action="{{ url_for('admin.users_delete_member', user_id=user.id) }}" class="d-inline"
+                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be archived and hidden from the default members list; clean records will be fully deleted.');">
+                  <button type="submit" class="btn btn-outline-dark" title="Delete Member Too">
+                    <i class="ph ph-user-minus"></i>
+                  </button>
+                </form>
+                {% endif %}
+              {% else %}
+                <span class="btn btn-outline-secondary disabled" title="Cannot manage own account">(Current)</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if unlinked_members %}
+<div class="card alert-info">
+  <div class="card-header bg-info text-white">
+    <h5 class="mb-0"><i class="ph ph-info"></i> Members Without User Accounts</h5>
+  </div>
+  <div class="card-body">
+    <p><strong>{{ unlinked_members|length }}</strong> members do not have user accounts yet:</p>
+    <ul class="small mb-0">
+      {% for m in unlinked_members %}
+      <li>{{ m.member_no }} - {{ m.full_name }}</li>
+      {% endfor %}
+    </ul>
+    <p class="mt-3 mb-0"><a href="{{ url_for('admin.users_add') }}" class="btn btn-sm btn-primary">Create Accounts for These Members</a></p>
+  </div>
+</div>
+{% endif %}
+
+<div class="alert alert-secondary mt-4">
+  <strong>Quick Reference:</strong>
+  <ul class="mb-0">
+    <li><strong>Admin Users:</strong> Accounts for committee members (IT Admin, Chairman, Treasurer, etc.)</li>
+    <li><strong>Member Users:</strong> Accounts for regular club members (login credentials for their dashboards)</li>
+    <li>Use "Edit" to change passwords or reset account status</li>
+    <li>Use "Toggle" to activate/deactivate accounts without deleting</li>
+    <li>Deleting a user here removes login access only; it does not remove the member from the Members module</li>
+    <li>Use the new person-remove button to remove the linked member too; historical records are archived instead of being destroyed</li>
+  </ul>
+</div>
+{% endblock %}
+
+

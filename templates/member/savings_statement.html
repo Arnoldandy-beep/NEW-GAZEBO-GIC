@@ -1,0 +1,70 @@
+﻿{% extends "base.html" %}
+{% block title %}Savings Statement{% endblock %}
+{% block topbar %}Savings Statement{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Savings Statement</h1>
+    <div class="subtitle">{{ member.full_name }} &middot; {{ member.member_no }}</div>
+  </div>
+</div>
+
+<div class="read-only-banner"><i class="ph ph-info"></i> Read-only view of your monthly contributions since {{ CONFIG.SAVINGS_START_PERIOD|period_label }}.</div>
+
+<div class="stat-grid">
+  <div class="stat-card accent">
+    <div class="label">Total Saved</div>
+    <div class="value">{{ total|money }}</div>
+    <div class="sub">{{ paid_count }} of {{ expected_count }} months paid</div>
+  </div>
+  <div class="stat-card warn">
+    <div class="label">Locked</div>
+    <div class="value">{{ locked|money }}</div>
+    <div class="sub">Backing your loans / guarantees</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Available</div>
+    <div class="value">{{ available|money }}</div>
+    <div class="sub">Not currently locked</div>
+  </div>
+  <div class="stat-card {% if (expected_count - paid_count) > 0 %}danger{% else %}accent{% endif %}">
+    <div class="label">Months Pending</div>
+    <div class="value">{{ expected_count - paid_count }}</div>
+    <div class="sub">{{ ((expected_count - paid_count) * CONFIG.MONTHLY_SAVINGS_AMOUNT)|money }} arrears</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="ph ph-file-text"></i> Monthly History</div>
+  <div class="card-body p-0 table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Period</th><th>Status</th><th>Amount</th><th>Payment Date</th>
+          <th>Method</th><th>Reference</th><th class="table-money">Running Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in history %}
+        <tr>
+          <td><strong>{{ h.label }}</strong></td>
+          <td>
+            {% if h.paid %}<span class="badge-pill badge-paid">Paid</span>
+            {% else %}<span class="badge-pill badge-unpaid">Unpaid</span>{% endif %}
+          </td>
+          <td class="table-money">
+            {% if h.paid %}{{ h.amount|money }}{% else %}<span class="text-muted">- {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} due -</span>{% endif %}
+          </td>
+          <td>{{ h.payment_date|datefmt if h.payment_date else '-' }}</td>
+          <td>{{ h.method or '-' }}</td>
+          <td>{{ h.reference or '-' }}</td>
+          <td class="table-money">{{ h.running|money }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+

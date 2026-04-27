@@ -1,0 +1,284 @@
+﻿{% extends "base.html" %}
+{% block title %}{% if edit_mode %}Edit Loan{% else %}New Loan{% endif %}{% endblock %}
+{% block topbar %}{% if edit_mode %}Edit Loan{% else %}New Loan{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if edit_mode %}Edit Loan {{ loan.loan_no }}{% else %}New Loan Application (Paper Form Required){% endif %}</h1>
+    <div class="subtitle">Interest {{ rate_pct }}%/month (members), max {{ max_term }} months</div>
+  </div>
+  <a href="{{ url_for('admin.loans_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back</a>
+</div>
+
+<div class="alert alert-warning py-2 small">
+  <i class="ph ph-warning-circle"></i>
+  Only record loans submitted via a signed hard-copy application form.
+</div>
+
+{% if not edit_mode %}
+<div class="alert alert-info py-2 small">
+  <i class="ph ph-database"></i>
+  For older manual loans, choose <strong>Historical Manual Import</strong>, set the old disbursed date, and the system will calculate overdue penalties immediately if applicable.
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card mb-3">
+        <div class="card-header"><i class="ph ph-file-text"></i> Loan Request</div>
+        <div class="card-body row g-3">
+          <div class="col-12">
+            <label class="form-label">Borrower <span class="text-danger">*</span></label>
+            <select name="member_id" id="member_id" class="form-select" required>
+              <option value="">Select borrower</option>
+              {% for m in members %}
+              <option value="{{ m.id }}"
+                      data-avail="{{ m.available_savings }}"
+                      data-name="{{ m.full_name }}"
+                      {% if (loan and loan.member_id == m.id) or (request.form.get('member_id')|int == m.id) %}selected{% endif %}>
+                {{ m.member_no }} - {{ m.full_name }} (Avail: {{ m.available_savings|money }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Borrower Full Name</label>
+            <input type="text" id="borrower_name" class="form-control" readonly value="{{ loan.borrower_name if loan and loan.borrower_name else '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Amount (UGX) <span class="text-danger">*</span></label>
+            <input type="number" name="principal" id="principal" class="form-control" step="1000" min="1000" required value="{{ request.form.get('principal', loan.principal if loan else 100000) }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Period (max {{ max_term }} months) <span class="text-danger">*</span></label>
+            <select name="term_months" class="form-select" required>
+              {% set term_value = request.form.get('term_months', loan.term_months if loan else 6)|int %}
+              {% for i in range(1, max_term + 1) %}
+              <option value="{{ i }}" {% if i == term_value %}selected{% endif %}>{{ i }} mo.</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Date Issued <span class="text-danger">*</span></label>
+            <input type="date" name="issued_date" class="form-control" required value="{{ request.form.get('issued_date', loan.issued_date if loan else today.isoformat()) }}">
+          </div>
+          {% if not edit_mode %}
+          <div class="col-md-6">
+            <label class="form-label">Capture Mode</label>
+            {% set cap_mode = request.form.get('capture_mode', 'workflow_pending') %}
+            <select name="capture_mode" id="capture_mode" class="form-select">
+              <option value="workflow_pending" {% if cap_mode == 'workflow_pending' %}selected{% endif %}>Standard Workflow (Pending approvals)</option>
+              <option value="legacy_active" {% if cap_mode == 'legacy_active' %}selected{% endif %}>Historical Manual Import (Active now)</option>
+            </select>
+          </div>
+          <div class="col-md-6" id="disbursed_date_wrap" style="display:none;">
+            <label class="form-label">Disbursed Date (historical)</label>
+            <input type="date" name="disbursed_date" id="disbursed_date" class="form-control" value="{{ request.form.get('disbursed_date', '') }}">
+            <div class="form-text">Due date will be calculated from this disbursed date for imported loans.</div>
+          </div>
+          {% endif %}
+          <div class="col-12">
+            <label class="form-label">Purpose</label>
+            <input type="text" name="purpose" class="form-control" value="{{ request.form.get('purpose', loan.purpose if loan else '') }}" placeholder="Business Loan">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Signed Loan Application (hard copy scan) <span class="text-danger">*</span></label>
+            <input type="file" name="application_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp" {% if not edit_mode or not loan.application_file %}required{% endif %}>
+            {% if edit_mode and loan.application_file %}
+            <div class="form-text">Current file: <a href="{{ url_for('static', filename=loan.application_file) }}" target="_blank">View uploaded application</a></div>
+            {% endif %}
+          </div>
+          {% if edit_mode and loan.status != 'Pending' %}
+          <div class="col-12">
+            <label class="form-label">Reason for Amendment</label>
+            <textarea name="reason" rows="2" class="form-control" placeholder="State why this approved loan needs correction.">{{ request.form.get('reason', '') }}</textarea>
+            <div class="form-text">Approved loans require checker approval (any 2 of Chairman, Secretary, Committee).</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><i class="ph ph-shield-check"></i> Guarantors (2 required)</div>
+        <div class="card-body row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Guarantor 1 <span class="text-danger">*</span></label>
+            <select name="guarantor1_id" id="guarantor1_id" class="form-select" required>
+              <option value="">Select guarantor 1</option>
+              {% for m in members %}
+              <option value="{{ m.id }}"
+                      data-avail="{{ m.available_savings }}"
+                      {% if (loan and loan.guarantor1_id == m.id) or (request.form.get('guarantor1_id')|int == m.id) %}selected{% endif %}>
+                {{ m.member_no }} - {{ m.full_name }} (Avail: {{ m.available_savings|money }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Guarantor 2 <span class="text-danger">*</span></label>
+            <select name="guarantor2_id" id="guarantor2_id" class="form-select" required>
+              <option value="">Select guarantor 2</option>
+              {% for m in members %}
+              <option value="{{ m.id }}"
+                      data-avail="{{ m.available_savings }}"
+                      {% if (loan and loan.guarantor2_id == m.id) or (request.form.get('guarantor2_id')|int == m.id) %}selected{% endif %}>
+                {{ m.member_no }} - {{ m.full_name }} (Avail: {{ m.available_savings|money }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-3">
+        <div class="card-header"><i class="ph ph-calculator"></i> Security Calculation</div>
+        <div class="card-body small">
+          <p class="mb-2">Borrower savings are locked first. Any shortfall is split equally between the two guarantors. Guarantors are <strong>always required</strong> even if the borrower can cover the full amount.</p>
+          <div class="mb-1">Borrower lock: <strong id="self_lock">USh 0</strong></div>
+          <div class="mb-1">Guarantor 1 lock: <strong id="g1_lock">USh 0</strong></div>
+          <div class="mb-1">Guarantor 2 lock: <strong id="g2_lock">USh 0</strong></div>
+          <div class="mb-1">Total locked: <strong id="total_lock">USh 0</strong></div>
+          <div class="mb-0">Coverage: <strong id="coverage">0%</strong> <span id="coverage_status" class="text-muted">-</span></div>
+          <div id="guarantor_note" class="mt-2 small text-success" style="display:none;"><i class="ph ph-info"></i> Borrower fully covers this loan. Guarantors are co-signatories only — no savings frozen.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><i class="ph ph-info"></i> Workflow</div>
+        <div class="card-body small">
+          <ul class="mb-0 ps-3">
+            <li>Only Treasurer and IT Admin can create/edit loan requests.</li>
+            <li>New loans require 3 admin approvals before becoming Active.</li>
+            <li>Edits on approved loans require 2 checker approvals.</li>
+            <li>Historical import creates an already-active loan and computes overdue penalties immediately.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <a href="{{ url_for('admin.loans_list') }}" class="btn btn-outline-secondary">Cancel</a>
+    <button type="submit" class="btn btn-primary">
+      <i class="ph ph-check"></i>
+      {% if edit_mode %}
+        {% if loan.status == 'Pending' %}Save Changes{% else %}Submit Amendment{% endif %}
+      {% else %}
+        Submit Loan Request
+      {% endif %}
+    </button>
+  </div>
+</form>
+
+<script>
+(function () {
+  const captureMode = document.getElementById('capture_mode');
+  const disbursedWrap = document.getElementById('disbursed_date_wrap');
+  const disbursedInput = document.getElementById('disbursed_date');
+  const member = document.getElementById('member_id');
+  const g1 = document.getElementById('guarantor1_id');
+  const g2 = document.getElementById('guarantor2_id');
+  const principal = document.getElementById('principal');
+  const borrowerName = document.getElementById('borrower_name');
+
+  const selfLock = document.getElementById('self_lock');
+  const g1Lock = document.getElementById('g1_lock');
+  const g2Lock = document.getElementById('g2_lock');
+  const totalLock = document.getElementById('total_lock');
+  const coverage = document.getElementById('coverage');
+  const coverageStatus = document.getElementById('coverage_status');
+  const guarantorNote = document.getElementById('guarantor_note');
+
+  function ugx(v) {
+    const n = Math.max(0, parseInt(v || 0, 10) || 0);
+    return 'USh ' + n.toLocaleString();
+  }
+
+  function selectedAvail(sel) {
+    if (!sel || !sel.options || sel.selectedIndex < 0) return 0;
+    return parseInt(sel.options[sel.selectedIndex].getAttribute('data-avail') || '0', 10) || 0;
+  }
+
+  function updateBorrowerName() {
+    if (!member || member.selectedIndex < 0) {
+      borrowerName.value = '';
+      return;
+    }
+    borrowerName.value = member.options[member.selectedIndex].getAttribute('data-name') || '';
+  }
+
+  function recalc() {
+    const p = Math.max(0, parseInt(principal.value || '0', 10) || 0);
+    const ownAvail = selectedAvail(member);
+    const g1Avail = selectedAvail(g1);
+    const g2Avail = selectedAvail(g2);
+
+    const ownLock = Math.min(p, ownAvail);
+    let remaining = Math.max(0, p - ownLock);
+
+    let g1Needed = Math.ceil(remaining / 2);
+    let g2Needed = remaining - g1Needed;
+
+    let g1Used = Math.min(g1Needed, g1Avail);
+    let g2Used = Math.min(g2Needed, g2Avail);
+
+    let covered = ownLock + g1Used + g2Used;
+    if (covered < p && remaining > (g1Used + g2Used)) {
+      const short1 = Math.max(0, g1Avail - g1Used);
+      const short2 = Math.max(0, g2Avail - g2Used);
+      const still = p - covered;
+      const add1 = Math.min(still, short1);
+      g1Used += add1;
+      const still2 = p - (ownLock + g1Used + g2Used);
+      const add2 = Math.min(still2, short2);
+      g2Used += add2;
+      covered = ownLock + g1Used + g2Used;
+    }
+
+    const ratio = p > 0 ? Math.round((covered / p) * 100) : 0;
+    selfLock.textContent = ugx(ownLock);
+    g1Lock.textContent = ugx(g1Used);
+    g2Lock.textContent = ugx(g2Used);
+    totalLock.textContent = ugx(covered);
+    coverage.textContent = ratio + '%';
+    const borrowerFullyCovered = (p > 0 && ownLock >= p);
+    if (guarantorNote) guarantorNote.style.display = borrowerFullyCovered ? '' : 'none';
+    if (p === 0) {
+      coverageStatus.textContent = '-';
+      coverageStatus.className = 'text-muted';
+    } else if (covered >= p) {
+      coverageStatus.textContent = 'OK';
+      coverageStatus.className = 'text-success';
+    } else {
+      coverageStatus.textContent = 'Insufficient';
+      coverageStatus.className = 'text-danger';
+    }
+  }
+
+  function toggleCaptureMode() {
+    if (!captureMode || !disbursedWrap) return;
+    const legacy = captureMode.value === 'legacy_active';
+    disbursedWrap.style.display = legacy ? '' : 'none';
+    if (disbursedInput) disbursedInput.required = legacy;
+  }
+
+  [member, g1, g2, principal].forEach(function (el) {
+    if (!el) return;
+    el.addEventListener('change', function () { updateBorrowerName(); recalc(); });
+    el.addEventListener('input', recalc);
+  });
+
+  if (captureMode) {
+    captureMode.addEventListener('change', toggleCaptureMode);
+  }
+
+  updateBorrowerName();
+  toggleCaptureMode();
+  recalc();
+})();
+</script>
+{% endblock %}
+
+

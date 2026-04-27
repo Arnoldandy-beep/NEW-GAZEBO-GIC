@@ -1,0 +1,71 @@
+﻿{% extends "base.html" %}
+{% block title %}Add User{% endblock %}
+{% block topbar %}Add User{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Add New User</h1><div class="subtitle">Create a new system user account</div></div>
+  <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary"><i class="ph ph-caret-left"></i> Back</a>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-4">User Account Details</h5>
+        <form method="post">
+          <input type="hidden" name="action" value="create">
+          
+          <div class="mb-3">
+            <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="username" name="username" required 
+                   placeholder="e.g. ssekitto, nsobya, john.doe" autofocus>
+            <small class="form-text text-muted">Must be unique. Lowercase letters and periods only.</small>
+          </div>
+          
+          <div class="mb-3">
+            <label for="password" class="form-label">Initial Password <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="password" name="password" value="gazebo123">
+            <small class="form-text text-muted">User will be required to change on first login.</small>
+          </div>
+          
+          <div class="mb-3">
+            <label for="member_id" class="form-label">Link to Member (Optional)</label>
+            <select class="form-select" id="member_id" name="member_id">
+              <option value="">- No member link -</option>
+              {% for m in members %}
+              <option value="{{ m.id }}">{{ m.member_no }} - {{ m.full_name }} ({{ ROLES[m.role].name }})</option>
+              {% endfor %}
+            </select>
+            <small class="form-text text-muted">Link this account to an existing member. Leave blank for system-only accounts.</small>
+          </div>
+          
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary"><i class="ph ph-check-circle"></i> Create User</button>
+            <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="card alert-info">
+      <div class="card-header bg-info text-white">
+        <strong>Account Types</strong>
+      </div>
+      <div class="card-body small">
+        <p><strong>System Account (No Member)</strong></p>
+        <p>Admin-only account for managing the club system. Cannot access member portals.</p>
+        
+        <p class="mt-3"><strong>Member Account (Linked Member)</strong></p>
+        <p>Account that grants login access to club systems. User can view their own dashboard once linked to a member.</p>
+        
+        <p class="mt-3"><strong>Default Password</strong></p>
+        <p><code>gazebo123</code> - User must change on first login.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

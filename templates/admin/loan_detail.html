@@ -1,0 +1,385 @@
+﻿{% extends "base.html" %}
+{% block title %}Loan {{ loan.loan_no }}{% endblock %}
+{% block topbar %}Loan {{ loan.loan_no }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ loan.loan_no }}</h1>
+    <div class="subtitle">{{ loan.borrower_name }} ({{ loan.member_no }}) &middot;
+      <span class="badge-pill badge-{{ loan.status|lower }}">{{ loan.status }}</span>
+      {% if pos.is_overdue %}<span class="badge-pill badge-overdue ms-1">Overdue {{ pos.overdue_months }}m</span>{% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.loans_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back</a>
+    {% if session.role in ('IT_ADMIN', 'TREASURER') %}
+    <a href="{{ url_for('admin.loan_edit', loan_id=loan.id) }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-pencil-simple"></i> Edit</a>
+    {% endif %}
+    {% if session.role == 'IT_ADMIN' %}
+    <form method="post" action="{{ url_for('admin.loan_delete', loan_id=loan.id) }}" data-confirm="Permanently delete loan {{ loan.loan_no }} and ALL related records (repayments, penalties, approvals)? This cannot be undone." class="d-inline">
+      <button type="submit" class="btn btn-danger btn-sm"><i class="ph ph-trash"></i> Delete Loan</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if pos.is_overdue %}
+<div class="loan-overdue-alert mb-3">
+  <i class="ph ph-warning-circle"></i>
+  <strong>Overdue — {{ pos.overdue_months }} month(s)</strong> &ensp;{{ pos.days_overdue }} day(s) past due date. Penalty accruing at {{ (loan.interest_rate*100)|int }}%/month.
+</div>
+{% endif %}
+
+<div class="loan-stat-strip mb-3">
+  <div class="loan-stat-box">
+    <div class="lst-label"><i class="ph ph-coins"></i> Principal</div>
+    <div class="lst-value">{{ loan.principal|money }}</div>
+  </div>
+  <div class="loan-stat-box">
+    <div class="lst-label"><i class="ph ph-clock-countdown"></i> Outstanding</div>
+    <div class="lst-value {% if pos.total_outstanding > 0 %}lst-warn{% endif %}">{{ pos.total_outstanding|money }}</div>
+  </div>
+  <div class="loan-stat-box">
+    <div class="lst-label"><i class="ph ph-calendar-check"></i> Monthly Install</div>
+    <div class="lst-value">{{ detail_meta.monthly_installment|money }}</div>
+  </div>
+  <div class="loan-stat-box">
+    <div class="lst-label"><i class="ph ph-chart-donut"></i> Repaid</div>
+    <div class="lst-value {% if detail_meta.repayment_progress == 100 %}lst-ok{% endif %}">{{ detail_meta.repayment_progress }}%</div>
+    <div class="lst-bar-track mt-1"><div class="lst-bar-fill" style="width:{{ detail_meta.repayment_progress }}%"></div></div>
+  </div>
+</div>
+
+<div class="loan-pool-info-bar mb-3">
+  <span><i class="ph ph-bank"></i> Pool <strong>{{ detail_meta.active_pool|money }}</strong></span>
+  <span class="pipe">|</span>
+  <span>Deployed <strong>{{ detail_meta.projected_deployed|money }}</strong></span>
+  <span class="pipe">|</span>
+  <span>Available After This Loan <strong class="{% if detail_meta.remaining_pool_after_loan > 0 %}text-success{% else %}text-danger{% endif %}">{{ detail_meta.remaining_pool_after_loan|money }}</strong></span>
+  <span class="pipe">|</span>
+  <span>Utilisation <strong>{{ detail_meta.utilization }}%</strong></span>
+  <div class="loan-pool-progress mt-2" style="height:4px;"><div class="loan-pool-progress-bar" style="width:{{ detail_meta.utilization }}%"></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-file-text"></i> Loan Details</div>
+      <div class="card-body p-0">
+        <table class="table loan-detail-table mb-0">
+          <tbody>
+            <tr class="detail-section"><td colspan="2">Loan Identity</td></tr>
+            <tr><td>Loan No.</td><td class="text-end"><strong>{{ loan.loan_no }}</strong></td></tr>
+            <tr><td>Borrower</td><td class="text-end"><strong>{{ loan.borrower_name }}</strong> <span class="text-muted">({{ loan.member_no }})</span></td></tr>
+            <tr><td>Purpose</td><td class="text-end">{{ loan.purpose or '-' }}</td></tr>
+
+            <tr class="detail-section"><td colspan="2">Financial Terms</td></tr>
+            <tr><td>Interest Rate</td><td class="text-end">{{ (loan.interest_rate*100)|int }}% per month</td></tr>
+            <tr><td>Term</td><td class="text-end">{{ loan.term_months }} month(s)</td></tr>
+            <tr><td>Principal</td><td class="text-end">{{ loan.principal|money }}</td></tr>
+            <tr><td>Contract Interest</td><td class="text-end">{{ pos.contract_interest|money }}</td></tr>
+            <tr><td>Overdue Penalty</td><td class="text-end">{{ pos.recorded_penalty|money }}</td></tr>
+            <tr class="detail-key"><td>Total Repayable</td><td class="text-end">{{ detail_meta.total_repayable|money }}</td></tr>
+            <tr class="detail-key"><td>Monthly Installment</td><td class="text-end">{{ detail_meta.monthly_installment|money }}</td></tr>
+
+            <tr class="detail-section"><td colspan="2">Security</td></tr>
+            <tr><td>Borrower Lock</td><td class="text-end">{{ loan.self_locked_amount|money }}</td></tr>
+            {% if loan.g1_name %}
+            <tr><td>Guarantor 1</td><td class="text-end">{{ loan.g1_no }} &ndash; {{ loan.g1_name }} <span class="text-muted">({{ loan.g1_locked_amount|money }} locked)</span></td></tr>
+            {% else %}
+            <tr><td>Guarantor 1</td><td class="text-end text-muted">None</td></tr>
+            {% endif %}
+            {% if loan.g2_name %}
+            <tr><td>Guarantor 2</td><td class="text-end">{{ loan.g2_no }} &ndash; {{ loan.g2_name }} <span class="text-muted">({{ loan.g2_locked_amount|money }} locked)</span></td></tr>
+            {% else %}
+            <tr><td>Guarantor 2</td><td class="text-end text-muted">None</td></tr>
+            {% endif %}
+            <tr class="detail-key"><td>Total Security</td><td class="text-end">{{ (loan.self_locked_amount + loan.g1_locked_amount + loan.g2_locked_amount)|money }}</td></tr>
+
+            <tr class="detail-section"><td colspan="2">Repayment Position</td></tr>
+            <tr><td>Principal Repaid</td><td class="text-end">{{ pos.paid_principal|money }}</td></tr>
+            <tr><td>Interest Repaid</td><td class="text-end">{{ pos.paid_interest|money }}</td></tr>
+            <tr><td>Principal Balance</td><td class="text-end {% if pos.outstanding_principal > 0 %}text-danger{% endif %}">{{ pos.outstanding_principal|money }}</td></tr>
+            <tr><td>Interest Balance</td><td class="text-end {% if pos.outstanding_interest > 0 %}text-danger{% endif %}">{{ pos.outstanding_interest|money }}</td></tr>
+            <tr><td>Late Days</td><td class="text-end">{{ pos.days_overdue }}</td></tr>
+            <tr><td>Penalty Months</td><td class="text-end">{{ pos.overdue_months }}</td></tr>
+
+            <tr class="detail-section"><td colspan="2">Timeline &amp; Authorisation</td></tr>
+            <tr><td>Issued</td><td class="text-end">{{ loan.issued_date|datefmt }}</td></tr>
+            <tr><td>Due Date</td><td class="text-end">{{ loan.due_date|datefmt }}</td></tr>
+            <tr><td>Approved Date</td><td class="text-end">{{ loan.approved_date|datefmt if loan.approved_date else '-' }}</td></tr>
+            <tr><td>Disbursed Date</td><td class="text-end">{{ loan.disbursed_date|datefmt if loan.disbursed_date else '-' }}</td></tr>
+            <tr><td>Paid Off Date</td><td class="text-end">{{ detail_meta.paid_off_date|datefmt if detail_meta.paid_off_date else '-' }}</td></tr>
+            <tr><td>Approval Progress</td><td class="text-end">{{ detail_meta.approval_progress_text }}</td></tr>
+            <tr><td>Approved By</td><td class="text-end">{{ detail_meta.approved_by_name or '-' }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if approvers_list %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-users-three"></i> Approval Trail</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th>Name</th><th>Role</th><th>Stage</th><th>Decision</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for a in approvers_list %}
+            <tr>
+              <td>{{ a.name }}</td>
+              <td><span class="small text-muted">{{ a.role }}</span></td>
+              <td><span class="small">{{ a.stage }}</span></td>
+              <td><span class="badge-pill badge-{% if a.decision == 'APPROVE' %}active{% else %}declined{% endif %}">{{ a.decision }}</span></td>
+              <td><small>{{ a.created_at|datefmt if a.created_at else '-' }}</small></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-folder"></i> Documentation</div>
+      <div class="card-body">
+        {% if loan.application_file %}
+          <div class="doc-icon-row">
+            <div class="doc-icon-badge"><i class="ph ph-file-pdf"></i></div>
+            <div>
+              <div class="fw-bold">Signed Application</div>
+              <div class="small text-muted">Physical form on file</div>
+              <a href="{{ url_for('static', filename=loan.application_file) }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2"><i class="ph ph-eye"></i> View Document</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="text-center py-3">
+            <i class="ph ph-file-dashed" style="font-size:36px;color:var(--text-muted);"></i>
+            <p class="text-muted small mt-2 mb-3">No signed form attached yet.</p>
+          </div>
+          {% if session.role in ('IT_ADMIN', 'TREASURER') %}
+          <form method="post" action="{{ url_for('admin.loan_application_upload', loan_id=loan.id) }}" enctype="multipart/form-data">
+            <input type="file" name="application_file" class="form-control form-control-sm mb-2" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+            <button type="submit" class="btn btn-sm btn-outline-primary w-100"><i class="ph ph-upload-simple"></i> Upload Signed Form</button>
+          </form>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-wrench"></i> Workflow Actions</div>
+      <div class="card-body">
+        {% if loan.status == 'Pending' %}
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="approval-dots">
+              {% for i in range(3) %}<span class="approval-dot {% if i < new_approval_count %}filled{% endif %}"></span>{% endfor %}
+            </div>
+            <span class="small text-muted">{{ new_approval_count }}/3 admin approvals</span>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            {% if not approved_by_me_new %}
+            <form method="post" action="{{ url_for('admin.loan_approve', loan_id=loan.id) }}" class="d-inline">
+              <button type="submit" class="btn btn-success btn-sm"><i class="ph ph-check"></i> Approve</button>
+            </form>
+            {% else %}
+            <span class="badge-pill badge-info"><i class="ph ph-check"></i> You approved</span>
+            {% endif %}
+            <form method="post" action="{{ url_for('admin.loan_decline', loan_id=loan.id) }}" data-confirm="Decline this loan?" class="d-inline">
+              <button type="submit" class="btn btn-outline-danger btn-sm"><i class="ph ph-x"></i> Decline</button>
+            </form>
+          </div>
+        {% elif loan.status == 'Declined' %}
+          <p class="text-muted small mb-0"><i class="ph ph-x-circle"></i> This loan was declined.</p>
+        {% elif loan.status == 'Cleared' %}
+          <p class="small mb-0" style="color:var(--accent);"><i class="ph ph-check-circle"></i> Loan fully repaid &amp; cleared.</p>
+        {% elif loan.status == 'Active' %}
+          {% if not loan.disbursed_date %}
+          <form method="post" action="{{ url_for('admin.loan_disburse', loan_id=loan.id) }}" class="d-inline">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="ph ph-coins"></i> Mark Disbursed</button>
+          </form>
+          {% else %}
+          <p class="small mb-0" style="color:var(--accent);"><i class="ph ph-check-circle"></i> Active &amp; Disbursed</p>
+          {% endif %}
+        {% endif %}
+
+        {% if pending_amendment %}
+        <hr>
+        <div class="small fw-bold mb-2">Pending Amendment #{{ pending_amendment.id }}</div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="approval-dots">
+            {% for i in range(pending_amendment.approvals_required or 2) %}<span class="approval-dot {% if i < amendment_approval_count %}filled{% endif %}"></span>{% endfor %}
+          </div>
+          <span class="small text-muted">{{ amendment_approval_count }}/{{ pending_amendment.approvals_required or 2 }} checker approvals</span>
+        </div>
+        {% if session.role in ('CHAIRMAN', 'SECRETARY', 'COMMITTEE') and not approved_by_me_amendment %}
+        <form method="post" action="{{ url_for('admin.loan_amendment_approve', loan_id=loan.id, amendment_id=pending_amendment.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-success btn-sm"><i class="ph ph-check-circle"></i> Approve Amendment</button>
+        </form>
+        {% elif session.role in ('CHAIRMAN', 'SECRETARY', 'COMMITTEE') %}
+        <span class="badge-pill badge-info"><i class="ph ph-check"></i> You approved</span>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    {% if loan.status == 'Active' %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-currency-circle-dollar"></i> Record Repayment</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('admin.loan_repay', loan_id=loan.id) }}">
+          <div class="repay-quick-panel mb-2">
+            <div class="small mb-2">
+              <strong>Quick actions:</strong> early interest payment and partial deposits are supported.
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-success btn-sm js-fill-amount" data-amount="{{ pos.outstanding_interest + pos.outstanding_penalty }}">Pay Interest+Penalty Only</button>
+              <button type="button" class="btn btn-outline-primary btn-sm js-fill-amount" data-amount="{{ pos.outstanding_principal }}">Pay Principal Only</button>
+              <button type="button" class="btn btn-outline-dark btn-sm js-fill-amount" data-amount="{{ pos.total_outstanding }}">Pay Full Outstanding</button>
+            </div>
+            <div class="small text-muted mt-2">Pending: {{ pos.outstanding_interest|money }} interest + {{ pos.outstanding_penalty|money }} penalty + {{ pos.outstanding_principal|money }} principal</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Amount</label>
+            <input type="number" id="repayment_amount" name="amount" class="form-control" step="100" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Date</label>
+            <input type="date" name="payment_date" class="form-control" value="{{ today.isoformat() }}">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Method</label>
+            <select name="payment_method" class="form-select">
+              <option>Cash</option><option>Mobile Money</option><option selected>Bank Transfer</option><option>Cheque</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Reference</label>
+            <input type="text" name="reference_no" class="form-control" placeholder="Optional">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Notes</label>
+            <textarea name="notes" rows="2" class="form-control"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="ph ph-floppy-disk"></i> Record Repayment</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-chart-donut"></i> Repayment Progress</div>
+      <div class="card-body">
+        <div class="repay-progress-wrap mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="small fw-bold">{{ pos.total_paid|money }} paid</span>
+            <span class="small text-muted">{{ detail_meta.repayment_progress }}% of {{ detail_meta.total_repayable|money }}</span>
+          </div>
+          <div class="repay-progress-track"><div class="repay-progress-fill {% if detail_meta.repayment_progress == 100 %}fill-cleared{% elif pos.is_overdue %}fill-overdue{% endif %}" style="width:{{ detail_meta.repayment_progress }}%"></div></div>
+          <div class="d-flex justify-content-between mt-1">
+            <span class="small text-muted">Outstanding: {{ pos.total_outstanding|money }}</span>
+            <span class="small text-muted">{{ pos.outstanding_principal|money }} principal + {{ pos.outstanding_interest|money }} interest</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-0" style="border-top:1px solid var(--border);">
+        <table class="table mb-0">
+          <tbody>
+            <tr><td>Total Repayable</td><td class="text-end">{{ detail_meta.total_repayable|money }}</td></tr>
+            <tr><td>Total Paid</td><td class="text-end">{{ pos.total_paid|money }}</td></tr>
+            <tr><td class="fw-bold">Outstanding</td><td class="text-end fw-bold {% if pos.total_outstanding > 0 %}text-danger{% else %}text-success{% endif %}">{{ pos.total_outstanding|money }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-calendar-blank"></i> Schedule</div>
+      <div class="card-body p-0 table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>#</th><th>Due</th><th>Amount</th><th>Status</th><th>Paid</th></tr></thead>
+          <tbody>
+            {% for s in detail_meta.schedule_rows %}
+            <tr>
+              <td>{{ s.idx }}</td>
+              <td>{{ s.due|datefmt }}</td>
+              <td>{{ s.amount|money }}</td>
+              <td><span class="badge-pill badge-{{ s.status|lower }}">{{ s.status }}</span></td>
+              <td>{{ s.paid|money }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><i class="ph ph-list-checks"></i> Payment Records</div>
+  <div class="card-body p-0 table-responsive">
+    {% if repays %}
+    <table class="table mb-0">
+      <thead><tr><th>Date</th><th>Amount</th><th>Principal</th><th>Interest</th><th>Penalty</th><th>Method</th></tr></thead>
+      <tbody>
+        {% for r in repays %}
+        <tr>
+          <td>{{ r.payment_date|datefmt }}</td>
+          <td class="table-money">{{ r.amount|money }}</td>
+          <td class="table-money">{{ r.principal_part|money }}</td>
+          <td class="table-money">{{ r.interest_part|money }}</td>
+          <td class="table-money">{{ r.penalty_part|money }}</td>
+          <td><small>{{ r.payment_method or '-' }}</small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state small">No repayments recorded yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% if penalties %}
+<div class="card mt-3">
+  <div class="card-header"><i class="ph ph-clock"></i> Penalties Applied</div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr><th>Period</th><th>Applied</th><th>Amount</th><th>Notes</th></tr></thead>
+      <tbody>
+        {% for p in penalties %}
+        <tr>
+          <td>{{ p.period|period_label }}</td>
+          <td>{{ p.applied_date|datefmt }}</td>
+          <td class="table-money">{{ p.penalty_amount|money }}</td>
+          <td><small>{{ p.notes or '-' }}</small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function () {
+  const amountInput = document.getElementById('repayment_amount');
+  if (!amountInput) return;
+  document.querySelectorAll('.js-fill-amount').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const v = parseInt(btn.getAttribute('data-amount') || '0', 10) || 0;
+      amountInput.value = v > 0 ? v : '';
+      amountInput.focus();
+    });
+  });
+})();
+</script>
+{% endblock %}
+
+

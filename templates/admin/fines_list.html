@@ -1,0 +1,435 @@
+﻿{% extends "base.html" %}
+{% block title %}Fines{% endblock %}
+{% block topbar %}Discipline Fines Register{% endblock %}
+{% block content %}
+{% set ns = namespace(total=0, paid_total=0, unpaid_total=0, paid_count=0, unpaid_count=0) %}
+{% for f in fines %}
+  {% set ns.total = ns.total + f.amount %}
+  {% if f.status == 'Paid' %}
+    {% set ns.paid_total = ns.paid_total + f.amount %}
+    {% set ns.paid_count = ns.paid_count + 1 %}
+  {% else %}
+    {% set ns.unpaid_total = ns.unpaid_total + f.amount %}
+    {% set ns.unpaid_count = ns.unpaid_count + 1 %}
+  {% endif %}
+{% endfor %}
+{% set resolution_pct = (ns.paid_count * 100 // (fines|length)) if fines else 0 %}
+
+<style>
+.fines-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.fines-title h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(120deg, #9f2d2f 0%, #d74a2a 55%, #f18f2b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.fines-subtitle {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.fines-subtitle strong {
+  color: #9f2d2f;
+}
+.fines-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #8c2f2f;
+  background: #ffe6df;
+  border: 1px solid #ffc1b2;
+}
+
+.fines-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.fine-stat {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 12px rgba(44, 33, 20, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+.fine-stat::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #9f2d2f 0%, #d74a2a 100%);
+}
+.fine-stat.warn::before {
+  background: linear-gradient(90deg, #bf7a2a 0%, #d9951a 100%);
+}
+.fine-stat.ok::before {
+  background: linear-gradient(90deg, #1f8f68 0%, #0f7d59 100%);
+}
+.fine-stat.neutral::before {
+  background: linear-gradient(90deg, #2f6c8f 0%, #2f86b7 100%);
+}
+.fine-stat .label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.75px;
+  color: #7a746b;
+}
+.fine-stat .value {
+  margin-top: 6px;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.fine-stat .sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.fines-progress-wrap {
+  background: linear-gradient(135deg, rgba(215, 74, 42, 0.08) 0%, rgba(241, 143, 43, 0.08) 100%);
+  border: 1px solid #efcfbe;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.fines-progress-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #8d352f;
+  margin-bottom: 10px;
+}
+.fines-progress-track {
+  width: 100%;
+  height: 22px;
+  border-radius: 999px;
+  background: #f7ddd3;
+  border: 1px solid #e8c4b5;
+  overflow: hidden;
+}
+.fines-progress-fill {
+  height: 100%;
+  width: {{ resolution_pct }}%;
+  background: linear-gradient(90deg, #1f8f68 0%, #0f7d59 100%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.fines-progress-meta {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: #7b4a44;
+}
+
+.fines-table-shell {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(44, 33, 20, 0.05);
+}
+.fines-table-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, #f9f0ea 0%, #f6ece1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fines-table-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.fines-count {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(120deg, #9f2d2f 0%, #d74a2a 100%);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.fines-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fines-table thead th {
+  background: #ece5d9;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  padding: 11px 12px;
+}
+.fines-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #ebe3d8;
+  vertical-align: middle;
+}
+.fines-table tbody tr:hover {
+  background: #fdf8f3;
+  box-shadow: inset 2px 0 0 #d74a2a;
+}
+.fine-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fine-member-no {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #fbe7de;
+  color: #9f2d2f;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.fine-member-name {
+  font-weight: 700;
+  color: var(--text);
+}
+.fine-member-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.fine-violation {
+  color: #403327;
+  font-weight: 600;
+}
+.fine-notes {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.fine-amount {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #8f2a2a;
+}
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.status-chip.paid {
+  color: #1b5e20;
+  background: #e7f6eb;
+  border: 1px solid #c1e5ca;
+}
+.status-chip.unpaid {
+  color: #b3551b;
+  background: #fff2e3;
+  border: 1px solid #ffd9b8;
+}
+.action-cell {
+  text-align: right;
+}
+.action-btns {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.action-btns form {
+  margin: 0;
+}
+
+.fines-note {
+  margin-top: 22px;
+  border: 1px solid #f2cebd;
+  background: linear-gradient(135deg, #fff7f2 0%, #fff2ea 100%);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: #7b3a2f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.fines-note strong {
+  color: #8f2d2f;
+}
+
+@media (max-width: 768px) {
+  .fines-title h1 {
+    font-size: 24px;
+  }
+  .fines-progress-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+</style>
+
+<div class="fines-header">
+  <div class="fines-title">
+    <h1><i class="ph ph-warning-octagon"></i> Discipline Fines Register</h1>
+    <div class="fines-subtitle">
+      Track all policy violations, enforce accountability, and monitor recovery of penalties into the operational fund.
+      <br>
+      <strong>Collection focus:</strong> unpaid fines should be cleared promptly to support club operations.
+      <div class="fines-tag"><i class="ph ph-shield-check"></i> Governance and Compliance</div>
+    </div>
+  </div>
+  <a href="{{ url_for('admin.fines_create') }}" class="btn btn-primary module-highlight-btn"><i class="ph ph-plus-circle"></i> Issue Fine</a>
+</div>
+
+<div class="fines-stats">
+  <div class="fine-stat neutral">
+    <div class="label"><i class="ph ph-receipt"></i> Total Fines Issued</div>
+    <div class="value">{{ fines|length }}</div>
+    <div class="sub">All recorded fine entries</div>
+  </div>
+  <div class="fine-stat ok">
+    <div class="label"><i class="ph ph-check-circle"></i> Collected Amount</div>
+    <div class="value">{{ ns.paid_total|money }}</div>
+    <div class="sub">{{ ns.paid_count }} paid records</div>
+  </div>
+  <div class="fine-stat warn">
+    <div class="label"><i class="ph ph-clock-countdown"></i> Outstanding Amount</div>
+    <div class="value">{{ ns.unpaid_total|money }}</div>
+    <div class="sub">{{ ns.unpaid_count }} unpaid records</div>
+  </div>
+  <div class="fine-stat">
+    <div class="label"><i class="ph ph-chart-line-up"></i> Recovery Rate</div>
+    <div class="value">{{ resolution_pct }}%</div>
+    <div class="sub">{{ ns.paid_count }} of {{ fines|length }} resolved</div>
+  </div>
+</div>
+
+<div class="fines-progress-wrap">
+  <div class="fines-progress-title"><i class="ph ph-target"></i> Fine Recovery Progress</div>
+  <div class="fines-progress-track">
+    <div class="fines-progress-fill" style="width: {{ resolution_pct }}%">{% if resolution_pct > 12 %}{{ resolution_pct }}%{% endif %}</div>
+  </div>
+  <div class="fines-progress-meta">
+    <span><strong>{{ ns.paid_total|money }}</strong> recovered out of <strong>{{ ns.total|money }}</strong> issued</span>
+    <span>Pending recovery: <strong>{{ ns.unpaid_total|money }}</strong></span>
+  </div>
+</div>
+
+<div class="fines-table-shell">
+  <div class="fines-table-head">
+    <h2><i class="ph ph-list-dashes"></i> Fine Register Entries</h2>
+    <span class="fines-count">{{ fines|length }}</span>
+  </div>
+  <div class="table-responsive">
+    {% if fines %}
+    <table class="fines-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Member</th>
+          <th>Violation</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th style="text-align:right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fines %}
+        <tr>
+          <td>{{ f.fine_date|datefmt }}</td>
+          <td>
+            <div class="fine-member">
+              <span class="fine-member-no">{{ f.member_no }}</span>
+              <div>
+                <div class="fine-member-name">{{ f.full_name }}</div>
+                <div class="fine-member-sub">Member {{ f.member_no }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="fine-violation">{{ f.violation }}</div>
+            {% if f.notes %}<div class="fine-notes">{{ f.notes }}</div>{% endif %}
+          </td>
+          <td><span class="fine-amount">{{ f.amount|money }}</span></td>
+          <td>
+            {% if f.status == 'Paid' %}
+            <span class="status-chip paid"><i class="ph ph-check"></i> Paid</span>
+            {% else %}
+            <span class="status-chip unpaid"><i class="ph ph-clock"></i> Unpaid</span>
+            {% endif %}
+          </td>
+          <td class="action-cell">
+            <div class="action-btns">
+              {% if session.get('role') in ['CHAIRMAN', 'TREASURER', 'SECRETARY', 'IT_ADMIN'] %}
+              <a href="{{ url_for('admin.fines_edit', fine_id=f.id) }}" class="btn btn-sm btn-outline-secondary"><i class="ph ph-pencil"></i> Edit</a>
+              {% endif %}
+              {% if session.get('role') in ['TREASURER', 'IT_ADMIN'] %}
+              <form method="post" action="{{ url_for('admin.fines_delete', fine_id=f.id) }}" onsubmit="return confirm('Delete this fine record? This action cannot be undone.');">
+                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ph ph-trash"></i> Delete</button>
+              </form>
+              {% endif %}
+              {% if f.status == 'Unpaid' %}
+              <form method="post" action="{{ url_for('admin.fines_pay', fine_id=f.id) }}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success"><i class="ph ph-check"></i> Mark paid</button>
+              </form>
+              {% else %}
+              <span class="text-muted small">Paid {{ f.paid_date|datefmt if f.paid_date else '' }}</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><i class="ph ph-smiley"></i><div>No fines on record.</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="fines-note">
+  <i class="ph ph-info"></i>
+  <strong>Operational Interpretation:</strong> Fines are compliance penalties and are not part of member savings balances. Recovered fines strengthen the club's operational capacity and should be followed up by Treasurer and IT Admin until fully settled.
+</div>
+{% endblock %}
+
+

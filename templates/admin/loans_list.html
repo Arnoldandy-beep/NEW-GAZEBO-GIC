@@ -1,0 +1,162 @@
+﻿{% extends "base.html" %}
+{% block title %}Loans{% endblock %}
+{% block topbar %}Loans{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Loans</h1><div class="subtitle">{{ (CONFIG.LOAN_INTEREST_RATE_MONTHLY * 100)|int }}%/mo (members) &middot; Max {{ CONFIG.LOAN_MAX_TERM_MONTHS }} months</div></div>
+  <div class="d-flex gap-2 module-action-group loans-module-actions">
+    <form method="post" action="{{ url_for('admin.penalties_run') }}" data-confirm="Run penalty cycle? This will apply 5% penalty to all overdue active loans for unrecorded months." class="d-inline">
+      <button type="submit" class="btn btn-outline-warning btn-sm module-warn-btn"><i class="ph ph-clock"></i> Run Penalties</button>
+    </form>
+    {% if session.role in ('IT_ADMIN', 'TREASURER') %}
+    <a href="{{ url_for('admin.loan_create') }}" class="btn btn-primary module-highlight-btn"><i class="ph ph-plus-circle"></i> New Loan</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mb-3 loan-pools-panel">
+  <div class="card-body">
+    <div class="loan-pools-header mb-3">
+      <div>
+        <strong><i class="ph ph-bank"></i> Available Funds For New Loans</strong>
+        <div class="small text-muted">Total savings pool: <strong>{{ loan_pools.total_savings|money }}</strong> &middot; Standard SACCO rates &middot; Updated on every transaction</div>
+      </div>
+      <div class="loan-pools-amount">{{ loan_pools.available_to_deploy|money }}</div>
+    </div>
+    <div class="loan-pools-grid">
+      <a href="{{ url_for('admin.loans_list', pool='deployed_active', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-danger {% if pool == 'deployed_active' %}pool-active{% endif %}">
+        <div class="pool-box-icon"><i class="ph ph-arrows-clockwise"></i></div>
+        <div class="label">Deployed (Active Loans)</div>
+        <div class="value">{{ loan_pools.deployed_active|money }}</div>
+      </a>
+      <a href="{{ url_for('admin.loans_list', pool='interest_pending_active', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-warn {% if pool == 'interest_pending_active' %}pool-active{% endif %}">
+        <div class="pool-box-icon"><i class="ph ph-clock"></i></div>
+        <div class="label">Outstanding Interest + Penalty (Active)</div>
+        <div class="value">{{ loan_pools.interest_pending_active|money }}</div>
+        <div class="small text-muted mt-1">Base {{ loan_pools.interest_pending_active_base|money }} + Penalty {{ loan_pools.interest_pending_active_penalty|money }}</div>
+      </a>
+      <a href="{{ url_for('admin.loans_list', pool='total_loans_interest', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-info {% if pool == 'total_loans_interest' %}pool-active{% endif %}">
+        <div class="pool-box-icon"><i class="ph ph-trend-up"></i></div>
+        <div class="label">Total Interest + Penalty (All Loans)</div>
+        <div class="value">{{ loan_pools.total_loans_interest|money }}</div>
+        <div class="small text-muted mt-1">Base {{ loan_pools.total_loans_interest_base|money }} + Penalty {{ loan_pools.total_loans_interest_penalty|money }}</div>
+      </a>
+      <a href="{{ url_for('admin.loans_list', pool='principal_all_loans', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-info {% if pool == 'principal_all_loans' %}pool-active{% endif %}">
+        <div class="pool-box-icon"><i class="ph ph-stack"></i></div>
+        <div class="label">Principal on All Loans</div>
+        <div class="value">{{ loan_pools.principal_all_loans|money }}</div>
+      </a>
+      <a href="{{ url_for('admin.loans_list', pool='closed_loans_count', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-success {% if pool == 'closed_loans_count' %}pool-active{% endif %}">
+        <div class="pool-box-icon"><i class="ph ph-check-circle"></i></div>
+        <div class="label">Closed Loans</div>
+        <div class="value">{{ loan_pools.closed_loans_count }}</div>
+      </a>
+      <a href="{{ url_for('admin.loans_list', pool='interest_on_closed', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-success {% if pool == 'interest_on_closed' %}pool-active{% endif %}">
+        <div class="pool-box-icon"><i class="ph ph-receipt"></i></div>
+        <div class="label">Interest on Closed Loans</div>
+        <div class="value">{{ loan_pools.interest_on_closed|money }}</div>
+      </a>
+    </div>
+    <div class="loan-pool-progress mt-3">
+      <div class="loan-pool-progress-bar" style="width: {{ loan_pools.pool_utilization }}%"></div>
+    </div>
+    <div class="small text-muted mt-1">Pool Utilisation (principal outstanding / pool): {{ loan_pools.pool_utilization }}%</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0 table-responsive">
+      <div class="loan-strip-wrap p-3 pb-2">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="loan-strip">
+            <a class="chip {% if not status %}active{% endif %}" href="{{ url_for('admin.loans_list', sort=sort_by, dir=sort_dir, pool=pool) }}">All</a>
+            {% for s in statuses %}
+            <a class="chip {% if s == status %}active{% endif %}" href="{{ url_for('admin.loans_list', status=s, sort=sort_by, dir=sort_dir, pool=pool) }}">{{ s }}</a>
+            {% endfor %}
+          </div>
+          <div class="loan-strip loan-strip-sort">
+            <a class="chip chip-sort {% if sort_by == 'overdue' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='overdue', dir='desc') }}"><i class="ph ph-warning"></i> Overdue First</a>
+            <a class="chip chip-sort {% if sort_by == 'outstanding' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='outstanding', dir='desc') }}"><i class="ph ph-sort-descending"></i> Highest Outstanding</a>
+            <a class="chip chip-sort {% if sort_by == 'due' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='due', dir='asc') }}"><i class="ph ph-calendar-blank"></i> Nearest Due</a>
+            <a class="chip chip-sort {% if sort_by == 'newest' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='newest', dir='desc') }}"><i class="ph ph-clock"></i> Newest</a>
+          </div>
+        </div>
+      </div>
+    <table class="table table-sortable mb-0">
+      <thead>
+        <tr>
+          {% set cols = [
+            ('loan_no', 'No.'),
+            ('borrower', 'Borrower'),
+            ('principal', 'Principal'),
+            ('interest', 'Interest'),
+            ('rate', 'Rate'),
+            ('due', 'Due Date'),
+            ('outstanding', 'Outstanding'),
+            ('status', 'Status'),
+          ] %}
+          {% for col_key, col_label in cols %}
+          {% set is_active = (sort_by == col_key) %}
+          {% set next_dir = 'asc' if (is_active and sort_dir == 'desc') else 'desc' %}
+          <th>
+            <a href="{{ url_for('admin.loans_list', status=status, pool=pool, sort=col_key, dir=next_dir) }}" class="sort-th {% if is_active %}sort-active{% endif %}">
+              {{ col_label }}
+              {% if is_active %}
+                <i class="ph ph-caret-{{ 'up' if sort_dir == 'asc' else 'down' }}"></i>
+              {% else %}
+                <i class="ph ph-caret-up-down sort-idle"></i>
+              {% endif %}
+            </a>
+          </th>
+          {% endfor %}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in loans %}
+        <tr>
+          <td><strong>{{ l.loan_no }}</strong></td>
+          <td>
+            {{ l.member_no }} - {{ l.borrower_name }}
+            <div class="small text-muted">G: {{ l.g1_name or '-' }} / {{ l.g2_name or '-' }}</div>
+          </td>
+          <td class="table-money">{{ l.principal|money }}</td>
+          <td>
+            {% set pending_interest_total = l.outstanding_interest + l.outstanding_penalty %}
+            {% set paid_interest_total = l.paid_interest + l.paid_penalty %}
+            {% set total_interest_due = paid_interest_total + pending_interest_total %}
+            {% if pending_interest_total == 0 and paid_interest_total > 0 %}
+            <div class="interest-cleared-wrap">
+              <div class="interest-cleared-line">{{ total_interest_due|money }}</div>
+              <div class="interest-cleared-note">NO INTEREST PENDING</div>
+            </div>
+            {% else %}
+            <div>{{ total_interest_due|money }}</div>
+            <div class="small text-muted">Pending {{ pending_interest_total|money }}</div>
+            {% if l.outstanding_penalty > 0 %}
+            <div class="small text-danger">Penalty {{ l.outstanding_penalty|money }}</div>
+            {% endif %}
+            {% if l.paid_interest + l.paid_penalty > 0 %}
+            <div class="small text-success">Paid {{ (l.paid_interest + l.paid_penalty)|money }}</div>
+            {% endif %}
+            {% endif %}
+          </td>
+          <td>{{ (l.interest_rate * 100)|int }}%/mo</td>
+          <td>
+            {{ l.due_date|datefmt }}
+            {% if l.is_overdue %}<div><span class="badge-pill badge-overdue">+{{ l.overdue_months }}m late</span></div>{% endif %}
+          </td>
+          <td class="table-money">{{ l.total_outstanding|money }}</td>
+          <td><span class="badge-pill badge-{{ l.status|lower }}">{{ l.status }}</span></td>
+          <td><a href="{{ url_for('admin.loan_detail', loan_id=l.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="text-center text-muted py-4">No loans match.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+

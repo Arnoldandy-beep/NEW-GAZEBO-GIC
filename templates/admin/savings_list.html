@@ -1,0 +1,253 @@
+﻿{% extends "base.html" %}
+{% block title %}Savings{% endblock %}
+{% block topbar %}Savings{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Savings Module</h1>
+    <div class="subtitle">Club start: Aug-2025. Deposits are auto-allocated at {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} per month.</div>
+  </div>
+  {% if session.role in ('IT_ADMIN','TREASURER') %}
+  <div class="d-flex gap-2 savings-module-actions">
+    <a href="{{ url_for('admin.savings_record') }}" class="btn btn-primary"><i class="ph ph-plus-circle"></i> Record Deposit</a>
+    <a href="{{ url_for('admin.savings_bulk') }}" class="btn btn-outline-primary"><i class="ph ph-stack"></i> Bulk Record</a>
+  </div>
+  {% endif %}
+</div>
+
+<ul class="nav nav-tabs mb-3 savings-module-tabs">
+  <li class="nav-item">
+    <a class="nav-link {% if view == 'overview' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='overview') }}">
+      <i class="ph ph-chart-pie-slice"></i> Overview
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if view == 'ledger' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='ledger', member_id=selected_member_id) }}">
+      <i class="ph ph-book-bookmark"></i> Ledger
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if view == 'calendar' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='calendar', year=year) }}">
+      <i class="ph ph-calendar-check"></i> Calendar
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if view == 'amendments' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='amendments') }}">
+      <i class="ph ph-note-pencil"></i> Amendments
+    </a>
+  </li>
+</ul>
+
+{% if view == 'overview' %}
+  <div class="stat-grid">
+    <a class="stat-card accent text-decoration-none" href="#member-breakdown">
+      <div class="label">Total Savings</div>
+      <div class="value">{{ total_savings_all|money }}</div>
+      <div class="sub">Click for per-member breakdown</div>
+    </a>
+    <div class="stat-card info">
+      <div class="label">Expected To Date</div>
+      <div class="value">{{ expected_to_date|money }}</div>
+      <div class="sub">{{ active_count }} active members x months since Aug-2025</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="label">Coverage</div>
+      <div class="value">{% if expected_to_date %}{{ ((total_savings_all / expected_to_date) * 100)|round|int }}%{% else %}0%{% endif %}</div>
+      <div class="sub">Overall collection progress</div>
+    </div>
+    <div class="stat-card {% if active_count %}accent{% else %}danger{% endif %}">
+      <div class="label">Active Members</div>
+      <div class="value">{{ active_count }}</div>
+      <div class="sub">Included in expected calculations</div>
+    </div>
+  </div>
+
+  <div class="card" id="member-breakdown">
+    <div class="card-header"><i class="ph ph-users-three"></i> Total Savings Breakdown Per Member</div>
+    <div class="card-body p-0 table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Months Covered</th><th class="table-money">Total Savings</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for m in member_totals %}
+          <tr>
+            <td><strong>{{ m.member_no }}</strong></td>
+            <td>{{ m.full_name }}</td>
+            <td>{{ m.months_covered }}</td>
+            <td class="table-money money-positive">{{ m.total_savings|money }}</td>
+            <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.savings_list', view='ledger', member_id=m.id) }}">View Ledger</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No member savings records yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{% if view == 'ledger' %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <input type="hidden" name="view" value="ledger">
+        <div class="col-md-6">
+          <label class="form-label">Select Member</label>
+          <select name="member_id" class="form-select" onchange="this.form.submit()">
+            {% for m in members_for_ledger %}
+            <option value="{{ m.id }}" {% if m.id == selected_member_id %}selected{% endif %}>{{ m.member_no }} - {{ m.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if selected_member %}
+  <div class="stat-grid">
+    <div class="stat-card accent">
+      <div class="label">Member</div>
+      <div class="value" style="font-size:18px">{{ selected_member.member_no }}</div>
+      <div class="sub">{{ selected_member.full_name }}</div>
+    </div>
+    <div class="stat-card info">
+      <div class="label">Total Saved</div>
+      <div class="value">{{ ledger_total|money }}</div>
+      <div class="sub">Across all recorded periods</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="label">Months Covered</div>
+      <div class="value">{{ ledger_months }}</div>
+      <div class="sub">At {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} each</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><i class="ph ph-book-bookmark"></i> {{ selected_member.member_no }} Savings Ledger</div>
+    <div class="card-body p-0 table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>Period</th><th class="table-money">Amount</th><th>Payment Date</th><th>Method</th><th>Ref</th>{% if session.role in ('IT_ADMIN','TREASURER') %}<th></th>{% endif %}</tr></thead>
+        <tbody>
+          {% for r in ledger_rows %}
+          <tr>
+            <td>{{ r.period|period_label }}</td>
+            <td class="table-money">{{ r.amount|money }}</td>
+            <td>{{ r.payment_date|datefmt }}</td>
+            <td>{{ r.payment_method or 'Bank Transfer' }}</td>
+            <td>{{ r.reference_no or '-' }}</td>
+            {% if session.role in ('IT_ADMIN','TREASURER') %}
+            <td>
+              <form method="post" action="{{ url_for('admin.savings_delete', savings_id=r.id) }}" data-confirm="Delete this savings entry? This cannot be undone." class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="ph ph-trash"></i></button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+          {% else %}
+          <tr><td colspan="{% if session.role in ('IT_ADMIN','TREASURER') %}6{% else %}5{% endif %}" class="text-center text-muted py-4">No savings yet for this member.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+
+{% if view == 'calendar' %}
+  <div class="card mb-3">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <strong>{{ year }} Savings Calendar</strong>
+        <div class="small text-muted mt-1">Each checkmark represents exactly {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} for that month.</div>
+      </div>
+      <div class="savings-calendar-actions">
+        {% for y in years %}
+          <a href="{{ url_for('admin.savings_list', view='calendar', year=y) }}"
+             class="btn btn-sm {% if y == year %}btn-primary module-highlight-btn{% else %}btn-outline-secondary module-year-btn{% endif %} me-1 mb-1">{{ y }} Savings</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="small mb-2">
+    <span class="me-2"><span class="text-success">&#10004;</span> = paid</span>
+    <span class="me-2"><span class="text-danger">&#10006;</span> = missed</span>
+    <span class="text-muted">blank = future month (not due yet)</span>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0 table-responsive">
+      <table class="table mb-0 savings-calendar-table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            {% for p in month_periods %}
+            <th class="text-center">{{ p|period_label }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in calendar_rows %}
+          <tr>
+            <td>
+              <strong>{{ row.member.full_name }}</strong>
+              <div class="small text-muted">{{ row.member.member_no }}</div>
+            </td>
+            {% for c in row.cells %}
+            <td class="text-center">
+              {% if c.status == 'paid' %}
+                <span class="text-success fw-bold" title="{{ c.amount|money if c.amount else '' }}">&#10004;</span>
+              {% elif c.status == 'missed' %}
+                <span class="text-danger fw-bold">&#10006;</span>
+              {% else %}
+                <span class="text-muted">&nbsp;</span>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% else %}
+          <tr><td colspan="{{ month_periods|length + 1 }}" class="text-center text-muted py-4">No active members found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{% if view == 'amendments' %}
+  <div class="card">
+    <div class="card-header"><i class="ph ph-note-pencil"></i> Savings Amendments (Latest 200 Entries)</div>
+    <div class="card-body p-0 table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>#</th><th>Name</th><th>Period</th><th class="table-money">Amount</th><th>Date</th><th>Method</th><th>Recorded By</th><th></th></tr></thead>
+        <tbody>
+          {% for r in amendments_rows %}
+          <tr>
+            <td>{{ r.member_no }}</td>
+            <td>{{ r.full_name }}</td>
+            <td>{{ r.period|period_label }}</td>
+            <td class="table-money">{{ r.amount|money }}</td>
+            <td>{{ r.payment_date|datefmt }}</td>
+            <td>{{ r.payment_method or 'Bank Transfer' }}</td>
+            <td>{{ r.recorder_name or '-' }}</td>
+            {% if session.role in ('IT_ADMIN','TREASURER') %}
+            <td>
+              <form method="post" action="{{ url_for('admin.savings_delete', savings_id=r.id) }}" data-confirm="Delete this savings entry? This cannot be undone." class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="ph ph-trash"></i></button>
+              </form>
+            </td>
+            {% else %}
+            <td>-</td>
+            {% endif %}
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-4">No savings entries found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+

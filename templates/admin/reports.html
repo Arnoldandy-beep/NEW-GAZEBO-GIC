@@ -1,0 +1,75 @@
+﻿{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block topbar %}Reports{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Reports</h1><div class="subtitle">Financial position &amp; trends</div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-bank"></i> Position Summary</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <tbody>
+            <tr><td><strong>ASSETS</strong></td><td></td></tr>
+            <tr><td>Cash on hand (savings &minus; principal lent)</td><td class="table-money money-positive">{{ cash_available|money }}</td></tr>
+            <tr><td>Loans outstanding (principal)</td><td class="table-money">{{ out_principal|money }}</td></tr>
+            <tr><td>Interest receivable</td><td class="table-money">{{ out_interest|money }}</td></tr>
+            <tr><td>Penalty receivable</td><td class="table-money">{{ out_penalty|money }}</td></tr>
+            <tr><td>Fines receivable</td><td class="table-money">{{ fines_receivable|money }}</td></tr>
+            <tr><td>Annual fees receivable</td><td class="table-money">{{ fees_receivable|money }}</td></tr>
+            <tr class="table-active"><td><strong>Total Assets</strong></td><td class="table-money"><strong>{{ (cash_available + out_principal + out_interest + out_penalty + fines_receivable + fees_receivable)|money }}</strong></td></tr>
+            <tr><td colspan="2">&nbsp;</td></tr>
+            <tr><td><strong>EQUITY (member savings)</strong></td><td class="table-money money-positive">{{ total_savings|money }}</td></tr>
+            <tr><td colspan="2">&nbsp;</td></tr>
+            <tr><td><strong>OPERATING INCOME</strong></td><td></td></tr>
+            <tr><td>Interest collected</td><td class="table-money">{{ interest_collected|money }}</td></tr>
+            <tr><td>Annual fees collected</td><td class="table-money">{{ income_fees|money }}</td></tr>
+            <tr><td>Fines collected</td><td class="table-money">{{ income_fines|money }}</td></tr>
+            <tr class="table-active"><td><strong>Total Operating Income</strong></td><td class="table-money"><strong>{{ (interest_collected + income_fees + income_fines)|money }}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-chart-bar"></i> Savings Trend</div>
+      <div class="card-body">
+        {% set max_total = (trend|map(attribute='total')|max) or 1 %}
+        <div class="bar-chart">
+          {% for t in trend %}
+          <div class="bar" style="height: {{ ((t.total / max_total) * 100)|int if t.total else 5 }}%">
+            <div class="bar-value">{{ (t.total/1000)|round(0)|int }}k</div>
+            <div class="bar-label">{{ t.label.split()[0] }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="text-center mt-4 small text-muted">Total monthly savings collected</div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><i class="ph ph-table"></i> Period Detail</div>
+      <div class="card-body p-0" style="max-height:280px;overflow:auto">
+        <table class="table mb-0">
+          <thead><tr><th>Period</th><th>Members</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for t in trend|reverse %}
+            <tr>
+              <td>{{ t.label }}</td>
+              <td>{{ t.count }}</td>
+              <td class="table-money">{{ t.total|money }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

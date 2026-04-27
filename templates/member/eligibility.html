@@ -1,0 +1,129 @@
+﻿{% extends "base.html" %}
+{% block title %}Loan Eligibility{% endblock %}
+{% block topbar %}Loan Eligibility Check{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Loan Eligibility</h1><div class="subtitle">Check what loan amount you qualify for</div></div>
+</div>
+
+{% if open_loan %}
+<div class="alert alert-warning">
+  <i class="ph ph-warning"></i>
+  You currently have an <strong>{{ open_loan.status }}</strong> loan ({{ open_loan.loan_no }}, principal {{ open_loan.principal|money }}). You must clear it before requesting another.
+</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-calculator"></i> Run an Eligibility Check</div>
+      <div class="card-body">
+        <form method="post">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label">Principal amount (UGX)</label>
+              <input type="number" name="principal" class="form-control" min="1000" step="1000" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Term (months, max {{ max_term }})</label>
+              <select name="term_months" class="form-select" required>
+                {% for i in range(1, max_term + 1) %}<option value="{{ i }}" {% if i == 3 %}selected{% endif %}>{{ i }} month{% if i > 1 %}s{% endif %}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Guarantor 1</label>
+              <select name="guarantor1_id" class="form-select" required>
+                <option value="">-- Select --</option>
+                {% for c in candidates %}
+                <option value="{{ c.id }}">{{ c.member_no }} - {{ c.full_name }} ({{ c.available_savings|money }} avail.)</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Guarantor 2</label>
+              <select name="guarantor2_id" class="form-select" required>
+                <option value="">-- Select --</option>
+                {% for c in candidates %}
+                <option value="{{ c.id }}">{{ c.member_no }} - {{ c.full_name }} ({{ c.available_savings|money }} avail.)</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3" {% if open_loan %}disabled{% endif %}>
+            <i class="ph ph-magnifying-glass"></i> Check Eligibility
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {% if check_result %}
+    <div class="card mt-3 border-{% if check_result.sufficient %}success{% else %}danger{% endif %}">
+      <div class="card-header bg-{% if check_result.sufficient %}success{% else %}danger{% endif %} text-white">
+        {% if check_result.sufficient %}<i class="ph ph-check-circle"></i> Eligible
+        {% else %}<i class="ph ph-x-circle"></i> Not Eligible{% endif %}
+      </div>
+      <div class="card-body">
+        <p>{{ check_result.message }}</p>
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <dl class="kv-list">
+              <dt>Principal</dt><dd>{{ check_result.principal|money }}</dd>
+              <dt>Term</dt><dd>{{ check_result.term_months }} months</dd>
+              <dt>Interest @ {{ rate_pct }}%/m</dt><dd>{{ check_result.interest|money }}</dd>
+              <dt>Total repayable</dt><dd><strong>{{ check_result.total_due|money }}</strong></dd>
+            </dl>
+          </div>
+          <div class="col-sm-6">
+            <dl class="kv-list">
+              <dt>My savings locked</dt><dd>{{ check_result.self_locked|money }}</dd>
+              <dt>Guarantor 1 ({{ check_result.g1_no or '-' }})</dt><dd>{{ check_result.g1_locked|money }}</dd>
+              <dt>Guarantor 2 ({{ check_result.g2_no or '-' }})</dt><dd>{{ check_result.g2_locked|money }}</dd>
+              {% if check_result.shortfall %}<dt class="text-danger">Shortfall</dt><dd class="text-danger">{{ check_result.shortfall|money }}</dd>{% endif %}
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="ph ph-info"></i> Your Position</div>
+      <div class="card-body">
+        <dl class="kv-list">
+          <dt>Member</dt><dd>{{ member.member_no }} - {{ member.full_name }}</dd>
+          <dt>My available savings</dt><dd><strong>{{ own_available|money }}</strong></dd>
+          <dt>Loan rate</dt><dd>{{ rate_pct }}% per month</dd>
+          <dt>Max term</dt><dd>{{ max_term }} months</dd>
+          <dt>Guarantors required</dt><dd>{{ CONFIG.GUARANTORS_REQUIRED }}</dd>
+        </dl>
+        <hr>
+        <p class="small text-muted mb-1"><i class="ph ph-lightbulb"></i> <strong>Suggested top guarantors</strong> (by available savings)</p>
+        <ul class="list-unstyled small mb-0">
+          {% for g in top_guarantors %}
+          <li><strong>{{ g.member_no }}</strong> - {{ g.full_name }} <span class="text-muted">({{ g.available_savings|money }})</span></li>
+          {% endfor %}
+        </ul>
+        <hr>
+        <p class="small mb-0"><strong>Approximate maximum loan</strong> with these two guarantors:
+          <br><span class="money-amount-large money-positive">{{ suggested_max|money }}</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><i class="ph ph-book-open-text"></i> How loan security works</div>
+      <div class="card-body small">
+        <ol class="ps-3 mb-0">
+          <li>Your <strong>own available savings</strong> are locked first as collateral.</li>
+          <li>If the loan exceeds your savings, the difference is split between your <strong>two guarantors</strong>' available savings.</li>
+          <li>Loans are due on the 30th of the agreed month and accrue {{ rate_pct }}% interest per month plus penalty if overdue.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,59 @@
+﻿{% extends "base.html" %}
+{% block title %}Bulk Savings{% endblock %}
+{% block topbar %}Bulk Record Savings{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Bulk Record Savings</h1><div class="subtitle">Tick each member who paid {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} for the period</div></div>
+  <a href="{{ url_for('admin.savings_list', view='overview') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back</a>
+</div>
+
+<form method="post">
+  <div class="card mb-3">
+    <div class="card-body row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Period</label>
+        <select name="period" class="form-select" required>
+          {% for p in periods %}
+          <option value="{{ p }}" {% if p == default_period %}selected{% endif %}>{{ p|period_label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Payment Date</label>
+        <input type="date" name="payment_date" class="form-control" value="{{ today.isoformat() }}">
+      </div>
+      <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.querySelectorAll('input[name=member_ids]').forEach(c => c.checked = true)"><i class="ph ph-check-square-offset"></i> Select all</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('input[name=member_ids]').forEach(c => c.checked = false)">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Members ({{ members|length }})</div>
+    <div class="card-body p-0">
+      <table class="table mb-0">
+        <thead><tr><th width="40"></th><th>#</th><th>Name</th><th>Phone</th><th>Role</th></tr></thead>
+        <tbody>
+          {% for m in members %}
+          <tr>
+            <td><input type="checkbox" class="form-check-input" name="member_ids" value="{{ m.id }}" id="m{{ m.id }}"></td>
+            <td><label for="m{{ m.id }}">{{ m.member_no }}</label></td>
+            <td><label for="m{{ m.id }}" style="cursor:pointer">{{ m.full_name }}</label></td>
+            <td>{{ m.phone or '-' }}</td>
+            <td><span class="role-badge role-{{ m.role|lower }}">{{ ROLES[m.role].name }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <a href="{{ url_for('admin.savings_list', view='overview') }}" class="btn btn-outline-secondary">Cancel</a>
+    <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> Record Selected</button>
+  </div>
+</form>
+{% endblock %}
+
+
