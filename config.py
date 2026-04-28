@@ -12,10 +12,19 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'gazebo-gic-change-this-in-production-2026')
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    PERMANENT_SESSION_LIFETIME = 60 * 60 * 8  # 8 hours
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "0") == "1"
+    SESSION_REFRESH_EACH_REQUEST = False
+    IDLE_SESSION_TIMEOUT_SECONDS = 60 * 3  # 3 minutes of inactivity
+
+    # Alert integrations
+    TELEGRAM_ALERTS_ENABLED = os.environ.get("TELEGRAM_ALERTS_ENABLED", "1") == "1"
+    TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+    APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:8080")
 
     # Database
-    DATABASE_PATH = str(BASE_DIR / 'data' / 'gazebo_gic.db')
+    #DATABASE_PATH = str(BASE_DIR / 'data' / 'gazebo_gic.db')
+    DATABASE_PATH = os.environ.get("DATABASE_PATH", str(BASE_DIR / "data" / "gazebo_gic.db"))
 
     # Club Settings
     CLUB_NAME = 'GAZEBO Investment Club'
@@ -54,6 +63,7 @@ class Config:
     ITEMS_PER_PAGE = 20
 
     # File Uploads
-    UPLOAD_FOLDER = str(BASE_DIR / 'static' / 'uploads')
+    #UPLOAD_FOLDER = str(BASE_DIR / 'static' / 'uploads')
+    UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", str(BASE_DIR / "static" / "uploads"))
     ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB per upload

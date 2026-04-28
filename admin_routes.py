@@ -7,6 +7,7 @@ import uuid
 import json
 import csv
 import io
+from urllib.parse import quote
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
     session, flash, current_app, jsonify, Response
@@ -23,7 +24,7 @@ from utils import (
     calculate_overdue_months, get_member_total_savings,
     get_member_locked_amount, get_member_available_savings,
     determine_loan_security, calculate_max_loan_amount,
-    next_member_no, next_loan_no,
+    next_member_no, next_loan_no, build_whatsapp_link, send_telegram_test_message,
 )
 from config import Config
 
@@ -264,6 +265,44 @@ def _next_doc_no(db, table_name, column_name, prefix):
     return f"{prefix}-{seq:04d}"
 
 
+def _loan_formal_reminder_text(loan_no, borrower_name, amount_owed, term_months, days_overdue, penalty):
+    return (
+        "FORMAL REPAYMENT NOTICE\n"
+        f"Borrower: {borrower_name}\n"
+        f"Loan Reference: {loan_no}\n"
+        f"Amount Owed (Outstanding Balance): {fmt_money(amount_owed)}\n"
+        f"Initial Loan Period Requested (Months): {term_months}\n"
+        f"Overdue Duration (Days Late): {days_overdue}\n"
+        f"Penalty Interest Accrued: {fmt_money(penalty)}\n\n"
+        "This is a formal demand for repayment under the lending terms and conditions of the club. "
+        "You are required to settle the outstanding balance immediately. Continued default may result "
+        "in additional charges, recovery action, and administrative sanctions in line with approved "
+        "lending standards."
+    )
+
+
+def _password_reset_whatsapp_message(full_name, username, temp_password, reason):
+    reason_text = (reason or 'Administrative account recovery').strip()
+    return (
+        f"Hello {full_name},\n\n"
+        f"Your password was reset because: {reason_text}.\n"
+        f"Username: {username}\n"
+        f"Temporary Password: {temp_password}\n\n"
+        "Please sign in and set your preferred password immediately.\n"
+        "Password guide: use at least 8 characters with uppercase, lowercase, and a number.\n"
+        f"App URL: {Config.APP_URL}\n\n"
+        "Thank you."
+    )
+
+
+def _render_whatsapp_reset_redirect(wa_url, return_url):
+    return render_template(
+        'admin/whatsapp_open.html',
+        wa_url=wa_url,
+        return_url=return_url,
+    )
+
+
 def _operational_fund_snapshot(db):
     fees_collected = db.execute(
         "SELECT COALESCE(SUM(amount),0) s FROM annual_fees WHERE status='Paid'"
@@ -420,15 +459,23 @@ def dashboard():
         outstanding_penalty += pos['outstanding_penalty']
         if pos['is_overdue']:
             overdue_count += 1
+            wa_msg = (
+                f"Hello {loan['full_name']}, this is a reminder from {Config.CLUB_SHORT_NAME}. "
+                f"Your loan {loan['loan_no']} is overdue by {pos['overdue_months']} month(s) "
+                f"with amount owed {fmt_money(pos['total_outstanding'])}. "
+                "Please contact club administration immediately."
+            )
             overdue_loans.append({
                 'id': loan['id'],
                 'loan_no': loan['loan_no'],
                 'member_no': loan['member_no'],
                 'full_name': loan['full_name'],
+                'phone': loan['phone'],
                 'amount_owed': pos['total_outstanding'],
                 'overdue_months': pos['overdue_months'],
                 'days_overdue': pos['days_overdue'],
                 'penalty': pos['outstanding_penalty'],
+                'wa_notice_url': build_whatsapp_link(loan['phone'], wa_msg),
             })
 
     # Savings defaulters this month
@@ -470,12 +517,18 @@ def dashboard():
         expected = [p for p in periods_to_date if p >= join_period]
         missing = [p for p in expected if p not in paid_periods]
         arrears_amount = len(missing) * Config.MONTHLY_SAVINGS_AMOUNT
+        wa_msg = (
+            f"Hello {m['full_name']}, this is a reminder from {Config.CLUB_SHORT_NAME}. "
+            f"Your monthly savings for {period_label(cur_period)} is still outstanding. "
+            f"Total arrears currently {fmt_money(arrears_amount)}. Please make payment soon."
+        )
         current_month_defaulters.append({
             'id': m['id'],
             'member_no': m['member_no'],
             'full_name': m['full_name'],
             'phone': m['phone'],
             'arrears_amount': arrears_amount,
+            'wa_notice_url': build_whatsapp_link(m['phone'], wa_msg),
         })
 
     # Current month savings coverage
@@ -1127,10 +1180,22 @@ def member_create_login(member_id):
 
 
 @bp.route('/members/<int:member_id>/reset-password', methods=['POST'])
-@admin_required
+@role_required('IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER')
 def member_reset_password(member_id):
     db = get_db()
+    user = db.execute(
+        """SELECT u.id, u.username, m.full_name, m.phone
+             FROM users u
+             JOIN members m ON m.id = u.member_id
+            WHERE u.member_id = ?""",
+        (member_id,),
+    ).fetchone()
+    if not user:
+        flash('No login account found for this member.', 'danger')
+        return redirect(url_for('admin.member_detail', member_id=member_id))
+
     new_pw = request.form.get('new_password') or 'gazebo123'
+    reason = (request.form.get('reset_reason') or 'Administrative account recovery').strip()
     db.execute(
         """UPDATE users SET password_hash=?, must_change_pw=1
            WHERE member_id = ?""",
@@ -1138,10 +1203,22 @@ def member_reset_password(member_id):
     )
     db.commit()
     log_action('RESET_PASSWORD', 'user', member_id,
-               f"Password reset for member {member_id}")
-    flash(f'Password reset to "{new_pw}". Member must change on first login.',
-          'success')
-    return redirect(url_for('admin.member_detail', member_id=member_id))
+               f"Password reset for member {member_id}. Reason: {reason}")
+    flash('Password reset complete. A WhatsApp credentials message is opening.', 'success')
+
+    wa_message = _password_reset_whatsapp_message(
+        user['full_name'] or user['username'],
+        user['username'],
+        new_pw,
+        reason,
+    )
+    wa_url = build_whatsapp_link(user['phone'], wa_message)
+    if not wa_url:
+        wa_url = f"https://wa.me/?text={quote(wa_message)}"
+    return _render_whatsapp_reset_redirect(
+        wa_url,
+        url_for('admin.member_detail', member_id=member_id),
+    )
 
 
 # ===========================================================================
@@ -1513,7 +1590,7 @@ def loans_list():
     sort_dir = request.args.get('dir') or 'desc'  # 'asc' or 'desc'
     pool = request.args.get('pool') or ''
 
-    sql = """SELECT l.*, m.member_no, m.full_name AS borrower_name,
+    sql = """SELECT l.*, m.member_no, m.full_name AS borrower_name, m.phone,
                     m1.full_name AS g1_name, m2.full_name AS g2_name
                FROM loans l
                JOIN members m ON m.id = l.member_id
@@ -1528,7 +1605,7 @@ def loans_list():
     loans = db.execute(sql, params).fetchall()
 
     all_loans = db.execute(
-        """SELECT l.*, m.member_no, m.full_name AS borrower_name,
+        """SELECT l.*, m.member_no, m.full_name AS borrower_name, m.phone,
                   m1.full_name AS g1_name, m2.full_name AS g2_name
              FROM loans l
              JOIN members m ON m.id = l.member_id
@@ -1596,6 +1673,32 @@ def loans_list():
             )
         )
 
+    overdue_reminders = []
+    for l in enriched:
+        if not l['is_overdue'] or int(l['total_outstanding'] or 0) <= 0:
+            continue
+        formal_text = _loan_formal_reminder_text(
+            l['loan_no'],
+            l['borrower_name'],
+            l['total_outstanding'],
+            int(l['term_months'] or 0),
+            int(l['days_overdue'] or 0),
+            int(l['outstanding_penalty'] or 0),
+        )
+        overdue_reminders.append({
+            'id': l['id'],
+            'loan_no': l['loan_no'],
+            'member_no': l['member_no'],
+            'borrower_name': l['borrower_name'],
+            'phone': l.get('phone'),
+            'amount_owed': l['total_outstanding'],
+            'term_months': int(l['term_months'] or 0),
+            'days_overdue': int(l['days_overdue'] or 0),
+            'penalty': int(l['outstanding_penalty'] or 0),
+            'formal_text': formal_text,
+            'wa_contact_url': build_whatsapp_link(l.get('phone'), formal_text),
+        })
+
     all_enriched = []
     for loan in all_loans:
         repays = db.execute(
@@ -1640,6 +1743,7 @@ def loans_list():
         sort_dir=sort_dir,
         pool=pool,
         statuses=Config.LOAN_STATUSES,
+        overdue_reminders=overdue_reminders,
         loan_pools={
             'available_to_deploy': available_to_deploy,
             'deployed_active': deployed_active,
@@ -1656,6 +1760,73 @@ def loans_list():
             'total_savings': total_savings,
         },
     )
+
+
+@bp.route('/loans/reminders/send', methods=['POST'])
+@admin_required
+def loans_send_reminders():
+    db = get_db()
+    raw_ids = request.form.getlist('loan_ids')
+    loan_ids = []
+    for v in raw_ids:
+        try:
+            loan_ids.append(int(v))
+        except (TypeError, ValueError):
+            continue
+
+    if not loan_ids:
+        flash('No overdue loans were selected for reminders.', 'warning')
+        return redirect(url_for('admin.loans_list', sort='overdue', dir='desc'))
+
+    sent = 0
+    for loan_id in loan_ids:
+        loan = db.execute(
+            """SELECT l.*, m.full_name AS borrower_name
+                 FROM loans l
+                 JOIN members m ON m.id = l.member_id
+                WHERE l.id = ?""",
+            (loan_id,),
+        ).fetchone()
+        if not loan:
+            continue
+
+        repays = db.execute("SELECT * FROM loan_repayments WHERE loan_id=?", (loan_id,)).fetchall()
+        pens = db.execute("SELECT * FROM loan_penalties WHERE loan_id=?", (loan_id,)).fetchall()
+        pos = calculate_loan_position(loan, repays, pens)
+        if not pos['is_overdue'] or int(pos['total_outstanding'] or 0) <= 0:
+            continue
+
+        formal_text = _loan_formal_reminder_text(
+            loan['loan_no'],
+            loan['borrower_name'],
+            pos['total_outstanding'],
+            int(loan['term_months'] or 0),
+            int(pos['days_overdue'] or 0),
+            int(pos['outstanding_penalty'] or 0),
+        )
+        reminder_message = (
+            f"Amount Owed: {fmt_money(pos['total_outstanding'])}\n"
+            f"Initial Loan Period: {int(loan['term_months'] or 0)} month(s)\n"
+            f"Overdue Duration: {int(pos['days_overdue'] or 0)} day(s)\n"
+            f"Penalty Interest: {fmt_money(pos['outstanding_penalty'])}\n\n"
+            f"{formal_text}"
+        )
+        _notify_member(
+            db,
+            loan['member_id'],
+            'Loan Repayment Reminder',
+            f"{loan['loan_no']} · {fmt_money(pos['total_outstanding'])} outstanding\n\n{reminder_message}",
+            url_for('member.loans'),
+        )
+        sent += 1
+
+    db.commit()
+    if sent:
+        log_action('SEND_LOAN_REMINDERS', 'loan', None, f"Sent {sent} overdue loan dashboard reminder(s)")
+        flash(f'Sent {sent} overdue loan reminder(s) to member dashboards.', 'success')
+    else:
+        flash('No overdue reminders were sent. Selected loans may already be settled.', 'warning')
+    return redirect(url_for('admin.loans_list', sort='overdue', dir='desc'))
 
 
 @bp.route('/loans/new', methods=['GET', 'POST'])
@@ -3632,6 +3803,13 @@ def users_list():
     # Find members without user accounts
     linked_member_ids = {u['member_id'] for u in admin_users + member_users if u['member_id']}
     unlinked_members = [m for m in all_members if m['id'] not in linked_member_ids]
+
+    settings_rows = db.execute(
+        "SELECT key, value FROM settings WHERE key IN ('telegram_bot_token','telegram_chat_id')"
+    ).fetchall()
+    settings_map = {r['key']: (r['value'] or '').strip() for r in settings_rows}
+    telegram_bot_token = settings_map.get('telegram_bot_token') or Config.TELEGRAM_BOT_TOKEN or ''
+    telegram_chat_id = settings_map.get('telegram_chat_id') or Config.TELEGRAM_CHAT_ID or ''
     
     return render_template(
         'admin/users.html',
@@ -3640,7 +3818,60 @@ def users_list():
         unlinked_members=unlinked_members,
         all_members=all_members,
         roles=Config.ROLES,
+        telegram_bot_token=telegram_bot_token,
+        telegram_chat_id=telegram_chat_id,
     )
+
+
+@bp.route('/users/alerting/save', methods=['POST'])
+@role_required('IT_ADMIN')
+def users_alerting_save():
+    db = get_db()
+    bot_token = (request.form.get('telegram_bot_token') or '').strip()
+    chat_id = (request.form.get('telegram_chat_id') or '').strip()
+
+    entries = [
+        ('telegram_bot_token', bot_token, 'Telegram bot token for system alerts'),
+        ('telegram_chat_id', chat_id, 'Telegram destination chat id for alerts'),
+    ]
+    for key, value, description in entries:
+        db.execute(
+            """INSERT INTO settings (key, value, description, updated_by, updated_at)
+               VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+               ON CONFLICT(key) DO UPDATE SET
+                 value=excluded.value,
+                 description=excluded.description,
+                 updated_by=excluded.updated_by,
+                 updated_at=CURRENT_TIMESTAMP""",
+            (key, value, description, session.get('user_id')),
+        )
+    db.commit()
+    log_action('ALERT_SETTINGS_SAVE', 'settings', None, 'Updated Telegram alerting credentials')
+    flash('Alerting configuration saved.', 'success')
+    return redirect(url_for('admin.users_list'))
+
+
+@bp.route('/users/alerting/test', methods=['POST'])
+@role_required('IT_ADMIN')
+def users_alerting_test():
+    db = get_db()
+    bot_token = (request.form.get('telegram_bot_token') or '').strip()
+    chat_id = (request.form.get('telegram_chat_id') or '').strip()
+    actor = session.get('full_name') or session.get('username') or 'IT Admin'
+    text = (
+        "GAZEBO GIC Test Alert\n"
+        f"Triggered by: {actor}\n"
+        f"Time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC\n"
+        "Status: Telegram integration is working."
+    )
+
+    ok = send_telegram_test_message(db, text, bot_token=bot_token, chat_id=chat_id)
+    if ok:
+        log_action('ALERT_TEST', 'settings', None, 'Sent Telegram test alert from System Users')
+        flash('Test alert sent successfully.', 'success')
+    else:
+        flash('Unable to send test alert. Check Telegram bot token and chat ID.', 'danger')
+    return redirect(url_for('admin.users_list'))
 
 
 @bp.route('/users/add', methods=['GET', 'POST'])
@@ -3695,7 +3926,7 @@ def users_edit(user_id):
     """Edit user details (password, active status, etc.)."""
     db = get_db()
     user = db.execute(
-        """SELECT u.*, m.member_no, m.full_name FROM users u
+        """SELECT u.*, m.member_no, m.full_name, m.phone FROM users u
            LEFT JOIN members m ON m.id = u.member_id
           WHERE u.id = ?""",
         (user_id,),
@@ -3707,10 +3938,14 @@ def users_edit(user_id):
     
     if request.method == 'POST':
         new_password = request.form.get('new_password')
+        reset_reason = (request.form.get('reset_reason') or 'Administrative account recovery').strip()
         is_active = request.form.get('is_active') == 'on'
         must_change = request.form.get('must_change_pw') == 'on'
         
         if new_password:
+            if session.get('role') not in {'IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER'}:
+                flash('You are not allowed to reset passwords.', 'danger')
+                return redirect(url_for('admin.users_edit', user_id=user_id))
             db.execute(
                 "UPDATE users SET password_hash=?, must_change_pw=1 WHERE id=?",
                 (generate_password_hash(new_password), user_id),
@@ -3722,6 +3957,19 @@ def users_edit(user_id):
         )
         db.commit()
         log_action('UPDATE_USER', 'user', user_id, f"Updated user {user['username']}")
+        if new_password:
+            wa_message = _password_reset_whatsapp_message(
+                user['full_name'] or user['username'],
+                user['username'],
+                new_password,
+                reset_reason,
+            )
+            wa_url = build_whatsapp_link(user['phone'], wa_message)
+            if not wa_url:
+                wa_url = f"https://wa.me/?text={quote(wa_message)}"
+            flash('User updated and password reset. A WhatsApp credentials message is opening.', 'success')
+            return _render_whatsapp_reset_redirect(wa_url, url_for('admin.users_list'))
+
         flash('User updated.', 'success')
         return redirect(url_for('admin.users_list'))
     

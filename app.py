@@ -3,7 +3,7 @@ GAZEBO Investment Club - Main Flask application
 Run with: python app.py
 """
 import os
-from flask import Flask, redirect, url_for, session, render_template
+from flask import Flask, redirect, url_for, session, render_template, request, flash
 from datetime import datetime, date
 
 from config import Config
@@ -83,6 +83,48 @@ def create_app():
             ROLES=Config.ROLES,
             pending_expenses_count=pending_expenses_count,
         )
+
+    @app.before_request
+    def enforce_session_timeout():
+        if request.endpoint == 'static':
+            return None
+        if 'user_id' not in session:
+            return None
+
+        if session.get('must_change_pw'):
+            allowed = {'auth.change_password', 'auth.logout'}
+            if request.endpoint not in allowed:
+                flash('Change your temporary password to continue. Use at least 8 characters with uppercase, lowercase, and a number.', 'warning')
+                return redirect(url_for('auth.change_password'))
+
+        now_ts = int(datetime.utcnow().timestamp())
+        last_seen = session.get('last_activity_at')
+        timeout = int(app.config.get('IDLE_SESSION_TIMEOUT_SECONDS', 180))
+
+        if last_seen is not None:
+            try:
+                if (now_ts - int(last_seen)) > timeout:
+                    session.clear()
+                    flash('Your session expired after 3 minutes of inactivity. Please sign in again.', 'warning')
+                    return redirect(url_for('auth.login', next=request.path))
+            except (TypeError, ValueError):
+                session.clear()
+                return redirect(url_for('auth.login'))
+
+        session['last_activity_at'] = now_ts
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+        response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+        response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        if session.get('user_id'):
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+        if request.is_secure:
+            response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+        return response
 
     # ----- Root route -----
     @app.route('/')

@@ -35,6 +35,18 @@
             </div>
             <small class="form-text text-muted">If you set a new password, the user will be required to change it on next login.</small>
           </div>
+
+          <div class="mb-3">
+            <label for="reset_reason" class="form-label">Reason for Reset</label>
+            <input type="text" class="form-control" id="reset_reason" name="reset_reason" placeholder="e.g. Forgotten password">
+            <small class="form-text text-muted">Included in WhatsApp credentials message after reset.</small>
+          </div>
+
+          {% if session.role not in ('IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER') %}
+          <div class="alert alert-warning small">
+            Password reset is restricted to IT Admin, Chairman, Secretary, and Treasurer.
+          </div>
+          {% endif %}
           
           <div class="mb-3">
             <div class="form-check">

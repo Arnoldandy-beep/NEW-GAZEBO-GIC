@@ -6,13 +6,132 @@ GAZEBO Investment Club - Utility helpers
 - Authorization decorators
 """
 import calendar
+import json
+import re
 from datetime import date, datetime, timedelta
 from functools import wraps
 from flask import session, redirect, url_for, flash, request, abort
 from dateutil.relativedelta import relativedelta
+from urllib import request as urlrequest, parse as urlparse
 
 from config import Config
 from database import get_db
+
+
+_TELEGRAM_ACTIONS = {
+    'RECORD_SAVINGS',
+    'BULK_SAVINGS',
+    'RECORD_FEE',
+    'CREATE_LOAN',
+    'APPROVE_LOAN',
+    'REQUEST_LOAN_AMENDMENT',
+    'APPROVE_LOAN_AMENDMENT',
+    'DISBURSE_LOAN',
+    'CREATE_FINE',
+    'PAY_FINE',
+    'REQUEST_EXPENSE',
+    'APPROVE_EXPENSE',
+}
+
+
+def _get_telegram_config(db):
+    token = Config.TELEGRAM_BOT_TOKEN
+    chat_id = Config.TELEGRAM_CHAT_ID
+    try:
+        rows = db.execute(
+            "SELECT key, value FROM settings WHERE key IN ('telegram_bot_token','telegram_chat_id')"
+        ).fetchall()
+        settings_map = {r['key']: (r['value'] or '').strip() for r in rows}
+        token = settings_map.get('telegram_bot_token') or token
+        chat_id = settings_map.get('telegram_chat_id') or chat_id
+    except Exception:
+        # settings table might be unavailable during early bootstrap
+        pass
+    return (token or '').strip(), (chat_id or '').strip()
+
+
+def _send_telegram_alert(bot_token, chat_id, text):
+    if not bot_token or not chat_id:
+        return False
+    api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        'chat_id': chat_id,
+        'text': text,
+        'disable_web_page_preview': True,
+    }
+    data = json.dumps(payload).encode('utf-8')
+    req = urlrequest.Request(api_url, data=data, headers={'Content-Type': 'application/json'})
+    with urlrequest.urlopen(req, timeout=6) as resp:
+        return 200 <= int(getattr(resp, 'status', 0) or 0) < 300
+
+
+def _should_notify_telegram(action, role_name):
+    role = (role_name or '').upper()
+    if action == 'LOGIN':
+        return bool(Config.ROLES.get(role, {}).get('admin'))
+    if not bool(Config.ROLES.get(role, {}).get('admin')):
+        return False
+    if role == 'IT_ADMIN':
+        return False
+    return action in _TELEGRAM_ACTIONS
+
+
+def _telegram_text_for_action(action, description, role_name):
+    role_label = Config.ROLES.get((role_name or '').upper(), {}).get('name', role_name or '-')
+    username = session.get('username') or '-'
+    full_name = session.get('full_name') or '-'
+    ip = (request.headers.get('X-Forwarded-For') or request.remote_addr or '-').split(',')[0].strip()
+    base = [
+        f"GAZEBO GIC Alert",
+        f"Action: {action}",
+        f"By: {full_name} ({username})",
+        f"Role: {role_label}",
+        f"IP: {ip}",
+    ]
+    if description:
+        base.append(f"Details: {description}")
+
+    if action == 'LOGIN':
+        ua = request.headers.get('User-Agent', '') if request else ''
+        if ua:
+            base.append(f"Device: {ua[:140]}")
+    if action == 'CREATE_LOAN':
+        base.append("Note: Loan submitted and approval workflow is required.")
+    return "\n".join(base)
+
+
+def send_telegram_test_message(db, text, bot_token=None, chat_id=None):
+    """Send a test Telegram message using provided credentials or saved settings."""
+    token = (bot_token or '').strip()
+    chat = (chat_id or '').strip()
+    if not token or not chat:
+        token_cfg, chat_cfg = _get_telegram_config(db)
+        token = token or token_cfg
+        chat = chat or chat_cfg
+    if not token or not chat:
+        return False
+    return _send_telegram_alert(token, chat, text)
+
+
+def normalize_phone_for_whatsapp(phone_value):
+    """Normalize common local formats to international digits for wa.me."""
+    if not phone_value:
+        return ''
+    p = re.sub(r'[^0-9+]', '', str(phone_value).strip())
+    if p.startswith('+'):
+        p = p[1:]
+    if p.startswith('00'):
+        p = p[2:]
+    if p.startswith('0'):
+        p = '256' + p[1:]
+    return re.sub(r'\D', '', p)
+
+
+def build_whatsapp_link(phone_value, message):
+    number = normalize_phone_for_whatsapp(phone_value)
+    if not number:
+        return None
+    return f"https://wa.me/{number}?text={urlparse.quote(message or '')}"
 
 
 # ---------------------------------------------------------------------------
@@ -559,6 +678,13 @@ def log_action(action, entity_type=None, entity_id=None, description=None):
             ),
         )
         db.commit()
+
+        role_name = session.get('role') if session else None
+        if Config.TELEGRAM_ALERTS_ENABLED and _should_notify_telegram(action, role_name):
+            bot_token, chat_id = _get_telegram_config(db)
+            if bot_token and chat_id:
+                text = _telegram_text_for_action(action, description, role_name)
+                _send_telegram_alert(bot_token, chat_id, text)
     except Exception as e:
         # Audit logging must never break the main flow
         print(f"[audit_log] failed: {e}")

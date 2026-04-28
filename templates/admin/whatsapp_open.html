@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Opening WhatsApp{% endblock %}
+{% block topbar %}Opening WhatsApp{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card" id="waOpenCard" data-wa-url="{{ wa_url }}">
+      <div class="card-header"><i class="ph ph-whatsapp-logo"></i> Sending Credentials Message</div>
+      <div class="card-body">
+        <p class="mb-2">WhatsApp should open automatically with the reset credentials message.</p>
+        <p class="small text-muted mb-3">If it does not open, use the button below.</p>
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="btn btn-success" href="{{ wa_url }}" target="_blank" rel="noopener noreferrer">
+            <i class="ph ph-whatsapp-logo"></i> Open WhatsApp
+          </a>
+          <a class="btn btn-outline-secondary" href="{{ return_url }}">
+            <i class="ph ph-arrow-left"></i> Back to System
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var waUrl = document.getElementById('waOpenCard').getAttribute('data-wa-url') || '';
+  if (waUrl) {
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  }
+})();
+</script>
+{% endblock %}

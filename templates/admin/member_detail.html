@@ -124,6 +124,9 @@
         </dl>
         <form method="post" action="{{ url_for('admin.member_reset_password', member_id=member.id) }}"
               data-confirm="Reset this user's password to a temporary value?">
+          <div class="mb-2">
+            <input type="text" name="reset_reason" class="form-control form-control-sm" placeholder="Reason for reset (e.g. account recovery)">
+          </div>
           <div class="input-group input-group-sm">
             <input type="text" name="new_password" class="form-control" placeholder="New temp password" required>
             <button type="submit" class="btn btn-warning"><i class="ph ph-arrow-clockwise"></i> Reset</button>

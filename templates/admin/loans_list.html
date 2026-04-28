@@ -81,6 +81,24 @@
             <a class="chip chip-sort {% if sort_by == 'newest' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='newest', dir='desc') }}"><i class="ph ph-clock"></i> Newest</a>
           </div>
         </div>
+        {% if sort_by == 'overdue' %}
+        <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+          <div class="small fw-semibold text-danger"><i class="ph ph-bell-ringing"></i> Loan Notification</div>
+          <div class="d-flex gap-2 flex-wrap">
+            <form method="post" action="{{ url_for('admin.loans_send_reminders') }}" class="d-inline">
+              {% for r in overdue_reminders %}
+              <input type="hidden" name="loan_ids" value="{{ r.id }}">
+              {% endfor %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" {% if not overdue_reminders %}disabled{% endif %}>
+                <i class="ph ph-bell"></i> SEND Reminders ({{ overdue_reminders|length }})
+              </button>
+            </form>
+            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#whatsappRemindersModal" {% if not overdue_reminders %}disabled{% endif %}>
+              <i class="ph ph-whatsapp-logo"></i> Send WhatsApp Reminder ({{ overdue_reminders|length }})
+            </button>
+          </div>
+        </div>
+        {% endif %}
       </div>
     <table class="table table-sortable mb-0">
       <thead>
@@ -157,6 +175,89 @@
     </table>
   </div>
 </div>
+
+{% if sort_by == 'overdue' %}
+<div class="modal fade" id="whatsappRemindersModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">WhatsApp Repayment Reminders (+{{ overdue_reminders|length }})</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-primary">
+          <div class="fw-bold">Instructions:</div>
+          <div>1. Click <strong>Send to Contact</strong> to open WhatsApp chat with the borrower (requires phone number on file)</div>
+          <div>2. Or click <strong>Copy Message</strong> to copy the formatted message and send manually</div>
+          <div>3. Message includes details on outstanding balance, overdue days, and penalties</div>
+        </div>
+
+        {% for r in overdue_reminders %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="mb-1">{{ r.borrower_name }} ({{ r.loan_no }})</h5>
+            <div class="small text-muted mb-2">Amount Owed: {{ r.amount_owed|money }} | Days Overdue: {{ r.days_overdue }}</div>
+            <pre class="bg-light border rounded p-3 small mb-3" style="white-space:pre-wrap">{{ r.formal_text }}</pre>
+            <div class="d-flex gap-2 flex-wrap">
+              {% if r.wa_contact_url %}
+              <a class="btn btn-sm btn-outline-success" href="{{ r.wa_contact_url }}" target="_blank" rel="noopener noreferrer">
+                <i class="ph ph-whatsapp-logo"></i> Send to Contact
+              </a>
+              {% else %}
+              <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Borrower phone is missing or invalid">
+                <i class="ph ph-whatsapp-logo"></i> Send to Contact
+              </button>
+              {% endif %}
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-dark"
+                onclick="copyReminderMessage(this)"
+                data-message="{{ r.formal_text|e }}"
+              >
+                <i class="ph ph-copy"></i> Copy Message
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-warning"
+                onclick="openWhatsAppManual(this)"
+                data-message="{{ r.formal_text|e }}"
+              >
+                <i class="ph ph-chat-circle"></i> WhatsApp (Manual)
+              </button>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-muted">No overdue loans to remind.</div>
+        {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal"><i class="ph ph-check-square"></i> Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyReminderMessage(btn) {
+  var message = btn.getAttribute('data-message') || '';
+  if (!message) {
+    return;
+  }
+  navigator.clipboard.writeText(message).then(function () {
+    var old = btn.innerHTML;
+    btn.innerHTML = '<i class="ph ph-check"></i> Copied';
+    setTimeout(function () { btn.innerHTML = old; }, 1400);
+  });
+}
+
+function openWhatsAppManual(btn) {
+  var message = btn.getAttribute('data-message') || '';
+  var url = 'https://wa.me/?text=' + encodeURIComponent(message);
+  window.open(url, '_blank');
+}
+</script>
+{% endif %}
 {% endblock %}
 
 

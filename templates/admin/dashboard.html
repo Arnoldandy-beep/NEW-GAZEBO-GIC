@@ -446,7 +446,13 @@
           <td>{{ d.phone or '-' }}</td>
           <td class="text-danger">{{ d.arrears_amount|money }}</td>
           <td><span class="status-chip-mini"><i class="ph ph-warning"></i> Behind</span></td>
-          <td><a class="notice-btn" href="{{ url_for('admin.member_detail', member_id=d.id) }}"><i class="ph ph-megaphone"></i> Notice</a></td>
+          <td>
+            {% if d.wa_notice_url %}
+            <a class="notice-btn" href="{{ d.wa_notice_url }}" target="_blank" rel="noopener noreferrer"><i class="ph ph-megaphone"></i> Notice</a>
+            {% else %}
+            <button class="notice-btn" type="button" disabled title="Member phone is missing or invalid"><i class="ph ph-megaphone"></i> Notice</button>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -472,7 +478,13 @@
           <td>{{ l.overdue_months }} month(s)</td>
           <td><span class="status-chip-mini">{{ l.days_overdue }} day(s)</span></td>
           <td class="text-danger">{{ l.penalty|money }}</td>
-          <td><a class="notice-btn" href="{{ url_for('admin.loan_detail', loan_id=l.id) }}"><i class="ph ph-megaphone"></i> Notice</a></td>
+          <td>
+            {% if l.wa_notice_url %}
+            <a class="notice-btn" href="{{ l.wa_notice_url }}" target="_blank" rel="noopener noreferrer"><i class="ph ph-megaphone"></i> Notice</a>
+            {% else %}
+            <button class="notice-btn" type="button" disabled title="Member phone is missing or invalid"><i class="ph ph-megaphone"></i> Notice</button>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

@@ -11,6 +11,33 @@
   <strong>Important:</strong> System Users manages login accounts only. If you delete a user here, that person will still appear in the Members module until you deactivate or remove the member record there.
 </div>
 
+{% if session.role == 'IT_ADMIN' %}
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="ph ph-bell-ringing"></i> Alerting Configuration</h5>
+    <span class="badge bg-dark">IT Admin Only</span>
+  </div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">Configure Telegram alerts used for admin logins and key business events.</p>
+    <form method="post" action="{{ url_for('admin.users_alerting_save') }}" class="row g-3 mb-2">
+      <div class="col-lg-6">
+        <label class="form-label">Telegram Bot Token</label>
+        <input type="text" class="form-control" name="telegram_bot_token" value="{{ telegram_bot_token }}" placeholder="e.g. 123456789:AA..." autocomplete="off">
+      </div>
+      <div class="col-lg-6">
+        <label class="form-label">Telegram Chat ID</label>
+        <input type="text" class="form-control" name="telegram_chat_id" value="{{ telegram_chat_id }}" placeholder="e.g. -1001234567890" autocomplete="off">
+      </div>
+      <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> Save Config</button>
+        <button type="submit" class="btn btn-outline-success" formaction="{{ url_for('admin.users_alerting_test') }}"><i class="ph ph-paper-plane-tilt"></i> Test Alert</button>
+        <span class="small text-muted ms-2">Test uses the values currently in the form.</span>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 {% if admin_users %}
 <div class="card mb-4">
   <div class="card-header">

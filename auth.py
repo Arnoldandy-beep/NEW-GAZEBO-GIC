@@ -7,12 +7,25 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
+import re
 
 from database import get_db
 from utils import login_required, log_action
 from config import Config
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+
+def _password_complexity_error(password):
+    if len(password or '') < 8:
+        return 'New password must be at least 8 characters.'
+    if not re.search(r'[A-Z]', password or ''):
+        return 'New password must include at least one uppercase letter.'
+    if not re.search(r'[a-z]', password or ''):
+        return 'New password must include at least one lowercase letter.'
+    if not re.search(r'\d', password or ''):
+        return 'New password must include at least one number.'
+    return None
 
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -72,7 +85,8 @@ def login():
         session['role']       = user['role']
         session['must_change_pw'] = bool(user['must_change_pw'])
         session['login_type'] = 'member' if is_member_login else 'admin'
-        session.permanent = True
+        session['last_activity_at'] = int(datetime.utcnow().timestamp())
+        session.permanent = False
 
         # Last login timestamp
         db.execute(
@@ -85,6 +99,7 @@ def login():
         flash(f"Welcome back, {user['full_name']}.", 'success')
 
         if user['must_change_pw']:
+            flash('Password update required before system access. Use at least 8 characters with uppercase, lowercase, and a number.', 'warning')
             return redirect(url_for('auth.change_password'))
         if next_url:
             return redirect(next_url)
@@ -121,8 +136,9 @@ def change_password():
         new_pw = request.form.get('new_password') or ''
         confirm = request.form.get('confirm_password') or ''
 
-        if len(new_pw) < 6:
-            flash('New password must be at least 6 characters.', 'danger')
+        complexity_error = _password_complexity_error(new_pw)
+        if complexity_error:
+            flash(complexity_error, 'danger')
             return render_template('auth/change_password.html')
         if new_pw != confirm:
             flash('Passwords do not match.', 'danger')
