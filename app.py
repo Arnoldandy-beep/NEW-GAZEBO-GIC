@@ -7,7 +7,7 @@ from flask import Flask, redirect, url_for, session, render_template
 from datetime import datetime, date
 
 from config import Config
-from database import close_db, init_schema
+from database import close_db, init_schema, get_db
 from utils import fmt_money, period_label
 from auth import bp as auth_bp
 from admin_routes import bp as admin_bp
@@ -67,11 +67,21 @@ def create_app():
 
     @app.context_processor
     def inject_globals():
+        pending_expenses_count = 0
+        if session.get('user_id') and session.get('role') in ('CHAIRMAN', 'IT_ADMIN'):
+            try:
+                db = get_db()
+                pending_expenses_count = db.execute(
+                    "SELECT COUNT(*) c FROM expenses WHERE status='Pending'"
+                ).fetchone()['c']
+            except Exception:
+                pass
         return dict(
             CONFIG=Config,
             today=date.today(),
             now=datetime.now(),
             ROLES=Config.ROLES,
+            pending_expenses_count=pending_expenses_count,
         )
 
     # ----- Root route -----

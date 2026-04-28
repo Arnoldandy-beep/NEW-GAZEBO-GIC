@@ -76,6 +76,12 @@
           <a href="{{ url_for('admin.fees_list') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.fees') %}active{% endif %}">
             <i class="ph ph-receipt"></i> Annual Fees
           </a>
+          <a href="{{ url_for('admin.expenses_list') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.expenses') %}active{% endif %}" style="position:relative">
+            <i class="ph ph-wallet"></i> Expenses
+            {% if pending_expenses_count and session.role in ('CHAIRMAN', 'IT_ADMIN') %}
+            <span class="nav-badge-exp">{{ pending_expenses_count }}</span>
+            {% endif %}
+          </a>
           <a href="{{ url_for('admin.reports') }}" class="nav-link {% if request.endpoint == 'admin.reports' %}active{% endif %}">
             <i class="ph ph-chart-bar"></i> Reports
           </a>
@@ -138,8 +144,8 @@
 
     <div class="app-content">
       <header class="app-topbar">
-        <button class="btn btn-light btn-sm sidebar-toggle d-md-none" type="button" onclick="document.getElementById('sidebar').classList.toggle('open')">
-          <i class="ph ph-list"></i>
+        <button class="btn sidebar-toggle d-lg-none" type="button" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="Toggle navigation menu">
+          <i class="bi bi-list"></i>
         </button>
         <div class="topbar-title">{% block topbar %}{% endblock %}</div>
         <div class="topbar-actions">

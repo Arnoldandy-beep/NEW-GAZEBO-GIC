@@ -137,7 +137,25 @@
       <div><strong>Status:</strong> <span style="color: #2e7d32; font-weight: 700;">{{ run.status }}</span></div>
     </div>
   </div>
-  <a href="{{ url_for('admin.dividends_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back to Dividends</a>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if session.role in ['IT_ADMIN', 'TREASURER'] %}
+      {% if run.status in ['Published', 'Distributed'] %}
+      <form method="post" action="{{ url_for('admin.dividends_visibility', run_id=run.id) }}">
+        <input type="hidden" name="action" value="hide">
+        <button class="btn btn-sm btn-outline-warning" type="submit"><i class="ph ph-eye-slash"></i> Hide from Members</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('admin.dividends_visibility', run_id=run.id) }}">
+        <input type="hidden" name="action" value="publish">
+        <button class="btn btn-sm btn-outline-success" type="submit"><i class="ph ph-eye"></i> Publish to Members</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('admin.dividends_undo', run_id=run.id) }}" onsubmit="return confirm('Undo this dividend run? This will remove payouts for this year.');">
+        <button class="btn btn-sm btn-outline-danger" type="submit"><i class="ph ph-arrow-counter-clockwise"></i> Undo Run</button>
+      </form>
+    {% endif %}
+    <a href="{{ url_for('admin.dividends_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back to Dividends</a>
+  </div>
 </div>
 
 <!-- Pool Breakdown Summary -->

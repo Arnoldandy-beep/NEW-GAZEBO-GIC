@@ -1,0 +1,524 @@
+{% extends "base.html" %}
+{% block title %}Expenses{% endblock %}
+{% block topbar %}Operational Expenses{% endblock %}
+{% block content %}
+
+<style>
+.expenses-header {
+  position: relative;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #f8fbff 0%, #edf6ff 58%, #f5fbf8 100%);
+  border: 1px solid #d7e8fb;
+  border-radius: 16px;
+  padding: 22px 20px;
+  box-shadow: 0 10px 24px rgba(36, 87, 136, 0.08);
+}
+.expenses-header h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #215e83, #1565c0 60%, #0b7d77);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.expenses-header .subtitle {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.expenses-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.expenses-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.expenses-metric {
+  background: #ffffffcc;
+  border: 1px solid #d8e7f6;
+  border-radius: 10px;
+  padding: 10px;
+}
+.expenses-metric .k {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: #6f8092;
+  font-weight: 700;
+}
+.expenses-metric .v {
+  display: block;
+  margin-top: 3px;
+  font-size: 17px;
+  color: #234b68;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.expenses-shell {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.05);
+  overflow: hidden;
+}
+
+.expenses-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #f9f7f3;
+}
+.expenses-tabs .tab-link {
+  text-decoration: none;
+  color: #6f6c65;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.expenses-tabs .tab-link.active {
+  color: #16293a;
+  background: #e9f2ff;
+}
+
+.expenses-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.expenses-table thead th {
+  background: #ece5d9;
+  font-weight: 700;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border);
+  padding: 12px;
+  text-align: left;
+}
+.expenses-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e9e2d7;
+  vertical-align: middle;
+  font-size: 13px;
+}
+.expenses-table tbody tr:hover { background: #f8f6f1; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.status-pending { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+.status-approved { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+.status-rejected { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+
+.empty-state {
+  padding: 42px 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.notice-box {
+  margin-top: 14px;
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  color: #0d47a1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+@media (max-width: 980px) {
+  .expenses-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .expenses-metrics { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="expenses-header">
+  <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+    <div>
+      <h1>Expenses</h1>
+      <div class="subtitle">Operational funds only. Available now: <strong>{{ ops.operational_fund_total|money }}</strong> | Available after pending: <strong>{{ ops.available_after_pending|money }}</strong></div>
+    </div>
+    {% if session.role in ('TREASURER', 'IT_ADMIN') %}
+    <div class="expenses-actions">
+      <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#incomeModal"><i class="ph ph-plus"></i> Record Income</button>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#expenseModal"><i class="ph ph-plus"></i> Record Expense</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="expenses-metrics">
+    <div class="expenses-metric"><span class="k">Fees Collected</span><span class="v">{{ ops.fees_collected|money }}</span></div>
+    <div class="expenses-metric"><span class="k">Fines Collected</span><span class="v">{{ ops.fines_collected|money }}</span></div>
+    <div class="expenses-metric"><span class="k">Other Operational Income</span><span class="v">{{ ops.recorded_income|money }}</span></div>
+    <div class="expenses-metric"><span class="k">Approved Expenses</span><span class="v">{{ ops.approved_expenses|money }}</span></div>
+  </div>
+</div>
+
+<div class="expenses-shell">
+  <div class="expenses-tabs">
+    <a class="tab-link {% if tab == 'all' %}active{% endif %}" href="{{ url_for('admin.expenses_list', tab='all') }}"><i class="ph ph-clipboard-text"></i> All Expenses</a>
+    <a class="tab-link {% if tab == 'income' %}active{% endif %}" href="{{ url_for('admin.expenses_list', tab='income') }}"><i class="ph ph-currency-dollar"></i> Operational Income</a>
+    <a class="tab-link {% if tab == 'pending' %}active{% endif %}" href="{{ url_for('admin.expenses_list', tab='pending') }}"><i class="ph ph-hourglass-medium"></i> Pending</a>
+    <a class="tab-link {% if tab == 'summary' %}active{% endif %}" href="{{ url_for('admin.expenses_list', tab='summary') }}"><i class="ph ph-chart-bar"></i> Summary</a>
+  </div>
+
+  {% if tab == 'income' %}
+  <div class="table-responsive">
+    <table class="expenses-table">
+      <thead><tr><th>Ref</th><th>Date</th><th>Amount</th><th>Source</th><th>By</th><th>Notes</th></tr></thead>
+      <tbody>
+        {% for i in incomes %}
+        <tr>
+          <td><strong>{{ i.income_no }}</strong></td>
+          <td>{{ i.income_date|datefmt }}</td>
+          <td>{{ i.amount|money }}</td>
+          <td>{{ i.source }}</td>
+          <td>{{ i.full_name or i.username or '-' }}</td>
+          <td>{{ i.notes or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-state">No operational income entries yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% elif tab == 'pending' %}
+  <div class="table-responsive">
+    <table class="expenses-table">
+      <thead><tr><th>Ref</th><th>Date</th><th>Amount</th><th>Purpose</th><th>Category</th><th>Requested By</th><th>Approver</th><th>Status</th><th>Receipt</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for e in pending_rows %}
+        <tr>
+          <td><strong>{{ e.expense_no }}</strong></td>
+          <td>{{ e.expense_date|datefmt }}</td>
+          <td>{{ e.amount|money }}</td>
+          <td>{{ e.purpose }}</td>
+          <td>{{ e.category or '-' }}</td>
+          <td>{{ e.requested_by_full or e.requested_by_name or '-' }}</td>
+          <td>{{ e.approver_full or e.approver_name or '-' }}</td>
+          <td><span class="status-pill status-pending">Pending</span></td>
+          <td>
+            {% if e.receipt_path %}
+            <a href="{{ url_for('static', filename=e.receipt_path) }}" target="_blank" title="View receipt" class="btn btn-sm btn-outline-secondary"><i class="ph ph-paperclip"></i></a>
+            {% else %}<span class="text-muted small">—</span>{% endif %}
+          </td>
+          <td>
+            {% if session.role == 'CHAIRMAN' %}
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ e.id }}">Approve</button>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ e.id }}">Reject</button>
+            </div>
+            <!-- Approve Modal -->
+            <div class="modal fade" id="approveModal{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title">Approve {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_approve', expense_id=e.id) }}">
+                    <div class="modal-body">
+                      <p class="mb-2">Approving <strong>{{ e.expense_no }}</strong> for <strong>{{ e.amount|money }}</strong> — this will immediately deduct from the operational fund.</p>
+                      <label class="form-label text-muted small">Approval Notes (optional)</label>
+                      <textarea class="form-control" name="decision_notes" rows="2" placeholder="Any notes for the treasurer..."></textarea>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Confirm Approve</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- Reject Modal -->
+            <div class="modal fade" id="rejectModal{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title">Reject {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_reject', expense_id=e.id) }}">
+                    <div class="modal-body">
+                      <p class="mb-2">You are rejecting <strong>{{ e.expense_no }}</strong> for <strong>{{ e.amount|money }}</strong>.</p>
+                      <label class="form-label text-muted small">Reason for Rejection <span class="text-danger">*</span></label>
+                      <textarea class="form-control" name="decision_notes" rows="2" required placeholder="Explain why this expense is rejected..."></textarea>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-danger">Confirm Reject</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <span class="text-muted small">Awaiting chairman</span>
+            {% endif %}
+            {% if session.role in ('TREASURER', 'IT_ADMIN') %}
+            <div class="d-flex gap-1 mt-1">
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ e.id }}"><i class="ph ph-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ e.id }}"><i class="ph ph-trash"></i></button>
+            </div>
+            <!-- Edit Modal -->
+            <div class="modal fade" id="editModal{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title">Edit {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_edit', expense_id=e.id) }}" enctype="multipart/form-data">
+                    <div class="modal-body">
+                      <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Amount (UGX)</label><input class="form-control" type="number" min="1" name="amount" value="{{ e.amount }}" required></div>
+                        <div class="col-md-6"><label class="form-label">Date</label><input class="form-control" type="date" name="expense_date" value="{{ e.expense_date }}" required></div>
+                        <div class="col-12"><label class="form-label">Purpose / Description</label><input class="form-control" name="purpose" value="{{ e.purpose }}" required></div>
+                        <div class="col-md-6"><label class="form-label">Category</label><input class="form-control" name="category" value="{{ e.category or 'Operations' }}" required></div>
+                        <div class="col-md-6"><label class="form-label">Request Approval From</label>
+                          <select class="form-select" name="approver_user_id" required>
+                            <option value="">-- Select Approver --</option>
+                            {% for c in chairman_approvers %}
+                            <option value="{{ c.id }}" {% if c.id == e.requested_approver_user_id %}selected{% endif %}>{{ c.full_name or c.username }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="col-12"><label class="form-label">Supporting Notes</label><input class="form-control" name="notes" value="{{ e.notes or '' }}"></div>
+                        <div class="col-12">
+                          <label class="form-label">Replace Receipt <span class="text-muted small">(leave blank to keep existing)</span></label>
+                          <input class="form-control" type="file" name="receipt_file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
+                          {% if e.receipt_path %}<div class="small text-muted mt-1"><i class="ph ph-paperclip"></i> Current: <a href="{{ url_for('static', filename=e.receipt_path) }}" target="_blank">View attachment</a></div>{% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save Changes</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- Delete Modal -->
+            <div class="modal fade" id="deleteModal{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title text-danger">Delete {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_delete', expense_id=e.id) }}">
+                    <div class="modal-body">Are you sure you want to permanently delete <strong>{{ e.expense_no }}</strong> ({{ e.amount|money }})? This cannot be undone.</div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-danger">Delete</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% elif tab == 'summary' %}
+  <div class="p-3">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card"><div class="card-body">
+          <div class="small text-muted text-uppercase">Operational Income (Fees + Fines - Expenses)</div>
+          <div class="h4 mb-1">{{ ops.operational_income|money }}</div>
+          <div class="small text-muted">Formula requested for dashboard and reports.</div>
+        </div></div>
+      </div>
+      <div class="col-md-6">
+        <div class="card"><div class="card-body">
+          <div class="small text-muted text-uppercase">Operational Fund (Spendable)</div>
+          <div class="h4 mb-1">{{ ops.operational_fund_total|money }}</div>
+          <div class="small text-muted">Includes extra recorded operational incomes.</div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="notice-box">
+      Approved expenses deduct from operational funds immediately. Pending requests are reserved in the "after pending" view for safer treasury planning.
+    </div>
+  </div>
+
+  {% else %}
+  <div class="table-responsive">
+    <table class="expenses-table">
+      <thead><tr><th>Ref</th><th>Date</th><th>Amount</th><th>Purpose</th><th>Category</th><th>By</th><th>Approver</th><th>Status</th><th>Receipt</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for e in expenses_rows %}
+        <tr>
+          <td><strong>{{ e.expense_no }}</strong></td>
+          <td>{{ e.expense_date|datefmt }}</td>
+          <td>{{ e.amount|money }}</td>
+          <td>{{ e.purpose }}</td>
+          <td>{{ e.category or '-' }}</td>
+          <td>{{ e.requested_by_full or e.requested_by_name or '-' }}</td>
+          <td>{{ e.approver_full or e.approver_name or '-' }}</td>
+          <td>
+            {% if e.status == 'Approved' %}<span class="status-pill status-approved">Approved</span>
+            {% elif e.status == 'Rejected' %}<span class="status-pill status-rejected">Rejected</span>
+            {% else %}<span class="status-pill status-pending">Pending</span>{% endif %}
+          </td>
+          <td>
+            {% if e.receipt_path %}
+            <a href="{{ url_for('static', filename=e.receipt_path) }}" target="_blank" title="View receipt" class="btn btn-sm btn-outline-secondary"><i class="ph ph-paperclip"></i></a>
+            {% else %}<span class="text-muted small">—</span>{% endif %}
+          </td>
+          <td>
+            {% if session.role == 'CHAIRMAN' and e.status == 'Pending' %}
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ e.id }}">Approve</button>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ e.id }}">Reject</button>
+            </div>
+            <!-- Approve Modal -->
+            <div class="modal fade" id="approveModal{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title">Approve {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_approve', expense_id=e.id) }}">
+                    <div class="modal-body">
+                      <p class="mb-2">Approving <strong>{{ e.expense_no }}</strong> for <strong>{{ e.amount|money }}</strong> — this will immediately deduct from the operational fund.</p>
+                      <label class="form-label text-muted small">Approval Notes (optional)</label>
+                      <textarea class="form-control" name="decision_notes" rows="2" placeholder="Any notes for the treasurer..."></textarea>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Confirm Approve</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- Reject Modal -->
+            <div class="modal fade" id="rejectModal{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title">Reject {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_reject', expense_id=e.id) }}">
+                    <div class="modal-body">
+                      <p class="mb-2">You are rejecting <strong>{{ e.expense_no }}</strong> for <strong>{{ e.amount|money }}</strong>.</p>
+                      <label class="form-label text-muted small">Reason for Rejection <span class="text-danger">*</span></label>
+                      <textarea class="form-control" name="decision_notes" rows="2" required placeholder="Explain why this expense is rejected..."></textarea>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-danger">Confirm Reject</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <span class="text-muted small">-</span>
+            {% endif %}
+            {% if session.role in ('TREASURER', 'IT_ADMIN') and e.status == 'Pending' %}
+            <div class="d-flex gap-1 mt-1">
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModalAll{{ e.id }}"><i class="ph ph-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModalAll{{ e.id }}"><i class="ph ph-trash"></i></button>
+            </div>
+            <!-- Edit Modal -->
+            <div class="modal fade" id="editModalAll{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title">Edit {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_edit', expense_id=e.id) }}" enctype="multipart/form-data">
+                    <div class="modal-body">
+                      <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Amount (UGX)</label><input class="form-control" type="number" min="1" name="amount" value="{{ e.amount }}" required></div>
+                        <div class="col-md-6"><label class="form-label">Date</label><input class="form-control" type="date" name="expense_date" value="{{ e.expense_date }}" required></div>
+                        <div class="col-12"><label class="form-label">Purpose / Description</label><input class="form-control" name="purpose" value="{{ e.purpose }}" required></div>
+                        <div class="col-md-6"><label class="form-label">Category</label><input class="form-control" name="category" value="{{ e.category or 'Operations' }}" required></div>
+                        <div class="col-md-6"><label class="form-label">Request Approval From</label>
+                          <select class="form-select" name="approver_user_id" required>
+                            <option value="">-- Select Approver --</option>
+                            {% for c in chairman_approvers %}
+                            <option value="{{ c.id }}" {% if c.id == e.requested_approver_user_id %}selected{% endif %}>{{ c.full_name or c.username }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="col-12"><label class="form-label">Supporting Notes</label><input class="form-control" name="notes" value="{{ e.notes or '' }}"></div>
+                        <div class="col-12">
+                          <label class="form-label">Replace Receipt <span class="text-muted small">(leave blank to keep existing)</span></label>
+                          <input class="form-control" type="file" name="receipt_file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
+                          {% if e.receipt_path %}<div class="small text-muted mt-1"><i class="ph ph-paperclip"></i> Current: <a href="{{ url_for('static', filename=e.receipt_path) }}" target="_blank">View attachment</a></div>{% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save Changes</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- Delete Modal -->
+            <div class="modal fade" id="deleteModalAll{{ e.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header"><h6 class="modal-title text-danger">Delete {{ e.expense_no }}</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{{ url_for('admin.expenses_delete', expense_id=e.id) }}">
+                    <div class="modal-body">Are you sure you want to permanently delete <strong>{{ e.expense_no }}</strong> ({{ e.amount|money }})? This cannot be undone.</div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-danger">Delete</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+{% if session.role in ('TREASURER', 'IT_ADMIN') %}
+<div class="modal fade" id="incomeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Record Operational Income</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{{ url_for('admin.expenses_income_record') }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Amount (UGX)</label><input class="form-control" type="number" min="1" name="amount" required></div>
+            <div class="col-md-6"><label class="form-label">Date</label><input class="form-control" type="date" name="income_date" value="{{ today.isoformat() }}" required></div>
+            <div class="col-12"><label class="form-label">Source</label><input class="form-control" name="source" placeholder="Donation, adjustment, contribution, etc." required></div>
+            <div class="col-12"><label class="form-label">Notes</label><input class="form-control" name="notes" placeholder="Reference and context"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save Income</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Record Expense / Withdrawal</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{{ url_for('admin.expenses_request') }}" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="notice-box mb-3">
+            Record any club expenditure not related to loans. Expenses only consume operational funds from annual fees and other registered operational income, not member savings or loan interest. Available after pending requests: <strong>{{ ops.available_after_pending|money }}</strong>.
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Amount (UGX)</label><input class="form-control" type="number" min="1" name="amount" required></div>
+            <div class="col-md-6"><label class="form-label">Date</label><input class="form-control" type="date" name="expense_date" value="{{ today.isoformat() }}" required></div>
+            <div class="col-12"><label class="form-label">Purpose / Description</label><input class="form-control" name="purpose" placeholder="Describe the expense clearly" required></div>
+            <div class="col-md-6"><label class="form-label">Category</label><input class="form-control" name="category" value="Operations" required></div>
+            <div class="col-md-6"><label class="form-label">Request Approval From</label>
+              <select class="form-select" name="approver_user_id" required>
+                <option value="">-- Select Approver --</option>
+                {% for c in chairman_approvers %}
+                <option value="{{ c.id }}">{{ c.full_name or c.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12"><label class="form-label">Supporting Notes</label><input class="form-control" name="notes" placeholder="Receipt no., context, etc."></div>
+            <div class="col-12">
+              <label class="form-label">Attach Receipt / Supporting Document <span class="text-muted small">(JPG, PNG, PDF &mdash; max 5 MB)</span></label>
+              <input class="form-control" type="file" name="receipt_file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Submit for Approval</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

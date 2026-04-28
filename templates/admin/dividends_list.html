@@ -54,7 +54,7 @@
   <div class="card-body p-0 table-responsive">
     {% if runs %}
     <table class="table mb-0">
-      <thead><tr><th>Year</th><th>Pool</th><th>Members</th><th>Per Member</th><th>Top Saver</th><th>Distributed</th><th></th></tr></thead>
+      <thead><tr><th>Year</th><th>Pool</th><th>Members</th><th>Per Member</th><th>Top Saver</th><th>Status</th><th>Distributed</th><th></th></tr></thead>
       <tbody>
         {% for r in runs %}
         <tr>
@@ -63,8 +63,17 @@
           <td>{{ r.member_count }}</td>
           <td class="table-money">{{ r.per_member_amount|money }}</td>
           <td>{{ r.top_saver_no }} - {{ r.top_saver_name or '-' }}</td>
+          <td>
+            {% if r.status in ['Published', 'Distributed'] %}
+            <span class="badge-pill badge-active">Published</span>
+            {% else %}
+            <span class="badge-pill badge-pending">Hidden</span>
+            {% endif %}
+          </td>
           <td>{{ r.distribution_date|datefmt }}</td>
-          <td><a href="{{ url_for('admin.dividends_detail', run_id=r.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+          <td class="text-end">
+            <a href="{{ url_for('admin.dividends_detail', run_id=r.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

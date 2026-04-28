@@ -316,6 +316,51 @@ CREATE TABLE IF NOT EXISTS annual_fees (
 );
 
 -- ============================================================
+-- OPERATIONAL INCOME (non-fee/fine income lines)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS operational_incomes (
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    income_no               TEXT UNIQUE NOT NULL,
+    income_date             DATE NOT NULL,
+    amount                  INTEGER NOT NULL,
+    source                  TEXT NOT NULL,
+    notes                   TEXT,
+    recorded_by             INTEGER NOT NULL,
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (recorded_by) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_operational_incomes_date ON operational_incomes(income_date);
+
+-- ============================================================
+-- EXPENSE REQUESTS (treasurer submits, chairman approves)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS expenses (
+    id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+    expense_no                  TEXT UNIQUE NOT NULL,
+    expense_date                DATE NOT NULL,
+    amount                      INTEGER NOT NULL,
+    purpose                     TEXT NOT NULL,
+    category                    TEXT DEFAULT 'Operations',
+    notes                       TEXT,
+    status                      TEXT DEFAULT 'Pending', -- Pending / Approved / Rejected
+    requested_by                INTEGER NOT NULL,
+    requested_approver_user_id  INTEGER,
+    approved_by                 INTEGER,
+    approved_at                 TIMESTAMP,
+    decision_notes              TEXT,
+    receipt_path                TEXT,
+    created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (requested_by) REFERENCES users(id),
+    FOREIGN KEY (requested_approver_user_id) REFERENCES users(id),
+    FOREIGN KEY (approved_by) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status);
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
+
+-- ============================================================
 -- FINES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS fines (
@@ -383,3 +428,5 @@ def _apply_migrations(conn):
         conn.execute("ALTER TABLE loans ADD COLUMN application_file TEXT")
     if not _column_exists(conn, 'minutes', 'signed_file'):
         conn.execute("ALTER TABLE minutes ADD COLUMN signed_file TEXT")
+    if not _column_exists(conn, 'expenses', 'receipt_path'):
+        conn.execute("ALTER TABLE expenses ADD COLUMN receipt_path TEXT")

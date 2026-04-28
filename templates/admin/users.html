@@ -69,7 +69,7 @@
                 </form>
                 {% if user.member_id %}
                 <form method="post" action="{{ url_for('admin.users_delete_member', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be archived and hidden from the default members list; clean records will be fully deleted.');">
+                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be marked as Exited and hidden from the default members list; clean records will be fully deleted.');">
                   <button type="submit" class="btn btn-outline-dark" title="Delete Member Too">
                     <i class="ph ph-user-minus"></i>
                   </button>
@@ -139,7 +139,7 @@
                 </form>
                 {% if user.member_id %}
                 <form method="post" action="{{ url_for('admin.users_delete_member', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be archived and hidden from the default members list; clean records will be fully deleted.');">
+                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be marked as Exited and hidden from the default members list; clean records will be fully deleted.');">
                   <button type="submit" class="btn btn-outline-dark" title="Delete Member Too">
                     <i class="ph ph-user-minus"></i>
                   </button>
@@ -183,7 +183,7 @@
     <li>Use "Edit" to change passwords or reset account status</li>
     <li>Use "Toggle" to activate/deactivate accounts without deleting</li>
     <li>Deleting a user here removes login access only; it does not remove the member from the Members module</li>
-    <li>Use the new person-remove button to remove the linked member too; historical records are archived instead of being destroyed</li>
+    <li>Use the new person-remove button to remove the linked member too; historical records are marked as Exited instead of being destroyed</li>
   </ul>
 </div>
 {% endblock %}

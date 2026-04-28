@@ -7,32 +7,40 @@
     <h1>Savings Module</h1>
     <div class="subtitle">Club start: Aug-2025. Deposits are auto-allocated at {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} per month.</div>
   </div>
+  <div class="d-flex gap-2 flex-wrap savings-module-actions">
+    <a href="{{ url_for('admin.savings_list', view=view, member_scope='active', member_id=selected_member_id if view == 'ledger' else None, year=year if view == 'calendar' else None) }}"
+       class="btn btn-sm {% if member_scope == 'active' %}btn-primary module-highlight-btn{% else %}btn-outline-secondary module-year-btn{% endif %}">
+      <i class="ph ph-user-check"></i> Active Savings
+    </a>
+    <a href="{{ url_for('admin.savings_list', view=view, member_scope='non_active', member_id=selected_member_id if view == 'ledger' else None, year=year if view == 'calendar' else None) }}"
+       class="btn btn-sm {% if member_scope == 'non_active' %}btn-primary module-highlight-btn{% else %}btn-outline-secondary module-year-btn{% endif %}">
+      <i class="ph ph-user-minus"></i> Non-Active Savings ({{ non_active_count }})
+    </a>
   {% if session.role in ('IT_ADMIN','TREASURER') %}
-  <div class="d-flex gap-2 savings-module-actions">
     <a href="{{ url_for('admin.savings_record') }}" class="btn btn-primary"><i class="ph ph-plus-circle"></i> Record Deposit</a>
     <a href="{{ url_for('admin.savings_bulk') }}" class="btn btn-outline-primary"><i class="ph ph-stack"></i> Bulk Record</a>
-  </div>
   {% endif %}
+  </div>
 </div>
 
 <ul class="nav nav-tabs mb-3 savings-module-tabs">
   <li class="nav-item">
-    <a class="nav-link {% if view == 'overview' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='overview') }}">
+    <a class="nav-link {% if view == 'overview' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='overview', member_scope=member_scope) }}">
       <i class="ph ph-chart-pie-slice"></i> Overview
     </a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if view == 'ledger' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='ledger', member_id=selected_member_id) }}">
+    <a class="nav-link {% if view == 'ledger' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='ledger', member_id=selected_member_id, member_scope=member_scope) }}">
       <i class="ph ph-book-bookmark"></i> Ledger
     </a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if view == 'calendar' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='calendar', year=year) }}">
+    <a class="nav-link {% if view == 'calendar' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='calendar', year=year, member_scope=member_scope) }}">
       <i class="ph ph-calendar-check"></i> Calendar
     </a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if view == 'amendments' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='amendments') }}">
+    <a class="nav-link {% if view == 'amendments' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='amendments', member_scope=member_scope) }}">
       <i class="ph ph-note-pencil"></i> Amendments
     </a>
   </li>
@@ -48,16 +56,16 @@
     <div class="stat-card info">
       <div class="label">Expected To Date</div>
       <div class="value">{{ expected_to_date|money }}</div>
-      <div class="sub">{{ active_count }} active members x months since Aug-2025</div>
+      <div class="sub">{{ scope_count }} {{ scope_label|lower }} members x months since Aug-2025</div>
     </div>
     <div class="stat-card gold">
       <div class="label">Coverage</div>
       <div class="value">{% if expected_to_date %}{{ ((total_savings_all / expected_to_date) * 100)|round|int }}%{% else %}0%{% endif %}</div>
       <div class="sub">Overall collection progress</div>
     </div>
-    <div class="stat-card {% if active_count %}accent{% else %}danger{% endif %}">
-      <div class="label">Active Members</div>
-      <div class="value">{{ active_count }}</div>
+    <div class="stat-card {% if scope_count %}accent{% else %}danger{% endif %}">
+      <div class="label">{{ scope_label }} Members</div>
+      <div class="value">{{ scope_count }}</div>
       <div class="sub">Included in expected calculations</div>
     </div>
   </div>
@@ -76,7 +84,7 @@
             <td>{{ m.full_name }}</td>
             <td>{{ m.months_covered }}</td>
             <td class="table-money money-positive">{{ m.total_savings|money }}</td>
-            <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.savings_list', view='ledger', member_id=m.id) }}">View Ledger</a></td>
+            <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.savings_list', view='ledger', member_id=m.id, member_scope=member_scope) }}">View Ledger</a></td>
           </tr>
           {% else %}
           <tr><td colspan="5" class="text-center text-muted py-4">No member savings records yet.</td></tr>
@@ -92,6 +100,7 @@
     <div class="card-body">
       <form method="get" class="row g-2 align-items-end">
         <input type="hidden" name="view" value="ledger">
+        <input type="hidden" name="member_scope" value="{{ member_scope }}">
         <div class="col-md-6">
           <label class="form-label">Select Member</label>
           <select name="member_id" class="form-select" onchange="this.form.submit()">
@@ -163,7 +172,7 @@
       </div>
       <div class="savings-calendar-actions">
         {% for y in years %}
-          <a href="{{ url_for('admin.savings_list', view='calendar', year=y) }}"
+          <a href="{{ url_for('admin.savings_list', view='calendar', year=y, member_scope=member_scope) }}"
              class="btn btn-sm {% if y == year %}btn-primary module-highlight-btn{% else %}btn-outline-secondary module-year-btn{% endif %} me-1 mb-1">{{ y }} Savings</a>
         {% endfor %}
       </div>

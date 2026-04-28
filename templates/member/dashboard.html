@@ -23,6 +23,28 @@
   background-clip: text;
 }
 
+.member-id-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #c7d7eb;
+  background: #ffffff;
+  color: #244f86;
+  font-size: 11px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.member-hero .member-profile-photo {
+  width: 58px;
+  height: 58px;
+  border-width: 3px;
+}
+
 .member-dash-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -70,6 +92,45 @@
   color: #6b7886;
 }
 
+.member-dash-tile.tile-ok {
+  border-color: #a4d6bb;
+  background: linear-gradient(135deg, #f7fff9 0%, #eefaf3 100%);
+}
+
+.member-dash-tile.tile-ok .value {
+  color: #136541;
+}
+
+.member-dash-tile.tile-ok .head i {
+  color: #1d8a5b;
+}
+
+.member-dash-tile.tile-warn {
+  border-color: #e8c788;
+  background: linear-gradient(135deg, #fffaf0 0%, #fff4de 100%);
+}
+
+.member-dash-tile.tile-warn .value {
+  color: #9b5f08;
+}
+
+.member-dash-tile.tile-warn .head i {
+  color: #bf7a2a;
+}
+
+.member-dash-tile.tile-bad {
+  border-color: #e6a5a5;
+  background: linear-gradient(135deg, #fff7f7 0%, #ffefef 100%);
+}
+
+.member-dash-tile.tile-bad .value {
+  color: #a12626;
+}
+
+.member-dash-tile.tile-bad .head i {
+  color: #b73e3e;
+}
+
 .member-loan-mini {
   margin-top: 18px;
   background: #fff;
@@ -93,6 +154,172 @@
 .member-loan-mini-item .k { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #708195; font-weight: 700; }
 .member-loan-mini-item .v { margin-top: 4px; font-size: 20px; font-weight: 800; color: #214764; }
 
+.member-trend-card {
+  margin-top: 14px;
+  background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
+  border: 1px solid #d7e2ef;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(41,74,144,.08);
+}
+
+.member-notif-card {
+  margin-bottom: 14px;
+  background: #fff;
+  border: 1px solid #d7e2ef;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(30, 48, 74, .08);
+  overflow: hidden;
+}
+.member-notif-head {
+  padding: 10px 14px;
+  font-size: 12px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: #4f6781;
+  font-weight: 800;
+  background: linear-gradient(90deg, #edf4ff 0%, #f5f9ff 100%);
+  border-bottom: 1px solid #d9e5f3;
+}
+.member-notif-item {
+  display: block;
+  text-decoration: none;
+  padding: 11px 14px;
+  border-bottom: 1px solid #edf2f8;
+}
+.member-notif-item:last-child { border-bottom: 0; }
+.member-notif-item:hover { background: #f8fbff; }
+.member-notif-title { font-size: 13px; font-weight: 700; color: #20384b; }
+.member-notif-msg { font-size: 12px; color: #607286; margin-top: 2px; }
+
+.member-trend-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.member-trend-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.member-trend-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e6f1fc 0%, #d3e8fb 100%);
+  color: #2f6fa8;
+  font-size: 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
+}
+
+.member-trend-title .eyebrow {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .75px;
+  font-weight: 800;
+  color: #6b7c8f;
+}
+
+.member-trend-title .name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #24394d;
+  line-height: 1.2;
+}
+
+.member-trend-title .hint {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6b7886;
+}
+
+.member-trend-panel {
+  border: 1px solid #dbe6f2;
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  background: linear-gradient(180deg, #fdfefe 0%, #f4f8fc 100%);
+}
+
+.member-trend-bars {
+  height: 112px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  padding-top: 4px;
+  border-bottom: 1px solid #dde7f0;
+}
+
+.member-trend-bar-wrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.member-trend-status {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.member-trend-status .badge-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42), 0 5px 10px rgba(28,39,55,.16);
+  border: 1px solid rgba(255,255,255,.45);
+}
+
+.member-trend-status .badge-icon.paid {
+  background: linear-gradient(180deg, #49bf7b 0%, #1f8f68 55%, #156d4f 100%);
+}
+
+.member-trend-status .badge-icon.unpaid {
+  background: linear-gradient(180deg, #dd6b6b 0%, #b73e3e 55%, #8f2d2d 100%);
+}
+
+.member-trend-status .badge-icon.pending {
+  background: linear-gradient(180deg, #f1c56f 0%, #d59a28 55%, #b67b13 100%);
+}
+
+.member-trend-value {
+  text-align: center;
+  font-size: 10px;
+  color: #4f6479;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.member-trend-bar {
+  width: 100%;
+  border-radius: 12px 12px 4px 4px;
+  background: linear-gradient(180deg, #67a8e6 0%, #3f83c5 55%, #2b679c 100%);
+  min-height: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 8px 16px rgba(47,111,168,.12);
+}
+
+.member-trend-label {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #6e7e8f;
+  font-weight: 700;
+  letter-spacing: .25px;
+}
+
 @media (max-width: 780px) {
   .member-loan-mini-row { grid-template-columns: 1fr; }
 }
@@ -107,49 +334,61 @@
       <div class="member-profile-photo member-profile-photo-sm member-avatar-fallback">{{ (member.full_name or 'U')[0]|upper }}</div>
       {% endif %}
       <div>
-        <h1>Welcome, {{ member.full_name.split()[0] }}</h1>
-        <div class="subtitle">Member {{ member.member_no }} &middot; {{ cur_period_pretty }} summary</div>
+        <h1>Welcome {{ greeting_prefix }} {{ member.full_name }}</h1>
+        <div class="subtitle">Current Month Overview ({{ today.strftime('%B %Y') }})</div>
+        <div class="member-id-chip"><i class="bi bi-person-vcard"></i> {{ member.member_no }}</div>
       </div>
     </div>
   </div>
-  <div class="read-only-banner mt-3">
-    <i class="ph ph-info"></i> Personal read-only view: your savings, loans, fees, fines, and published minutes.
-  </div>
+</div>
+
+<div class="member-notif-card">
+  <div class="member-notif-head"><i class="ph ph-bell"></i> Notifications</div>
+  {% if unread_notifications %}
+    {% for n in unread_notifications %}
+    <a class="member-notif-item" href="{{ url_for('member.notification_open', notification_id=n.id) }}">
+      <div class="member-notif-title">{{ n.title }}</div>
+      <div class="member-notif-msg">{{ n.message }}</div>
+    </a>
+    {% endfor %}
+  {% else %}
+    <div class="p-3 text-muted small">No unread notifications.</div>
+  {% endif %}
 </div>
 
 <div class="member-dash-grid">
   <a class="member-dash-tile" href="{{ url_for('member.savings_statement') }}">
-    <div class="head"><span class="label">Savings Pool</span><i class="ph ph-bank"></i></div>
+    <div class="head"><span class="label">Savings Pool</span><i class="bi bi-bank2"></i></div>
     <div class="value">{{ total_savings|money }}</div>
     <div class="sub">Locked: {{ locked|money }} | Available: {{ available|money }}</div>
   </a>
 
-  <a class="member-dash-tile" href="{{ url_for('member.savings_statement') }}">
-    <div class="head"><span class="label">Current Month Savings</span><i class="ph ph-calendar-check"></i></div>
+  <a class="member-dash-tile tile-{{ month_savings_state }}" href="{{ url_for('member.savings_statement') }}">
+    <div class="head"><span class="label">Current Month Savings</span><i class="bi bi-cash-coin"></i></div>
     <div class="value">{% if my_month_savings_paid %}Paid{% else %}Pending{% endif %}</div>
-    <div class="sub">Outstanding this month: {{ my_month_savings_outstanding|money }} | Arrears: {{ arrears_amount|money }}</div>
+    <div class="sub">Outstanding this month: {{ my_month_savings_outstanding|money }} | Arrears: {{ prior_arrears_amount|money }}</div>
   </a>
 
-  <a class="member-dash-tile" href="{{ url_for('member.profile') }}">
-    <div class="head"><span class="label">Annual Fee {{ current_year }}</span><i class="ph ph-receipt"></i></div>
+  <a class="member-dash-tile tile-{{ fee_status_state }}" href="{{ url_for('member.profile') }}">
+    <div class="head"><span class="label">Annual Fee {{ current_year }}</span><i class="bi bi-patch-check"></i></div>
     <div class="value">{% if my_fee_paid %}Paid{% else %}Pending{% endif %}</div>
     <div class="sub">Fee amount: {{ my_fee_amount|money }} | Deadline: {{ my_fee_deadline|datefmt }}</div>
   </a>
 
   <a class="member-dash-tile" href="{{ url_for('member.profile') }}">
-    <div class="head"><span class="label">My Fines {{ current_year }}</span><i class="ph ph-warning-octagon"></i></div>
+    <div class="head"><span class="label">My Fines {{ current_year }}</span><i class="bi bi-exclamation-diamond"></i></div>
     <div class="value">{{ my_fines_outstanding|money }}</div>
     <div class="sub">Outstanding fines ({{ my_fines_unpaid_count }} records) | Collected: {{ my_fines_collected|money }}</div>
   </a>
 
   <a class="member-dash-tile" href="{{ url_for('member.minutes') }}">
-    <div class="head"><span class="label">Minutes Published</span><i class="ph ph-notepad"></i></div>
+    <div class="head"><span class="label">Minutes Published</span><i class="bi bi-journal-check"></i></div>
     <div class="value">{{ published_minutes_count }}</div>
     <div class="sub">Published records readable from your portal</div>
   </a>
 
   <a class="member-dash-tile" href="{{ url_for('member.profile') }}">
-    <div class="head"><span class="label">Operations (Fees + Fines)</span><i class="ph ph-chart-line-up"></i></div>
+    <div class="head"><span class="label">Operations (Fees + Fines)</span><i class="bi bi-graph-up-arrow"></i></div>
     <div class="value">{{ operations_my_collected|money }}</div>
     <div class="sub">Collected from you | Projection: {{ operations_my_projection|money }} | Outstanding: {{ operations_my_outstanding|money }}</div>
   </a>
@@ -164,6 +403,45 @@
     <div class="member-loan-mini-item"><div class="k">Active</div><div class="v">{{ my_loans_active_count }}</div></div>
     <div class="member-loan-mini-item"><div class="k">Pending</div><div class="v">{{ my_loans_pending_count }}</div></div>
     <div class="member-loan-mini-item"><div class="k">Overdue</div><div class="v">{{ my_loans_overdue_count }}</div></div>
+  </div>
+</div>
+
+<div class="member-trend-card">
+  <div class="member-trend-head">
+    <div class="member-trend-title">
+      <div class="member-trend-icon"><i class="bi bi-bar-chart-line"></i></div>
+      <div>
+        <div class="eyebrow">Savings Pattern</div>
+        <div class="name">My Savings Trend</div>
+        <div class="hint">Last 6 months of contributions</div>
+      </div>
+    </div>
+    <a href="{{ url_for('member.savings_statement') }}" class="small">View statement &rarr;</a>
+  </div>
+  <div class="member-trend-panel">
+    <div class="member-trend-bars">
+      {% for t in savings_trend %}
+      {% set h = ((t.amount / savings_trend_max) * 100) if savings_trend_max > 0 else 8 %}
+      <div class="member-trend-bar-wrap">
+        <div class="member-trend-status">
+          {% if t.status == 'paid' %}
+          <span class="badge-icon paid" title="Paid"><i class="bi bi-check-lg"></i></span>
+          {% elif t.status == 'pending' %}
+          <span class="badge-icon pending" title="Pending"><i class="bi bi-exclamation-triangle-fill"></i></span>
+          {% else %}
+          <span class="badge-icon unpaid" title="Not paid"><i class="bi bi-x-lg"></i></span>
+          {% endif %}
+        </div>
+        <div class="member-trend-value">
+          {% if t.amount >= 1000000 %}{{ '%.1f'|format(t.amount / 1000000) }}M
+          {% elif t.amount >= 1000 %}{{ (t.amount // 1000) }}K
+          {% else %}{{ t.amount }}{% endif %}
+        </div>
+        <div class="member-trend-bar" style="height: {{ [h, 10]|max }}%;"></div>
+        <div class="member-trend-label">{{ t.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 

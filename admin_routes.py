@@ -5,9 +5,11 @@ Handles members, savings, loans, dividends, minutes, fees, fines, settings
 import os
 import uuid
 import json
+import csv
+import io
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
-    session, flash, current_app, jsonify
+    session, flash, current_app, jsonify, Response
 )
 from werkzeug.security import generate_password_hash
 from datetime import datetime, date
@@ -42,6 +44,22 @@ def _save_upload(file_field_name, subfolder=''):
     f.save(os.path.join(dest_dir, filename))
     rel = f"uploads/{subfolder}/{filename}" if subfolder else f"uploads/{filename}"
     return rel.replace('\\', '/')
+
+
+def _save_expense_receipt(file_field_name='receipt_file'):
+    """Save an expense receipt (image or PDF). Returns relative path or None."""
+    ALLOWED = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'}
+    f = request.files.get(file_field_name)
+    if not f or not f.filename:
+        return None
+    ext = f.filename.rsplit('.', 1)[-1].lower()
+    if ext not in ALLOWED:
+        return None
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    dest_dir = os.path.join(Config.UPLOAD_FOLDER, 'expense-receipts')
+    os.makedirs(dest_dir, exist_ok=True)
+    f.save(os.path.join(dest_dir, filename))
+    return f"uploads/expense-receipts/{filename}"
 
 
 def _auto_apply_penalties(db, loan_id):
@@ -142,6 +160,28 @@ def _notify_roles(db, roles, title, message, link=None, exclude_user_id=None):
         )
 
 
+def _notify_user(db, user_id, title, message, link=None):
+    if not user_id:
+        return
+    db.execute(
+        """INSERT INTO notifications (user_id, title, message, link)
+           VALUES (?, ?, ?, ?)""",
+        (user_id, title, message, link),
+    )
+
+
+def _notify_member(db, member_id, title, message, link=None):
+    """Push a notification to a member login if one exists and is active."""
+    if not member_id:
+        return
+    user = db.execute(
+        "SELECT id FROM users WHERE member_id=? AND is_active=1 ORDER BY id LIMIT 1",
+        (member_id,),
+    ).fetchone()
+    if user:
+        _notify_user(db, user['id'], title, message, link)
+
+
 def _member_removal_impact(db, member_id):
     counts = {
         'logins': db.execute(
@@ -206,6 +246,91 @@ def _next_archived_member_no(db, old_member_no):
     return candidate
 
 
+def _normalize_legacy_archived_status(db):
+    """Keep legacy records consistent after status rename from Archived to Exited."""
+    db.execute("UPDATE members SET status = 'Exited' WHERE status = 'Archived'")
+
+
+def _next_doc_no(db, table_name, column_name, prefix):
+    row = db.execute(
+        f"SELECT {column_name} AS no FROM {table_name} ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    seq = 1
+    if row and row['no']:
+        try:
+            seq = int(str(row['no']).split('-')[-1]) + 1
+        except (TypeError, ValueError):
+            seq = 1
+    return f"{prefix}-{seq:04d}"
+
+
+def _operational_fund_snapshot(db):
+    fees_collected = db.execute(
+        "SELECT COALESCE(SUM(amount),0) s FROM annual_fees WHERE status='Paid'"
+    ).fetchone()['s']
+    fines_collected = db.execute(
+        "SELECT COALESCE(SUM(amount),0) s FROM fines WHERE status='Paid'"
+    ).fetchone()['s']
+    recorded_income = db.execute(
+        "SELECT COALESCE(SUM(amount),0) s FROM operational_incomes"
+    ).fetchone()['s']
+    approved_expenses = db.execute(
+        "SELECT COALESCE(SUM(amount),0) s FROM expenses WHERE status='Approved'"
+    ).fetchone()['s']
+    pending_expenses = db.execute(
+        "SELECT COALESCE(SUM(amount),0) s FROM expenses WHERE status='Pending'"
+    ).fetchone()['s']
+
+    operational_income = int(fees_collected or 0) + int(fines_collected or 0) - int(approved_expenses or 0)
+    operational_fund_total = (
+        int(fees_collected or 0)
+        + int(fines_collected or 0)
+        + int(recorded_income or 0)
+        - int(approved_expenses or 0)
+    )
+    available_after_pending = operational_fund_total - int(pending_expenses or 0)
+
+    return {
+        'fees_collected': int(fees_collected or 0),
+        'fines_collected': int(fines_collected or 0),
+        'recorded_income': int(recorded_income or 0),
+        'approved_expenses': int(approved_expenses or 0),
+        'pending_expenses': int(pending_expenses or 0),
+        'operational_income': operational_income,
+        'operational_fund_total': operational_fund_total,
+        'available_after_pending': available_after_pending,
+    }
+
+
+def _loan_interest_snapshot(db):
+    collected = db.execute(
+        "SELECT COALESCE(SUM(interest_part),0) s FROM loan_repayments"
+    ).fetchone()['s']
+
+    projected_interest = 0
+    projected_penalty = 0
+    open_loans = db.execute(
+        "SELECT * FROM loans WHERE status IN ('Active','Pending')"
+    ).fetchall()
+    for loan in open_loans:
+        repays = db.execute(
+            "SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)
+        ).fetchall()
+        pens = db.execute(
+            "SELECT * FROM loan_penalties WHERE loan_id=?", (loan['id'],)
+        ).fetchall()
+        pos = calculate_loan_position(loan, repays, pens)
+        projected_interest += int(pos['outstanding_interest'] or 0)
+        projected_penalty += int(pos['outstanding_penalty'] or 0)
+
+    return {
+        'collected': int(collected or 0),
+        'projected_open': projected_interest + projected_penalty,
+        'projected_interest': projected_interest,
+        'projected_penalty': projected_penalty,
+    }
+
+
 def _remove_member_record(db, member):
     impact = _member_removal_impact(db, member['id'])
     linked_login = db.execute(
@@ -225,15 +350,15 @@ def _remove_member_record(db, member):
     db.execute("UPDATE users SET is_active = 0 WHERE member_id = ?", (member['id'],))
     db.execute(
         """UPDATE members
-              SET member_no = ?, status = 'Archived', updated_at = CURRENT_TIMESTAMP
+              SET member_no = ?, status = 'Exited', updated_at = CURRENT_TIMESTAMP
             WHERE id = ?""",
         (archived_member_no, member['id']),
     )
     return {
-        'mode': 'archived',
+        'mode': 'exited',
         'login_username': linked_login['username'] if linked_login else None,
         'message': (
-            f"Member {member['member_no']} has historical records, so the system archived the member "
+            f"Member {member['member_no']} has historical records, so the system marked the member as Exited "
             "and disabled their login instead of hard-deleting them."
         ),
     }
@@ -246,6 +371,8 @@ def _remove_member_record(db, member):
 @admin_required
 def dashboard():
     db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
 
     # Member counts
     total_members = db.execute(
@@ -254,7 +381,10 @@ def dashboard():
 
     # Total savings
     total_savings = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) s FROM savings"
+        """SELECT COALESCE(SUM(s.amount), 0) s
+             FROM savings s
+             JOIN members m ON m.id = s.member_id
+            WHERE m.status = 'Active'"""
     ).fetchone()['s']
 
     # Loan stats
@@ -308,7 +438,10 @@ def dashboard():
 
     # Current month savings total and defaulters
     month_savings_total = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) s FROM savings WHERE period = ?",
+        """SELECT COALESCE(SUM(s.amount), 0) s
+             FROM savings s
+             JOIN members m ON m.id = s.member_id
+            WHERE s.period = ? AND m.status = 'Active'""",
         (cur_period,),
     ).fetchone()['s']
 
@@ -347,9 +480,10 @@ def dashboard():
 
     # Current month savings coverage
     month_paid_members = db.execute(
-        """SELECT COUNT(DISTINCT member_id) c
-             FROM savings
-            WHERE period = ?""",
+        """SELECT COUNT(DISTINCT s.member_id) c
+             FROM savings s
+             JOIN members m ON m.id = s.member_id
+            WHERE s.period = ? AND m.status = 'Active'""",
         (cur_period,),
     ).fetchone()['c']
     month_outstanding_members = max(0, total_members - month_paid_members)
@@ -391,10 +525,35 @@ def dashboard():
         "SELECT COUNT(*) c FROM minutes"
     ).fetchone()['c']
 
-    # Operational pool (fees + fines)
-    operations_collected = int(fees_pool or 0) + int(fines_year['collected'] or 0)
+    # Operational pool and expenses
+    ops = _operational_fund_snapshot(db)
+    operations_collected = ops['fees_collected'] + ops['fines_collected']
     operations_projection = int(fees_projection or 0) + int(fines_year['issued'] or 0)
     operations_outstanding = max(0, operations_projection - operations_collected)
+    operations_income = ops['operational_income']
+    operations_fund_total = ops['operational_fund_total']
+    operations_available_after_pending = ops['available_after_pending']
+    expenses_spent = ops['approved_expenses']
+    expenses_pending = ops['pending_expenses']
+    expenses_spent_count = db.execute(
+        "SELECT COUNT(*) c FROM expenses WHERE status='Approved'"
+    ).fetchone()['c']
+
+    # Pending expenses for chairman dashboard panel
+    pending_expenses_rows = db.execute(
+        """SELECT e.*, req.username AS requested_by_name,
+                  COALESCE(reqm.full_name, req.username) AS requested_by_full
+             FROM expenses e
+             LEFT JOIN users req ON req.id = e.requested_by
+             LEFT JOIN members reqm ON reqm.id = req.member_id
+            WHERE e.status = 'Pending'
+            ORDER BY e.created_at DESC"""
+    ).fetchall()
+
+    # Loan interest performance
+    loan_interest = _loan_interest_snapshot(db)
+    loan_interest_collected = loan_interest['collected']
+    loan_interest_projected = loan_interest['projected_open']
 
     # Recent activity
     recent_audit = db.execute(
@@ -424,7 +583,10 @@ def dashboard():
     trend = []
     for p in periods:
         row = db.execute(
-            "SELECT COALESCE(SUM(amount),0) s, COUNT(*) c FROM savings WHERE period=?",
+            """SELECT COALESCE(SUM(s.amount),0) s, COUNT(*) c
+                 FROM savings s
+                 JOIN members m ON m.id = s.member_id
+                WHERE s.period=? AND m.status='Active'""",
             (p,),
         ).fetchone()
         trend.append({
@@ -440,7 +602,10 @@ def dashboard():
     yearly_trend = []
     for y in years:
         row = db.execute(
-            "SELECT COALESCE(SUM(amount),0) s FROM savings WHERE period LIKE ?",
+            """SELECT COALESCE(SUM(s.amount),0) s
+                 FROM savings s
+                 JOIN members m ON m.id = s.member_id
+                WHERE s.period LIKE ? AND m.status='Active'""",
             (f"{y}-%",),
         ).fetchone()
         yearly_trend.append({
@@ -480,10 +645,38 @@ def dashboard():
         minutes_published=minutes_published,
         minutes_total=minutes_total,
         operations_collected=operations_collected,
+        operations_income=operations_income,
         operations_projection=operations_projection,
         operations_outstanding=operations_outstanding,
+        operations_fund_total=operations_fund_total,
+        operations_available_after_pending=operations_available_after_pending,
+        expenses_spent=expenses_spent,
+        expenses_pending=expenses_pending,
+        expenses_spent_count=expenses_spent_count,
+        loan_interest_collected=loan_interest_collected,
+        loan_interest_projected=loan_interest_projected,
+        pending_rows=pending_expenses_rows,
         yearly_trend=yearly_trend,
     )
+
+
+@bp.route('/notifications/<int:notification_id>/open')
+@admin_required
+def notification_open(notification_id):
+    db = get_db()
+    n = db.execute(
+        "SELECT * FROM notifications WHERE id=? AND user_id=?",
+        (notification_id, session['user_id']),
+    ).fetchone()
+    if not n:
+        flash('Notification not found.', 'warning')
+        return redirect(url_for('admin.dashboard'))
+
+    db.execute("UPDATE notifications SET is_read=1 WHERE id=?", (notification_id,))
+    db.commit()
+    if n['link']:
+        return redirect(n['link'])
+    return redirect(url_for('admin.dashboard'))
 
 
 # ===========================================================================
@@ -493,6 +686,8 @@ def dashboard():
 @admin_required
 def members_list():
     db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
     q = (request.args.get('q') or '').strip()
     role_filter = request.args.get('role') or ''
     status_filter = request.args.get('status') or ''
@@ -511,7 +706,7 @@ def members_list():
         sql += " AND status = ?"
         params.append(status_filter)
     else:
-        sql += " AND status != 'Archived'"
+        sql += " AND status NOT IN ('Exited', 'Archived')"
     sql += " ORDER BY member_no"
     members = db.execute(sql, params).fetchall()
 
@@ -524,8 +719,12 @@ def members_list():
             "SELECT 1 FROM users WHERE member_id = ?", (m['id'],)
         ).fetchone()
         d = dict(m)
-        d['savings_total'] = savings_total
-        d['locked'] = locked
+        if m['status'] in {'Exited', 'Archived'}:
+            d['savings_total'] = None
+            d['locked'] = None
+        else:
+            d['savings_total'] = savings_total
+            d['locked'] = locked
         d['has_login'] = bool(has_user)
         enriched.append(d)
 
@@ -669,67 +868,78 @@ def member_create():
 @admin_required
 def member_detail(member_id):
     db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
     member = db.execute("SELECT * FROM members WHERE id = ?", (member_id,)).fetchone()
     if not member:
         flash('Member not found.', 'danger')
         return redirect(url_for('admin.members_list'))
 
-    savings = db.execute(
-        "SELECT * FROM savings WHERE member_id = ? ORDER BY period DESC",
-        (member_id,),
-    ).fetchall()
-    loans = db.execute(
-        """SELECT l.*, m1.full_name g1_name, m2.full_name g2_name
-             FROM loans l
-             LEFT JOIN members m1 ON m1.id = l.guarantor1_id
-             LEFT JOIN members m2 ON m2.id = l.guarantor2_id
-            WHERE l.member_id = ?
-            ORDER BY l.issued_date DESC""",
-        (member_id,),
-    ).fetchall()
-    fines = db.execute(
-        "SELECT * FROM fines WHERE member_id = ? ORDER BY fine_date DESC",
-        (member_id,),
-    ).fetchall()
-    fees = db.execute(
-        "SELECT * FROM annual_fees WHERE member_id = ? ORDER BY year DESC",
-        (member_id,),
-    ).fetchall()
+    is_exited_member = member['status'] in {'Exited', 'Archived'}
+
+    savings = []
+    loans = []
+    fines = []
+    fees = []
+    if not is_exited_member:
+        savings = db.execute(
+            "SELECT * FROM savings WHERE member_id = ? ORDER BY period DESC",
+            (member_id,),
+        ).fetchall()
+        loans = db.execute(
+            """SELECT l.*, m1.full_name g1_name, m2.full_name g2_name
+                 FROM loans l
+                 LEFT JOIN members m1 ON m1.id = l.guarantor1_id
+                 LEFT JOIN members m2 ON m2.id = l.guarantor2_id
+                WHERE l.member_id = ?
+                ORDER BY l.issued_date DESC""",
+            (member_id,),
+        ).fetchall()
+        fines = db.execute(
+            "SELECT * FROM fines WHERE member_id = ? ORDER BY fine_date DESC",
+            (member_id,),
+        ).fetchall()
+        fees = db.execute(
+            "SELECT * FROM annual_fees WHERE member_id = ? ORDER BY year DESC",
+            (member_id,),
+        ).fetchall()
     user_row = db.execute(
         "SELECT * FROM users WHERE member_id = ?", (member_id,),
     ).fetchone()
 
-    total_savings = get_member_total_savings(db, member_id)
-    locked = get_member_locked_amount(db, member_id)
+    total_savings = 0 if is_exited_member else get_member_total_savings(db, member_id)
+    locked = 0 if is_exited_member else get_member_locked_amount(db, member_id)
     available = max(0, total_savings - locked)
 
     # Build full savings periods view with statuses
-    expected_periods = all_savings_periods()
-    join = member['join_date']
-    if isinstance(join, str):
-        join_d = datetime.strptime(join, '%Y-%m-%d').date()
-    else:
-        join_d = join
-    join_period = period_str(join_d)
-    expected = [p for p in expected_periods if p >= join_period]
-
-    paid_map = {s['period']: s for s in savings}
     history = []
-    for p in expected:
-        s = paid_map.get(p)
-        history.append({
-            'period': p,
-            'label': period_label(p),
-            'amount': s['amount'] if s else 0,
-            'paid': bool(s),
-            'payment_date': s['payment_date'] if s else None,
-        })
+    if not is_exited_member:
+        expected_periods = all_savings_periods()
+        join = member['join_date']
+        if isinstance(join, str):
+            join_d = datetime.strptime(join, '%Y-%m-%d').date()
+        else:
+            join_d = join
+        join_period = period_str(join_d)
+        expected = [p for p in expected_periods if p >= join_period]
+
+        paid_map = {s['period']: s for s in savings}
+        for p in expected:
+            s = paid_map.get(p)
+            history.append({
+                'period': p,
+                'label': period_label(p),
+                'amount': s['amount'] if s else 0,
+                'paid': bool(s),
+                'payment_date': s['payment_date'] if s else None,
+            })
 
     return render_template(
         'admin/member_detail.html',
         member=member, savings=savings, loans=loans,
         fines=fines, fees=fees, user_row=user_row,
         total_savings=total_savings, locked=locked, available=available,
+        is_exited_member=is_exited_member,
         history=history,
     )
 
@@ -837,6 +1047,14 @@ def member_edit(member_id):
         db.commit()
         log_action('UPDATE_MEMBER', 'member', member_id,
                    f"Updated {member['member_no']}")
+        _notify_member(
+            db,
+            member_id,
+            'Profile Updated',
+            'Your member profile details were updated by administration.',
+            url_for('member.profile'),
+        )
+        db.commit()
         flash('Member updated.', 'success')
         return redirect(url_for('admin.member_detail', member_id=member_id))
 
@@ -961,9 +1179,23 @@ def _next_unallocated_periods(db, member_id, units):
 @admin_required
 def savings_list():
     db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
     view = (request.args.get('view') or 'overview').lower()
     if view not in {'overview', 'ledger', 'calendar', 'amendments'}:
         view = 'overview'
+
+    member_scope = (request.args.get('member_scope') or 'active').lower()
+    if member_scope not in {'active', 'non_active'}:
+        member_scope = 'active'
+
+    scope_filter_sql = "m.status = 'Active'"
+    scope_member_sql = "status = 'Active'"
+    scope_label = 'Active'
+    if member_scope == 'non_active':
+        scope_filter_sql = "m.status != 'Active' AND m.status != 'Exited' AND m.status != 'Archived'"
+        scope_member_sql = "status != 'Active' AND status != 'Exited' AND status != 'Archived'"
+        scope_label = 'Non-Active'
 
     cur_period = period_str(date.today())
     periods_to_date = all_savings_periods()
@@ -976,9 +1208,16 @@ def savings_list():
     active_count = len(active_members)
 
     total_savings_all = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) AS s FROM savings"
+        """SELECT COALESCE(SUM(s.amount), 0) AS s
+             FROM savings s
+             JOIN members m ON m.id = s.member_id
+            WHERE """ + scope_filter_sql
     ).fetchone()['s']
-    expected_to_date = active_count * len(periods_to_date) * Config.MONTHLY_SAVINGS_AMOUNT
+
+    scope_count = db.execute(
+        "SELECT COUNT(*) c FROM members WHERE " + scope_member_sql
+    ).fetchone()['c']
+    expected_to_date = scope_count * len(periods_to_date) * Config.MONTHLY_SAVINGS_AMOUNT
 
     member_totals = db.execute(
         """SELECT m.id, m.member_no, m.full_name, m.status,
@@ -986,7 +1225,7 @@ def savings_list():
                   COUNT(s.id) AS months_covered
              FROM members m
              LEFT JOIN savings s ON s.member_id = m.id
-            WHERE m.status != 'Archived'
+            WHERE m.status NOT IN ('Exited', 'Archived') AND """ + scope_filter_sql + """
             GROUP BY m.id, m.member_no, m.full_name, m.status
             ORDER BY m.member_no"""
     ).fetchall()
@@ -995,10 +1234,13 @@ def savings_list():
     members_for_ledger = db.execute(
         """SELECT id, member_no, full_name, status
              FROM members
-            WHERE status != 'Archived'
+            WHERE """ + scope_member_sql + """
             ORDER BY member_no"""
     ).fetchall()
     selected_member_id = request.args.get('member_id', type=int)
+    allowed_ids = {m['id'] for m in members_for_ledger}
+    if selected_member_id and selected_member_id not in allowed_ids:
+        selected_member_id = None
     if not selected_member_id and members_for_ledger:
         selected_member_id = members_for_ledger[0]['id']
 
@@ -1069,13 +1311,22 @@ def savings_list():
              FROM savings s
              JOIN members m ON m.id = s.member_id
              LEFT JOIN users u ON u.id = s.recorded_by
+            WHERE """ + scope_filter_sql + """
             ORDER BY s.created_at DESC, s.id DESC
             LIMIT 200"""
     ).fetchall()
 
+    non_active_count = db.execute(
+        "SELECT COUNT(*) c FROM members WHERE status != 'Active' AND status != 'Exited' AND status != 'Archived'"
+    ).fetchone()['c']
+
     return render_template(
         'admin/savings_list.html',
         view=view,
+        member_scope=member_scope,
+        scope_label=scope_label,
+        scope_count=scope_count,
+        non_active_count=non_active_count,
         total_savings_all=total_savings_all,
         expected_to_date=expected_to_date,
         active_count=active_count,
@@ -1140,6 +1391,14 @@ def savings_record():
             member_id,
             f"Allocated {fmt_money(amount)} for {m['member_no']} from {first_p} to {last_p}",
         )
+        _notify_member(
+            db,
+            member_id,
+            'Savings Deposit Recorded',
+            f"A savings deposit of {fmt_money(amount)} was posted to your account covering {first_p} to {last_p}.",
+            url_for('member.savings_statement'),
+        )
+        db.commit()
 
         msg = (
             f"Deposit allocated: {len(allocation_periods)} month(s)"
@@ -1176,6 +1435,7 @@ def savings_bulk():
             return redirect(url_for('admin.savings_bulk'))
 
         recorded = 0
+        notified_member_ids = []
         for mid in member_ids:
             mid = int(mid)
             if db.execute(
@@ -1191,6 +1451,15 @@ def savings_bulk():
                  payment_date, session['user_id']),
             )
             recorded += 1
+            notified_member_ids.append(mid)
+        for mid in notified_member_ids:
+            _notify_member(
+                db,
+                mid,
+                'Savings Deposit Recorded',
+                f"A savings deposit for {period_label(period)} ({fmt_money(Config.MONTHLY_SAVINGS_AMOUNT)}) was posted to your account.",
+                url_for('member.savings_statement'),
+            )
         db.commit()
         log_action('BULK_SAVINGS', 'savings', None,
                    f"Bulk recorded {recorded} payments for {period}")
@@ -1218,6 +1487,14 @@ def savings_delete(savings_id):
         db.commit()
         log_action('DELETE_SAVINGS', 'savings', savings_id,
                    f"Deleted savings {s['period']} for member {s['member_id']}")
+        _notify_member(
+            db,
+            s['member_id'],
+            'Savings Entry Reversed',
+            f"A savings entry for {s['period']} ({fmt_money(s['amount'])}) was removed by admin.",
+            url_for('member.savings_statement'),
+        )
+        db.commit()
         flash('Savings entry deleted.', 'success')
     return redirect(request.referrer or url_for('admin.savings_list', view='amendments'))
 
@@ -1229,6 +1506,8 @@ def savings_delete(savings_id):
 @admin_required
 def loans_list():
     db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
     status = request.args.get('status') or ''
     sort_by = request.args.get('sort') or 'overdue'
     sort_dir = request.args.get('dir') or 'desc'  # 'asc' or 'desc'
@@ -1331,7 +1610,10 @@ def loans_list():
         all_enriched.append(d)
 
     total_savings = db.execute(
-        "SELECT COALESCE(SUM(amount),0) s FROM savings"
+        """SELECT COALESCE(SUM(s.amount),0) s
+             FROM savings s
+             JOIN members m ON m.id = s.member_id
+            WHERE m.status = 'Active'"""
     ).fetchone()['s'] or 0
     deployed_active = sum(l['outstanding_principal'] for l in all_enriched if l['status'] == 'Active')
     interest_pending_active_base = sum(
@@ -1501,7 +1783,7 @@ def loan_create():
                 'Loan approval required',
                 f"{loan_no} needs 3 administrative approvals.",
                 url_for('admin.loan_detail', loan_id=loan_id),
-                exclude_user_id=session['user_id'],
+                exclude_user_id=None,
             )
             db.commit()
 
@@ -1525,6 +1807,8 @@ def loan_create():
 @admin_required
 def loan_detail(loan_id):
     db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
     loan = db.execute(
         """SELECT l.*, m.full_name AS borrower_name, m.member_no, m.phone,
                   m1.full_name AS g1_name, m1.member_no AS g1_no,
@@ -1616,7 +1900,10 @@ def loan_detail(loan_id):
         approval_progress_text = 'Fully approved'
 
     total_savings = db.execute(
-        "SELECT COALESCE(SUM(amount),0) s FROM savings"
+        """SELECT COALESCE(SUM(s.amount),0) s
+             FROM savings s
+             JOIN members m ON m.id = s.member_id
+            WHERE m.status = 'Active'"""
     ).fetchone()['s'] or 0
     active_loans = db.execute("SELECT * FROM loans WHERE status='Active'").fetchall()
     deployed_active = 0
@@ -2343,17 +2630,21 @@ def dividends_run():
     top_saver = max(members, key=lambda m: m['year_savings'] or 0)
     per_member = pool['distributable'] // len(members)
 
+    # Before year-end, keep manual runs hidden from members until explicitly published.
+    year_end_reached = date.today() >= date(year, 12, 31)
+    run_status = existing['status'] if existing else ('Published' if year_end_reached else 'Hidden')
+
     if existing:
         run_id = existing['id']
         db.execute(
             """UPDATE dividend_runs SET
                   total_interest_pool=?, top_saver_award=?, distributable_pool=?,
                   member_count=?, per_member_amount=?, top_saver_id=?, top_saver_total=?,
-                  distribution_date=?, status='Distributed', processed_by=?
+                  distribution_date=?, status=?, processed_by=?
                 WHERE id=?""",
             (pool['total_pool'], Config.TOP_SAVER_AWARD, pool['distributable'],
              len(members), per_member, top_saver['id'], top_saver['year_savings'] or 0,
-             distribution_date, session['user_id'], run_id),
+             distribution_date, run_status, session['user_id'], run_id),
         )
         db.execute("DELETE FROM dividend_payouts WHERE dividend_run_id=?", (run_id,))
     else:
@@ -2362,11 +2653,11 @@ def dividends_run():
                (year, total_interest_pool, top_saver_award, distributable_pool,
                 member_count, per_member_amount, top_saver_id, top_saver_total,
                 distribution_date, status, processed_by)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Distributed', ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (year, pool['total_pool'], Config.TOP_SAVER_AWARD, pool['distributable'],
              len(members), per_member, top_saver['id'],
              top_saver['year_savings'] or 0,
-             distribution_date, session['user_id']),
+             distribution_date, run_status, session['user_id']),
         )
         run_id = cur.lastrowid
 
@@ -2386,9 +2677,91 @@ def dividends_run():
     action_name = 'RERUN_DIVIDENDS' if existing else 'RUN_DIVIDENDS'
     log_action(action_name, 'dividend_run', run_id,
                f"Distributed {fmt_money(pool['total_pool'])} for {year}")
-    flash(f'Dividends for {year} processed: '
-          f'{fmt_money(pool["total_pool"])} pool.', 'success')
+    _notify_roles(
+        db,
+        ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
+        'Dividends Processed',
+        f"Dividend run for {year} was processed ({fmt_money(pool['total_pool'])} pool).",
+        url_for('admin.dividends_detail', run_id=run_id),
+        exclude_user_id=session['user_id'],
+    )
+    if run_status == 'Published':
+        member_ids = db.execute("SELECT id FROM members WHERE status='Active'").fetchall()
+        for mr in member_ids:
+            _notify_member(
+                db,
+                mr['id'],
+                f"Dividend Update {year}",
+                f"Dividend results for {year} were published to your portal.",
+                url_for('member.profile'),
+            )
+    db.commit()
+    if run_status == 'Published':
+        flash(f'Dividends for {year} processed and published: '
+              f'{fmt_money(pool["total_pool"])} pool.', 'success')
+    else:
+        flash(f'Dividends for {year} processed and saved as hidden draft. '
+              'Publish when ready.', 'info')
     return redirect(url_for('admin.dividends_detail', run_id=run_id))
+
+
+@bp.route('/dividends/<int:run_id>/visibility', methods=['POST'])
+@role_required('IT_ADMIN', 'TREASURER')
+def dividends_visibility(run_id):
+    db = get_db()
+    run = db.execute("SELECT * FROM dividend_runs WHERE id=?", (run_id,)).fetchone()
+    if not run:
+        flash('Dividend run not found.', 'danger')
+        return redirect(url_for('admin.dividends_list'))
+
+    action = (request.form.get('action') or '').strip().lower()
+    if action == 'publish':
+        new_status = 'Published'
+        msg = 'Dividend run published to members.'
+        audit_msg = f"Published dividend run {run['year']}"
+    elif action == 'hide':
+        new_status = 'Hidden'
+        msg = 'Dividend run hidden from members.'
+        audit_msg = f"Hid dividend run {run['year']}"
+    else:
+        flash('Invalid visibility action.', 'warning')
+        return redirect(url_for('admin.dividends_detail', run_id=run_id))
+
+    db.execute("UPDATE dividend_runs SET status=? WHERE id=?", (new_status, run_id))
+    db.commit()
+    log_action('DIVIDEND_VISIBILITY', 'dividend_run', run_id, audit_msg)
+    if new_status == 'Published':
+        member_ids = db.execute("SELECT id FROM members WHERE status='Active'").fetchall()
+        for mr in member_ids:
+            _notify_member(
+                db,
+                mr['id'],
+                f"Dividend Published {run['year']}",
+                f"Dividend run {run['year']} is now visible in your member portal.",
+                url_for('member.profile'),
+            )
+        db.commit()
+    flash(msg, 'success')
+    return redirect(url_for('admin.dividends_detail', run_id=run_id))
+
+
+@bp.route('/dividends/<int:run_id>/undo', methods=['POST'])
+@role_required('IT_ADMIN', 'TREASURER')
+def dividends_undo(run_id):
+    db = get_db()
+    run = db.execute("SELECT * FROM dividend_runs WHERE id=?", (run_id,)).fetchone()
+    if not run:
+        flash('Dividend run not found.', 'danger')
+        return redirect(url_for('admin.dividends_list'))
+
+    db.execute("DELETE FROM dividend_payouts WHERE dividend_run_id=?", (run_id,))
+    db.execute("DELETE FROM dividend_runs WHERE id=?", (run_id,))
+    db.commit()
+
+    log_action('UNDO_DIVIDENDS', 'dividend_run', run_id,
+               f"Removed dividend run for {run['year']}")
+    flash(f"Dividend run for {run['year']} has been undone and hidden from members.", 'success')
+    return redirect(url_for('admin.dividends_list'))
 
 
 @bp.route('/dividends/<int:run_id>')
@@ -2473,6 +2846,15 @@ def minutes_create():
         db.commit()
         log_action('CREATE_MINUTES', 'minutes', cur.lastrowid,
                    f"Minutes for {meeting_date} - {title}")
+        _notify_roles(
+            db,
+            ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
+            'Minutes Uploaded',
+            f"New meeting minutes were recorded: {title}",
+            url_for('admin.minutes_detail', minutes_id=cur.lastrowid),
+            exclude_user_id=session['user_id'],
+        )
+        db.commit()
         flash('Meeting minutes saved.', 'success')
         return redirect(url_for('admin.minutes_detail',
                                 minutes_id=cur.lastrowid))
@@ -2572,6 +2954,15 @@ def minutes_upload(minutes_id):
     db.commit()
     log_action('UPLOAD_MINUTES_FILE', 'minutes', minutes_id,
                f"Uploaded signed minutes file for {m['title']}")
+    _notify_roles(
+        db,
+        ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
+        'Minutes File Updated',
+        f"A signed file was uploaded for minutes: {m['title']}",
+        url_for('admin.minutes_detail', minutes_id=minutes_id),
+        exclude_user_id=session['user_id'],
+    )
+    db.commit()
     flash('Signed minutes uploaded.', 'success')
     return redirect(url_for('admin.minutes_detail', minutes_id=minutes_id))
 
@@ -2606,6 +2997,16 @@ def minutes_publish(minutes_id):
     if new_status:
         log_action('PUBLISH_MINUTES', 'minutes', minutes_id,
                    f"Published minutes {minutes_id} - {m['title']}")
+        member_ids = db.execute("SELECT id FROM members WHERE status='Active'").fetchall()
+        for mr in member_ids:
+            _notify_member(
+                db,
+                mr['id'],
+                'New Minutes Published',
+                f"New published minutes are available: {m['title']}",
+                url_for('member.minutes_detail', minutes_id=minutes_id),
+            )
+        db.commit()
         flash('Minutes published to member portal.', 'success')
     else:
         log_action('UNPUBLISH_MINUTES', 'minutes', minutes_id,
@@ -2653,6 +3054,14 @@ def fines_create():
         db.commit()
         log_action('CREATE_FINE', 'fine', cur.lastrowid,
                    f"Fine {fmt_money(amount)} for member {member_id}")
+        _notify_member(
+            db,
+            member_id,
+            'Fine Recorded',
+            f"A fine of {fmt_money(amount)} was recorded: {violation}.",
+            url_for('member.profile'),
+        )
+        db.commit()
         flash('Fine recorded.', 'success')
         return redirect(url_for('admin.fines_list'))
     members = db.execute(
@@ -2701,6 +3110,14 @@ def fines_edit(fine_id):
         db.commit()
         log_action('EDIT_FINE', 'fine', fine_id,
                    f"Edited fine {fine_id}: {fmt_money(amount)} for member {member_id}")
+        _notify_member(
+            db,
+            member_id,
+            'Fine Updated',
+            f"A fine record was updated: {fmt_money(amount)} for {violation}.",
+            url_for('member.profile'),
+        )
+        db.commit()
         flash('Fine record updated.', 'success')
         return redirect(url_for('admin.fines_list'))
 
@@ -2720,12 +3137,25 @@ def fines_edit(fine_id):
 @admin_required
 def fines_pay(fine_id):
     db = get_db()
+    fine = db.execute(
+        "SELECT id, member_id, amount FROM fines WHERE id=?",
+        (fine_id,),
+    ).fetchone()
     db.execute(
         "UPDATE fines SET status='Paid', paid_date=? WHERE id=?",
         (date.today().isoformat(), fine_id),
     )
     db.commit()
     log_action('PAY_FINE', 'fine', fine_id, f"Marked fine {fine_id} as paid")
+    if fine:
+        _notify_member(
+            db,
+            fine['member_id'],
+            'Fine Marked Paid',
+            f"Your fine payment of {fmt_money(fine['amount'])} has been marked as paid.",
+            url_for('member.profile'),
+        )
+        db.commit()
     flash('Fine marked paid.', 'success')
     return redirect(request.referrer or url_for('admin.fines_list'))
 
@@ -2746,6 +3176,14 @@ def fines_delete(fine_id):
     db.commit()
     log_action('DELETE_FINE', 'fine', fine_id,
                f"Deleted fine {fine_id} ({fmt_money(fine['amount'])}) for member {fine['member_id']}")
+    _notify_member(
+        db,
+        fine['member_id'],
+        'Fine Removed',
+        f"A fine entry of {fmt_money(fine['amount'])} was removed by administration.",
+        url_for('member.profile'),
+    )
+    db.commit()
     flash('Fine record deleted.', 'success')
     return redirect(url_for('admin.fines_list'))
 
@@ -2811,6 +3249,14 @@ def fees_record():
     db.commit()
     log_action('RECORD_FEE', 'annual_fee', member_id,
                f"Annual fee {year} - {fmt_money(amount)} for member {member_id}")
+    _notify_member(
+        db,
+        member_id,
+        'Annual Fee Recorded',
+        f"Your annual fee payment for {year} ({fmt_money(amount)}) has been recorded.",
+        url_for('member.profile'),
+    )
+    db.commit()
     flash('Annual fee recorded.', 'success')
     return redirect(url_for('admin.fees_list', year=year))
 
@@ -2831,8 +3277,326 @@ def fees_delete(fee_id):
                f"Deleted annual fee {year} - {fmt_money(fee['amount'])} for member {member_id}")
     db.execute("DELETE FROM annual_fees WHERE id=?", (fee_id,))
     db.commit()
+    _notify_member(
+        db,
+        member_id,
+        'Annual Fee Entry Removed',
+        f"A fee entry for {year} ({fmt_money(fee['amount'])}) was removed by administration.",
+        url_for('member.profile'),
+    )
+    db.commit()
     flash('Fee record deleted.', 'success')
     return redirect(url_for('admin.fees_list', year=year))
+
+
+# ===========================================================================
+# EXPENSES (Operational fund management)
+# ===========================================================================
+@bp.route('/expenses')
+@admin_required
+def expenses_list():
+    db = get_db()
+    tab = (request.args.get('tab') or 'all').strip().lower()
+    if tab not in {'all', 'income', 'pending', 'summary'}:
+        tab = 'all'
+
+    ops = _operational_fund_snapshot(db)
+
+    expenses_rows = db.execute(
+        """SELECT e.*, req.username AS requested_by_name,
+                  COALESCE(reqm.full_name, req.username) AS requested_by_full,
+                  appr.username AS approver_name,
+                  COALESCE(apprm.full_name, appr.username) AS approver_full
+             FROM expenses e
+             LEFT JOIN users req ON req.id = e.requested_by
+             LEFT JOIN members reqm ON reqm.id = req.member_id
+             LEFT JOIN users appr ON appr.id = e.approved_by
+             LEFT JOIN members apprm ON apprm.id = appr.member_id
+            ORDER BY e.created_at DESC, e.id DESC"""
+    ).fetchall()
+
+    incomes = db.execute(
+        """SELECT oi.*, u.username, m.full_name
+             FROM operational_incomes oi
+             LEFT JOIN users u ON u.id = oi.recorded_by
+             LEFT JOIN members m ON m.id = u.member_id
+            ORDER BY oi.income_date DESC, oi.id DESC"""
+    ).fetchall()
+
+    pending_rows = [r for r in expenses_rows if r['status'] == 'Pending']
+    approved_rows = [r for r in expenses_rows if r['status'] == 'Approved']
+    rejected_rows = [r for r in expenses_rows if r['status'] == 'Rejected']
+
+    chairman_approvers = db.execute(
+        """SELECT u.id, u.username, m.full_name
+             FROM users u
+             JOIN members m ON m.id = u.member_id
+            WHERE u.is_active = 1 AND m.role = 'CHAIRMAN' AND m.status='Active'
+            ORDER BY m.member_no"""
+    ).fetchall()
+
+    return render_template(
+        'admin/expenses_list.html',
+        tab=tab,
+        ops=ops,
+        expenses_rows=expenses_rows,
+        pending_rows=pending_rows,
+        approved_rows=approved_rows,
+        rejected_rows=rejected_rows,
+        incomes=incomes,
+        chairman_approvers=chairman_approvers,
+    )
+
+
+@bp.route('/expenses/income/record', methods=['POST'])
+@role_required('TREASURER', 'IT_ADMIN')
+def expenses_income_record():
+    db = get_db()
+    amount = int(request.form.get('amount') or 0)
+    income_date = (request.form.get('income_date') or date.today().isoformat()).strip()
+    source = (request.form.get('source') or '').strip()
+    notes = (request.form.get('notes') or '').strip()
+
+    if amount <= 0 or not source:
+        flash('Income source and positive amount are required.', 'danger')
+        return redirect(url_for('admin.expenses_list', tab='income'))
+
+    income_no = _next_doc_no(db, 'operational_incomes', 'income_no', 'INC')
+    db.execute(
+        """INSERT INTO operational_incomes
+           (income_no, income_date, amount, source, notes, recorded_by)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (income_no, income_date, amount, source, notes, session['user_id']),
+    )
+    db.commit()
+    log_action('RECORD_OPERATIONAL_INCOME', 'operational_income', None,
+               f"Recorded {income_no} {fmt_money(amount)} from {source}")
+    flash(f'Operational income {income_no} recorded.', 'success')
+    return redirect(url_for('admin.expenses_list', tab='income'))
+
+
+@bp.route('/expenses/request', methods=['POST'])
+@role_required('TREASURER', 'IT_ADMIN')
+def expenses_request():
+    db = get_db()
+    amount = int(request.form.get('amount') or 0)
+    expense_date = (request.form.get('expense_date') or date.today().isoformat()).strip()
+    purpose = (request.form.get('purpose') or '').strip()
+    category = (request.form.get('category') or 'Operations').strip()
+    notes = (request.form.get('notes') or '').strip()
+    approver_user_id = request.form.get('approver_user_id', type=int)
+
+    if amount <= 0 or not purpose:
+        flash('Purpose and positive amount are required.', 'danger')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+
+    approver = db.execute(
+        """SELECT u.id
+             FROM users u
+             JOIN members m ON m.id = u.member_id
+            WHERE u.id = ? AND u.is_active = 1 AND m.role='CHAIRMAN' AND m.status='Active'""",
+        (approver_user_id,),
+    ).fetchone()
+    if not approver:
+        flash('A valid active chairman approver is required.', 'danger')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+
+    ops = _operational_fund_snapshot(db)
+    if amount > ops['available_after_pending']:
+        flash(
+            f"Amount exceeds available operational balance after pending requests ({fmt_money(ops['available_after_pending'])}).",
+            'danger',
+        )
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+
+    expense_no = _next_doc_no(db, 'expenses', 'expense_no', 'EXP')
+    receipt_path = _save_expense_receipt('receipt_file')
+    db.execute(
+        """INSERT INTO expenses
+           (expense_no, expense_date, amount, purpose, category, notes, status,
+            requested_by, requested_approver_user_id, receipt_path)
+           VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?)""",
+        (expense_no, expense_date, amount, purpose, category, notes,
+         session['user_id'], approver_user_id, receipt_path),
+    )
+    db.commit()
+
+    _notify_roles(
+        db,
+        ['CHAIRMAN'],
+        'Expense approval required',
+        f"{expense_no} for {fmt_money(amount)} is waiting your decision.",
+        url_for('admin.expenses_list', tab='pending'),
+        exclude_user_id=None,
+    )
+    db.commit()
+    log_action('REQUEST_EXPENSE', 'expense', None,
+               f"Submitted {expense_no} for approval ({fmt_money(amount)})")
+    flash(f'Expense request {expense_no} submitted for chairman approval.', 'success')
+    return redirect(url_for('admin.expenses_list', tab='pending'))
+
+
+@bp.route('/expenses/<int:expense_id>/approve', methods=['POST'])
+@role_required('CHAIRMAN')
+def expenses_approve(expense_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM expenses WHERE id=?", (expense_id,)).fetchone()
+    if not row:
+        flash('Expense request not found.', 'danger')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+    if row['status'] != 'Pending':
+        flash('Only pending requests can be approved.', 'warning')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+    if row['requested_approver_user_id'] and int(row['requested_approver_user_id']) != int(session['user_id']):
+        flash('This request was assigned to another chairman approver.', 'danger')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+
+    ops = _operational_fund_snapshot(db)
+    if int(row['amount'] or 0) > int(ops['operational_fund_total']):
+        flash(
+            f"Insufficient operational fund. Available: {fmt_money(ops['operational_fund_total'])}.",
+            'danger',
+        )
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+
+    decision_notes = (request.form.get('decision_notes') or '').strip()
+    db.execute(
+        """UPDATE expenses
+              SET status='Approved', approved_by=?, approved_at=CURRENT_TIMESTAMP,
+                  decision_notes=?, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+        (session['user_id'], decision_notes, expense_id),
+    )
+    db.commit()
+    # Notify the requesting treasurer (and all treasurers)
+    _notify_roles(
+        db, ['TREASURER'],
+        f"Expense {row['expense_no']} Approved",
+        f"{row['expense_no']} for {fmt_money(row['amount'])} was approved by the Chairman." +
+        (f" Notes: {decision_notes}" if decision_notes else ''),
+        url_for('admin.expenses_list', tab='all'),
+    )
+    _notify_user(
+        db,
+        row['requested_by'],
+        f"Expense {row['expense_no']} Approved",
+        f"Your expense request for {fmt_money(row['amount'])} was approved." +
+        (f" Notes: {decision_notes}" if decision_notes else ''),
+        url_for('admin.expenses_list', tab='all'),
+    )
+    db.commit()
+    log_action('APPROVE_EXPENSE', 'expense', expense_id,
+               f"Approved {row['expense_no']} for {fmt_money(row['amount'])}")
+    flash(f"Expense {row['expense_no']} approved and treasurer notified.", 'success')
+    return redirect(url_for('admin.expenses_list', tab='pending'))
+
+
+@bp.route('/expenses/<int:expense_id>/reject', methods=['POST'])
+@role_required('CHAIRMAN')
+def expenses_reject(expense_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM expenses WHERE id=?", (expense_id,)).fetchone()
+    if not row:
+        flash('Expense request not found.', 'danger')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+    if row['status'] != 'Pending':
+        flash('Only pending requests can be rejected.', 'warning')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+    if row['requested_approver_user_id'] and int(row['requested_approver_user_id']) != int(session['user_id']):
+        flash('This request was assigned to another chairman approver.', 'danger')
+        return redirect(url_for('admin.expenses_list', tab='pending'))
+
+    decision_notes = (request.form.get('decision_notes') or '').strip()
+    if not decision_notes:
+        decision_notes = 'Rejected by chairman.'
+
+    db.execute(
+        """UPDATE expenses
+              SET status='Rejected', approved_by=?, approved_at=CURRENT_TIMESTAMP,
+                  decision_notes=?, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+        (session['user_id'], decision_notes, expense_id),
+    )
+    db.commit()
+    # Notify the requesting treasurer (and all treasurers)
+    _notify_roles(
+        db, ['TREASURER'],
+        f"Expense {row['expense_no']} Rejected",
+        f"{row['expense_no']} for {fmt_money(row['amount'])} was rejected by the Chairman. Reason: {decision_notes}",
+        url_for('admin.expenses_list', tab='all'),
+    )
+    _notify_user(
+        db,
+        row['requested_by'],
+        f"Expense {row['expense_no']} Rejected",
+        f"Your expense request for {fmt_money(row['amount'])} was rejected. Reason: {decision_notes}",
+        url_for('admin.expenses_list', tab='all'),
+    )
+    db.commit()
+    log_action('REJECT_EXPENSE', 'expense', expense_id,
+               f"Rejected {row['expense_no']} ({fmt_money(row['amount'])})")
+    flash(f"Expense {row['expense_no']} rejected and treasurer notified.", 'warning')
+    return redirect(url_for('admin.expenses_list', tab='pending'))
+
+
+@bp.route('/expenses/<int:expense_id>/edit', methods=['POST'])
+@role_required('TREASURER', 'IT_ADMIN')
+def expenses_edit(expense_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM expenses WHERE id=?", (expense_id,)).fetchone()
+    if not row:
+        flash('Expense not found.', 'danger')
+        return redirect(url_for('admin.expenses_list'))
+    if row['status'] != 'Pending':
+        flash('Only pending expenses can be edited.', 'warning')
+        return redirect(url_for('admin.expenses_list'))
+
+    amount = int(request.form.get('amount') or 0)
+    expense_date = (request.form.get('expense_date') or date.today().isoformat()).strip()
+    purpose = (request.form.get('purpose') or '').strip()
+    category = (request.form.get('category') or 'Operations').strip()
+    notes = (request.form.get('notes') or '').strip()
+    approver_user_id = request.form.get('approver_user_id', type=int)
+
+    if amount <= 0 or not purpose:
+        flash('Purpose and positive amount are required.', 'danger')
+        return redirect(url_for('admin.expenses_list'))
+
+    new_receipt = _save_expense_receipt('receipt_file')
+    receipt_path = new_receipt if new_receipt else row['receipt_path']
+
+    db.execute(
+        """UPDATE expenses
+              SET amount=?, expense_date=?, purpose=?, category=?, notes=?,
+                  requested_approver_user_id=?, receipt_path=?, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+        (amount, expense_date, purpose, category, notes, approver_user_id, receipt_path, expense_id),
+    )
+    db.commit()
+    log_action('EDIT_EXPENSE', 'expense', expense_id,
+               f"Edited {row['expense_no']} → amount {fmt_money(amount)}, purpose: {purpose}")
+    flash(f"Expense {row['expense_no']} updated.", 'success')
+    return redirect(url_for('admin.expenses_list', tab='all'))
+
+
+@bp.route('/expenses/<int:expense_id>/delete', methods=['POST'])
+@role_required('TREASURER', 'IT_ADMIN')
+def expenses_delete(expense_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM expenses WHERE id=?", (expense_id,)).fetchone()
+    if not row:
+        flash('Expense not found.', 'danger')
+        return redirect(url_for('admin.expenses_list'))
+    if row['status'] != 'Pending':
+        flash('Only pending expenses can be deleted.', 'warning')
+        return redirect(url_for('admin.expenses_list'))
+
+    db.execute("DELETE FROM expenses WHERE id=?", (expense_id,))
+    db.commit()
+    log_action('DELETE_EXPENSE', 'expense', expense_id,
+               f"Deleted {row['expense_no']} ({fmt_money(row['amount'])})")
+    flash(f"Expense {row['expense_no']} deleted.", 'success')
+    return redirect(url_for('admin.expenses_list', tab='all'))
 
 
 # ===========================================================================
@@ -3068,13 +3832,36 @@ def audit_list():
 # ===========================================================================
 # REPORTS
 # ===========================================================================
+def _csv_response(filename, headers, rows):
+    buff = io.StringIO()
+    writer = csv.writer(buff)
+    writer.writerow(headers)
+    for row in rows:
+        writer.writerow(row)
+    return Response(
+        buff.getvalue(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"'
+        },
+    )
+
+
 @bp.route('/reports')
 @admin_required
 def reports():
     db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
+    today = date.today()
+    current_year = today.year
+
     # Balance Sheet snapshot
     total_savings = db.execute(
-        "SELECT COALESCE(SUM(amount),0) s FROM savings"
+        """SELECT COALESCE(SUM(s.amount),0) s
+             FROM savings s
+             JOIN members m ON m.id = s.member_id
+            WHERE m.status='Active'"""
     ).fetchone()['s']
 
     active_loans = db.execute(
@@ -3113,14 +3900,30 @@ def reports():
         "SELECT COALESCE(SUM(interest_part),0) s FROM loan_repayments"
     ).fetchone()['s']
 
-    cash_available = total_savings - out_principal
+    ops = _operational_fund_snapshot(db)
+    loan_interest = _loan_interest_snapshot(db)
+    expenses_spent = ops['approved_expenses']
+    expenses_pending = ops['pending_expenses']
+    expenses_count = db.execute(
+        "SELECT COUNT(*) c FROM expenses WHERE status='Approved'"
+    ).fetchone()['c']
 
-    # Savings trends
-    periods = all_savings_periods()
+    cash_available = total_savings - out_principal
+    total_assets = (
+        cash_available + out_principal + out_interest + out_penalty +
+        fines_receivable + fees_receivable
+    )
+    operating_income = int(income_fees or 0) + int(income_fines or 0) - int(expenses_spent or 0)
+
+    # Savings trends (last 6 months for dashboard tile/chart)
+    periods = all_savings_periods()[-6:]
     trend = []
     for p in periods:
         row = db.execute(
-            "SELECT COALESCE(SUM(amount),0) s, COUNT(*) c FROM savings WHERE period=?",
+            """SELECT COALESCE(SUM(s.amount),0) s, COUNT(*) c
+                 FROM savings s
+                 JOIN members m ON m.id = s.member_id
+                WHERE s.period=? AND m.status='Active'""",
             (p,),
         ).fetchone()
         trend.append({
@@ -3128,9 +3931,200 @@ def reports():
             'total': row['s'] or 0, 'count': row['c'] or 0,
         })
 
+    # Member stats
+    active_members = db.execute(
+        "SELECT COUNT(*) c FROM members WHERE status='Active'"
+    ).fetchone()['c']
+    exited_members = db.execute(
+        "SELECT COUNT(*) c FROM members WHERE status='Exited'"
+    ).fetchone()['c']
+
+    # Loan stats
+    loan_totals = db.execute(
+        "SELECT COUNT(*) c, COALESCE(SUM(principal),0) s FROM loans"
+    ).fetchone()
+    pending_loans = db.execute(
+        "SELECT COUNT(*) c FROM loans WHERE status='Pending'"
+    ).fetchone()['c']
+    active_loan_count = db.execute(
+        "SELECT COUNT(*) c FROM loans WHERE status='Active'"
+    ).fetchone()['c']
+
+    overdue_loans_count = 0
+    for loan in active_loans:
+        repays = db.execute(
+            "SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)
+        ).fetchall()
+        pens = db.execute(
+            "SELECT * FROM loan_penalties WHERE loan_id=?", (loan['id'],)
+        ).fetchall()
+        pos = calculate_loan_position(loan, repays, pens)
+        if pos['is_overdue']:
+            overdue_loans_count += 1
+
+    # Fees/Fines stats (current year)
+    fees_year = db.execute(
+        """SELECT
+                 COALESCE(SUM(CASE WHEN status='Paid' THEN amount ELSE 0 END),0) paid_amount,
+                 COALESCE(SUM(CASE WHEN status='Unpaid' THEN amount ELSE 0 END),0) unpaid_amount,
+                 COALESCE(SUM(CASE WHEN status='Paid' THEN 1 ELSE 0 END),0) paid_count,
+                 COALESCE(SUM(CASE WHEN status='Unpaid' THEN 1 ELSE 0 END),0) unpaid_count
+              FROM annual_fees
+              WHERE year=?""",
+        (current_year,),
+    ).fetchone()
+    fines_year = db.execute(
+        """SELECT
+                 COALESCE(SUM(CASE WHEN status='Paid' THEN amount ELSE 0 END),0) paid_amount,
+                 COALESCE(SUM(CASE WHEN status='Unpaid' THEN amount ELSE 0 END),0) unpaid_amount,
+                 COALESCE(SUM(CASE WHEN status='Paid' THEN 1 ELSE 0 END),0) paid_count,
+                 COALESCE(SUM(CASE WHEN status='Unpaid' THEN 1 ELSE 0 END),0) unpaid_count
+              FROM fines
+              WHERE strftime('%Y', fine_date)=?""",
+        (str(current_year),),
+    ).fetchone()
+
+    # Minutes & dividends stats
+    minutes_stats = db.execute(
+        """SELECT
+                 COUNT(*) total,
+                 COALESCE(SUM(CASE WHEN is_published=1 THEN 1 ELSE 0 END),0) published
+              FROM minutes"""
+    ).fetchone()
+    dividend_stats = db.execute(
+        """SELECT
+                 COUNT(*) total,
+                 COALESCE(SUM(CASE WHEN status IN ('Published','Distributed') THEN 1 ELSE 0 END),0) published,
+                 COALESCE(SUM(total_interest_pool),0) total_pool
+              FROM dividend_runs"""
+    ).fetchone()
+
+    audit_recent = db.execute(
+        "SELECT COUNT(*) c FROM audit_log WHERE created_at >= datetime('now','-30 day')"
+    ).fetchone()['c']
+
+    report_tiles = [
+        # ── Financial Overview ────────────────────────────────────────
+        {
+            'key': 'position', 'group': 'Financial Overview',
+            'title': 'Financial Position',
+            'icon': 'bi bi-bank2',
+            'value': fmt_money(total_assets),
+            'sub': f"Cash {fmt_money(cash_available)} | Equity {fmt_money(total_savings)}",
+            'href': url_for('admin.reports'),
+            'tone': 'info',
+        },
+        {
+            'key': 'members', 'group': 'Financial Overview',
+            'title': 'Members Register',
+            'icon': 'bi bi-people-fill',
+            'value': str(active_members),
+            'sub': f"Active members | Exited: {exited_members}",
+            'href': url_for('admin.members_list'),
+            'tone': 'gold',
+        },
+        # ── Savings ───────────────────────────────────────────────────
+        {
+            'key': 'savings-trend', 'group': 'Savings',
+            'title': 'Savings Trend',
+            'icon': 'bi bi-graph-up-arrow',
+            'value': fmt_money(sum(t['total'] for t in trend)),
+            'sub': 'Last 6 months collection performance',
+            'href': url_for('admin.savings_list'),
+            'tone': 'accent',
+        },
+        # ── Loans ─────────────────────────────────────────────────────
+        {
+            'key': 'loans', 'group': 'Loans',
+            'title': 'Loans Portfolio',
+            'icon': 'bi bi-cash-stack',
+            'value': fmt_money(loan_totals['s'] or 0),
+            'sub': f"Active: {active_loan_count} | Pending: {pending_loans} | Overdue: {overdue_loans_count}",
+            'href': url_for('admin.loans_list'),
+            'tone': 'warn',
+        },
+        {
+            'key': 'loan-interest-collected', 'group': 'Loans',
+            'title': 'Loan Interest Collected',
+            'icon': 'bi bi-cash-coin',
+            'value': fmt_money(loan_interest['collected']),
+            'sub': f"Cash-realized interest to date | Projection open: {fmt_money(loan_interest['projected_open'])}",
+            'href': url_for('admin.loans_list'),
+            'tone': 'ok',
+        },
+        {
+            'key': 'loan-interest-projection', 'group': 'Loans',
+            'title': 'Loan Interest Projection',
+            'icon': 'bi bi-graph-up-arrow',
+            'value': fmt_money(loan_interest['projected_open']),
+            'sub': f"Outstanding interest {fmt_money(loan_interest['projected_interest'])} + penalties {fmt_money(loan_interest['projected_penalty'])} | Collected: {fmt_money(loan_interest['collected'])}",
+            'href': url_for('admin.loans_list'),
+            'tone': 'accent',
+        },
+        # ── Fees & Fines ──────────────────────────────────────────────
+        {
+            'key': 'fees', 'group': 'Fees & Fines',
+            'title': f'Annual Fees {current_year}',
+            'icon': 'bi bi-patch-check-fill',
+            'value': fmt_money(fees_year['paid_amount'] or 0),
+            'sub': f"Paid records: {fees_year['paid_count']} | Unpaid records: {fees_year['unpaid_count']}",
+            'href': url_for('admin.fees_list'),
+            'tone': 'ok',
+        },
+        {
+            'key': 'fines', 'group': 'Fees & Fines',
+            'title': f'Fines {current_year}',
+            'icon': 'bi bi-exclamation-octagon-fill',
+            'value': fmt_money(fines_year['paid_amount'] or 0),
+            'sub': f"Collected: {fines_year['paid_count']} | Outstanding: {fines_year['unpaid_count']}",
+            'href': url_for('admin.fines_list'),
+            'tone': 'danger',
+        },
+        # ── Operations ────────────────────────────────────────────────
+        {
+            'key': 'expenses', 'group': 'Operations',
+            'title': 'Expenses (Approved)',
+            'icon': 'bi bi-wallet2',
+            'value': fmt_money(expenses_spent),
+            'sub': f"{expenses_count} approved | Pending requests: {fmt_money(expenses_pending)}",
+            'href': url_for('admin.expenses_list'),
+            'tone': 'warn',
+        },
+        # ── Governance ────────────────────────────────────────────────
+        {
+            'key': 'minutes', 'group': 'Governance',
+            'title': 'Minutes & Governance',
+            'icon': 'bi bi-journal-richtext',
+            'value': str(minutes_stats['published'] or 0),
+            'sub': f"Published minutes | Total records: {minutes_stats['total']}",
+            'href': url_for('admin.minutes_list'),
+            'tone': 'info',
+        },
+        {
+            'key': 'dividends', 'group': 'Governance',
+            'title': 'Dividends Runs',
+            'icon': 'bi bi-award-fill',
+            'value': str(dividend_stats['published'] or 0),
+            'sub': f"Published runs | Total pool: {fmt_money(dividend_stats['total_pool'] or 0)}",
+            'href': url_for('admin.dividends_list'),
+            'tone': 'gold',
+        },
+        {
+            'key': 'audit', 'group': 'Governance',
+            'title': 'Audit & Controls',
+            'icon': 'bi bi-shield-check',
+            'value': str(audit_recent),
+            'sub': 'Audit entries in last 30 days',
+            'href': url_for('admin.audit_list'),
+            'tone': 'accent',
+        },
+    ]
+
     return render_template(
         'admin/reports.html',
+        current_year=current_year,
         total_savings=total_savings,
+        total_assets=total_assets,
         out_principal=out_principal,
         out_interest=out_interest,
         out_penalty=out_penalty,
@@ -3139,6 +4133,216 @@ def reports():
         income_fees=income_fees,
         income_fines=income_fines,
         interest_collected=interest_collected,
+        expenses_spent=expenses_spent,
+        operating_income=operating_income,
         cash_available=cash_available,
+        loan_total_count=loan_totals['c'] or 0,
+        active_members=active_members,
+        report_tiles=report_tiles,
         trend=trend,
     )
+
+
+@bp.route('/reports/export/<report_key>')
+@admin_required
+def reports_export(report_key):
+    db = get_db()
+    _normalize_legacy_archived_status(db)
+    db.commit()
+
+    if report_key == 'position':
+        total_savings = db.execute(
+            """SELECT COALESCE(SUM(s.amount),0) s
+                 FROM savings s
+                 JOIN members m ON m.id = s.member_id
+                WHERE m.status='Active'"""
+        ).fetchone()['s']
+        active_loans = db.execute("SELECT * FROM loans WHERE status IN ('Active','Pending')").fetchall()
+        out_principal = out_interest = out_penalty = 0
+        for loan in active_loans:
+            repays = db.execute("SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)).fetchall()
+            pens = db.execute("SELECT * FROM loan_penalties WHERE loan_id=?", (loan['id'],)).fetchall()
+            pos = calculate_loan_position(loan, repays, pens)
+            out_principal += pos['outstanding_principal']
+            out_interest += pos['outstanding_interest']
+            out_penalty += pos['outstanding_penalty']
+        fines_receivable = db.execute("SELECT COALESCE(SUM(amount),0) s FROM fines WHERE status='Unpaid'").fetchone()['s']
+        fees_receivable = db.execute("SELECT COALESCE(SUM(amount),0) s FROM annual_fees WHERE status='Unpaid'").fetchone()['s']
+        cash_available = total_savings - out_principal
+        rows = [
+            ('Cash available', cash_available),
+            ('Loans outstanding principal', out_principal),
+            ('Interest receivable', out_interest),
+            ('Penalty receivable', out_penalty),
+            ('Fines receivable', fines_receivable),
+            ('Annual fees receivable', fees_receivable),
+            ('Total member savings (equity)', total_savings),
+        ]
+        return _csv_response('financial_position.csv', ['Metric', 'Amount'], rows)
+
+    if report_key == 'savings-trend':
+        rows = []
+        for p in all_savings_periods():
+            r = db.execute(
+                """SELECT COALESCE(SUM(s.amount),0) s, COUNT(*) c
+                     FROM savings s
+                     JOIN members m ON m.id = s.member_id
+                    WHERE s.period=? AND m.status='Active'""",
+                (p,),
+            ).fetchone()
+            rows.append((period_label(p), r['c'] or 0, r['s'] or 0))
+        return _csv_response('savings_trend.csv', ['Period', 'Contributors', 'Total Amount'], rows)
+
+    if report_key == 'members':
+        rows = db.execute(
+            """SELECT member_no, full_name, role, status, join_date, phone, email
+                 FROM members
+                ORDER BY member_no"""
+        ).fetchall()
+        out = [(r['member_no'], r['full_name'], r['role'], r['status'], r['join_date'], r['phone'], r['email']) for r in rows]
+        return _csv_response('members_register.csv', ['Member No', 'Full Name', 'Role', 'Status', 'Join Date', 'Phone', 'Email'], out)
+
+    if report_key == 'loans':
+        loans = db.execute(
+            """SELECT l.*, m.member_no, m.full_name
+                 FROM loans l
+                 LEFT JOIN members m ON m.id = l.member_id
+                ORDER BY l.issued_date DESC"""
+        ).fetchall()
+        out = []
+        for loan in loans:
+            repays = db.execute("SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)).fetchall()
+            pens = db.execute("SELECT * FROM loan_penalties WHERE loan_id=?", (loan['id'],)).fetchall()
+            pos = calculate_loan_position(loan, repays, pens)
+            out.append((
+                loan['loan_no'], loan['member_no'], loan['full_name'], loan['status'],
+                loan['principal'], loan['issued_date'], loan['due_date'], pos['total_outstanding']
+            ))
+        return _csv_response(
+            'loans_portfolio.csv',
+            ['Loan No', 'Member No', 'Member Name', 'Status', 'Principal', 'Issued Date', 'Due Date', 'Outstanding Total'],
+            out,
+        )
+
+    if report_key == 'fees':
+        rows = db.execute(
+            """SELECT af.year, m.member_no, m.full_name, af.amount, af.status, af.paid_date, af.deadline
+                 FROM annual_fees af
+                 LEFT JOIN members m ON m.id = af.member_id
+                ORDER BY af.year DESC, m.member_no"""
+        ).fetchall()
+        out = [(r['year'], r['member_no'], r['full_name'], r['amount'], r['status'], r['paid_date'], r['deadline']) for r in rows]
+        return _csv_response('annual_fees.csv', ['Year', 'Member No', 'Member Name', 'Amount', 'Status', 'Payment Date', 'Deadline'], out)
+
+    if report_key == 'fines':
+        rows = db.execute(
+            """SELECT f.fine_date, m.member_no, m.full_name, f.violation, f.amount, f.status
+                 FROM fines f
+                 LEFT JOIN members m ON m.id = f.member_id
+                ORDER BY f.fine_date DESC"""
+        ).fetchall()
+        out = [(r['fine_date'], r['member_no'], r['full_name'], r['violation'], r['amount'], r['status']) for r in rows]
+        return _csv_response('fines_report.csv', ['Fine Date', 'Member No', 'Member Name', 'Violation', 'Amount', 'Status'], out)
+
+    if report_key == 'expenses':
+        rows = db.execute(
+            """SELECT e.expense_no, e.expense_date, e.amount, e.purpose, e.category, e.status,
+                       COALESCE(reqm.full_name, req.username) requested_by,
+                       COALESCE(apprm.full_name, appr.username) approved_by,
+                       e.approved_at
+                 FROM expenses e
+                 LEFT JOIN users req ON req.id = e.requested_by
+                 LEFT JOIN members reqm ON reqm.id = req.member_id
+                 LEFT JOIN users appr ON appr.id = e.approved_by
+                 LEFT JOIN members apprm ON apprm.id = appr.member_id
+                ORDER BY e.expense_date DESC, e.id DESC"""
+        ).fetchall()
+        out = [(
+            r['expense_no'], r['expense_date'], r['amount'], r['purpose'], r['category'],
+            r['status'], r['requested_by'], r['approved_by'], r['approved_at']
+        ) for r in rows]
+        return _csv_response(
+            'expenses.csv',
+            ['Expense No', 'Date', 'Amount', 'Purpose', 'Category', 'Status', 'Requested By', 'Approved By', 'Approved At'],
+            out,
+        )
+
+    if report_key == 'loan-interest-collected':
+        rows = db.execute(
+            """SELECT lr.payment_date, l.loan_no, m.member_no, m.full_name,
+                       lr.amount, lr.principal_part, lr.interest_part, lr.penalty_part
+                 FROM loan_repayments lr
+                 JOIN loans l ON l.id = lr.loan_id
+                 LEFT JOIN members m ON m.id = l.member_id
+                ORDER BY lr.payment_date DESC, lr.id DESC"""
+        ).fetchall()
+        out = [(
+            r['payment_date'], r['loan_no'], r['member_no'], r['full_name'],
+            r['amount'], r['principal_part'], r['interest_part'], r['penalty_part']
+        ) for r in rows]
+        return _csv_response(
+            'loan_interest_collected.csv',
+            ['Payment Date', 'Loan No', 'Member No', 'Member Name', 'Total Payment', 'Principal Part', 'Interest Part', 'Penalty Part'],
+            out,
+        )
+
+    if report_key == 'loan-interest-projection':
+        loans = db.execute(
+            """SELECT l.*, m.member_no, m.full_name
+                 FROM loans l
+                 LEFT JOIN members m ON m.id = l.member_id
+                WHERE l.status IN ('Active','Pending')
+                ORDER BY l.issued_date DESC, l.id DESC"""
+        ).fetchall()
+        out = []
+        for loan in loans:
+            repays = db.execute("SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)).fetchall()
+            pens = db.execute("SELECT * FROM loan_penalties WHERE loan_id=?", (loan['id'],)).fetchall()
+            pos = calculate_loan_position(loan, repays, pens)
+            out.append((
+                loan['loan_no'], loan['member_no'], loan['full_name'], loan['status'],
+                int(loan['principal'] or 0), pos['outstanding_principal'],
+                pos['outstanding_interest'], pos['outstanding_penalty'],
+            ))
+        return _csv_response(
+            'loan_interest_projection.csv',
+            ['Loan No', 'Member No', 'Member Name', 'Status', 'Principal', 'Outstanding Principal', 'Projected Interest', 'Projected Penalty'],
+            out,
+        )
+
+    if report_key == 'minutes':
+        rows = db.execute(
+            """SELECT m.meeting_date, m.title, mem.member_no AS chair_no,
+                       mem.full_name AS chair_name, m.is_published
+                 FROM minutes m
+                 LEFT JOIN members mem ON mem.id = m.chaired_by
+                ORDER BY m.meeting_date DESC"""
+        ).fetchall()
+        out = [(r['meeting_date'], r['title'], r['chair_no'], r['chair_name'], 'Published' if r['is_published'] else 'Hidden') for r in rows]
+        return _csv_response('minutes_governance.csv', ['Meeting Date', 'Title', 'Chaired By No', 'Chaired By Name', 'Visibility'], out)
+
+    if report_key == 'dividends':
+        rows = db.execute(
+            """SELECT year, total_interest_pool, distributable_pool, member_count,
+                       per_member_amount, status, distribution_date
+                 FROM dividend_runs
+                ORDER BY year DESC"""
+        ).fetchall()
+        out = [(r['year'], r['total_interest_pool'], r['distributable_pool'], r['member_count'], r['per_member_amount'], r['status'], r['distribution_date']) for r in rows]
+        return _csv_response('dividends_runs.csv', ['Year', 'Total Pool', 'Distributable Pool', 'Members', 'Per Member', 'Status', 'Distribution Date'], out)
+
+    if report_key == 'audit':
+        rows = db.execute(
+            """SELECT al.created_at, COALESCE(m.full_name, u.username, 'System') actor,
+                       al.action, al.entity_type, al.entity_id, al.description
+                 FROM audit_log al
+                 LEFT JOIN users u ON u.id = al.user_id
+                 LEFT JOIN members m ON m.id = u.member_id
+                ORDER BY al.id DESC
+                LIMIT 1000"""
+        ).fetchall()
+        out = [(r['created_at'], r['actor'], r['action'], r['entity_type'], r['entity_id'], r['description']) for r in rows]
+        return _csv_response('audit_controls.csv', ['Created At', 'Actor', 'Action', 'Entity Type', 'Entity ID', 'Detail'], out)
+
+    flash('Unknown report export requested.', 'warning')
+    return redirect(url_for('admin.reports'))

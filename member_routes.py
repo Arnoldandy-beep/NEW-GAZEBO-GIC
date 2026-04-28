@@ -6,14 +6,16 @@ from flask import (
     session, flash, current_app
 )
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 
 from database import get_db
 from utils import (
     login_required, fmt_money, period_str, period_label,
     all_savings_periods, get_member_total_savings,
     get_member_locked_amount, get_member_available_savings,
-    calculate_loan_position, calculate_max_loan_amount,
+    calculate_loan_position, calculate_due_date,
     determine_loan_security,
+    calculate_member_max_eligible_loan,
 )
 from config import Config
 
@@ -130,6 +132,56 @@ def dashboard():
         (member['id'],),
     ).fetchall()}
     arrears = [p for p in expected if p not in paid_periods]
+    prior_arrears = [p for p in arrears if p < cur_period]
+
+    # Savings trend for last 6 months (oldest -> newest)
+    anchor = date.today().replace(day=1)
+    trend_periods = [
+        period_str(anchor - relativedelta(months=offset))
+        for offset in range(5, -1, -1)
+    ]
+    placeholders = ','.join('?' * len(trend_periods))
+    trend_rows = db.execute(
+        f"""SELECT period, COALESCE(SUM(amount),0) AS amount
+              FROM savings
+             WHERE member_id=? AND period IN ({placeholders})
+             GROUP BY period""",
+        [member['id'], *trend_periods],
+    ).fetchall()
+    trend_map = {r['period']: int(r['amount'] or 0) for r in trend_rows}
+    savings_trend = [
+        {
+            'period': p,
+            'label': period_label(p),
+            'amount': int(trend_map.get(p, 0)),
+            'status': (
+                'paid' if p in paid_periods else
+                'pending' if p == cur_period else
+                'unpaid'
+            ),
+        }
+        for p in trend_periods
+    ]
+    savings_trend_max = max([p['amount'] for p in savings_trend] or [0])
+
+    # Courtesy title for greeting
+    gender_value = (member['gender'] if 'gender' in member.keys() else '') or ''
+    gender_value = gender_value.strip().lower()
+    if gender_value.startswith('m'):
+        greeting_prefix = 'Mr.'
+    elif gender_value.startswith('f'):
+        greeting_prefix = 'Miss'
+    else:
+        greeting_prefix = 'Mr./Ms.'
+
+    # Compliance color states
+    fee_status_state = 'ok' if my_fee_paid else 'bad'
+    if my_month_savings_paid:
+        month_savings_state = 'ok'
+    elif prior_arrears:
+        month_savings_state = 'bad'
+    else:
+        month_savings_state = 'warn'
 
     # Latest minutes (5)
     latest_minutes = db.execute(
@@ -142,8 +194,16 @@ def dashboard():
              FROM dividend_payouts dp
              JOIN dividend_runs dr ON dr.id = dp.dividend_run_id
             WHERE dp.member_id=?
+              AND dr.status IN ('Published', 'Distributed')
             ORDER BY dr.year DESC""",
         (member['id'],),
+    ).fetchall()
+
+    unread_notifications = db.execute(
+        """SELECT * FROM notifications
+            WHERE user_id = ? AND is_read = 0
+            ORDER BY id DESC LIMIT 10""",
+        (session['user_id'],),
     ).fetchall()
 
     return render_template(
@@ -175,9 +235,35 @@ def dashboard():
         current_year=current_year,
         arrears_count=len(arrears),
         arrears_amount=len(arrears) * Config.MONTHLY_SAVINGS_AMOUNT,
+        prior_arrears_count=len(prior_arrears),
+        prior_arrears_amount=len(prior_arrears) * Config.MONTHLY_SAVINGS_AMOUNT,
+        fee_status_state=fee_status_state,
+        month_savings_state=month_savings_state,
+        greeting_prefix=greeting_prefix,
+        savings_trend=savings_trend,
+        savings_trend_max=savings_trend_max,
         latest_minutes=latest_minutes,
+        unread_notifications=unread_notifications,
         payouts=payouts,
     )
+
+
+@bp.route('/notifications/<int:notification_id>/open')
+def notification_open(notification_id):
+    db = get_db()
+    n = db.execute(
+        "SELECT * FROM notifications WHERE id=? AND user_id=?",
+        (notification_id, session['user_id']),
+    ).fetchone()
+    if not n:
+        flash('Notification not found.', 'warning')
+        return redirect(url_for('member.dashboard'))
+
+    db.execute("UPDATE notifications SET is_read=1 WHERE id=?", (notification_id,))
+    db.commit()
+    if n['link']:
+        return redirect(n['link'])
+    return redirect(url_for('member.dashboard'))
 
 
 # ---------------------------------------------------------------------------
@@ -316,23 +402,12 @@ def loan_eligibility():
             ORDER BY member_no""",
         (member['id'],),
     ).fetchall()
-    enriched_candidates = []
-    for c in candidates:
-        avail = get_member_available_savings(db, c['id'])
-        d = dict(c)
-        d['available_savings'] = avail
-        enriched_candidates.append(d)
-
-    # Top 2 suggested guarantors (highest available)
-    top2 = sorted(
-        enriched_candidates, key=lambda x: x['available_savings'], reverse=True
-    )[:2]
-    suggested_max = own + sum(g['available_savings'] for g in top2)
 
     # If a check is being run
     check_result = None
     if request.method == 'POST':
         principal = int(request.form.get('principal') or 0)
+        term_months = int(request.form.get('term_months') or 1)
         g1_id = request.form.get('guarantor1_id')
         g2_id = request.form.get('guarantor2_id')
         g1_id = int(g1_id) if g1_id else None
@@ -348,16 +423,39 @@ def loan_eligibility():
         elif g1_id == member['id'] or g2_id == member['id']:
             flash('You cannot guarantee yourself.', 'warning')
         else:
+            policy_caps = calculate_member_max_eligible_loan(
+                db, member['id'], g1_id, g2_id, term_months
+            )
             check_result = determine_loan_security(
                 db, member['id'], principal, g1_id, g2_id
             )
             check_result['principal'] = principal
             check_result['interest'] = int(
                 principal * Config.LOAN_INTEREST_RATE_MONTHLY *
-                int(request.form.get('term_months') or 1)
+                term_months
             )
-            check_result['term_months'] = int(request.form.get('term_months') or 1)
+            check_result['term_months'] = term_months
             check_result['total_due'] = principal + check_result['interest']
+            check_result['monthly_installment'] = (
+                check_result['total_due'] // term_months if term_months else check_result['total_due']
+            )
+            check_result['final_installment'] = (
+                check_result['total_due'] - (check_result['monthly_installment'] * max(0, term_months - 1))
+            )
+            check_result['due_date'] = calculate_due_date(date.today(), term_months)
+            check_result['possible_penalty_monthly'] = int(
+                principal * Config.LOAN_PENALTY_RATE_MONTHLY
+            )
+            check_result['max_eligible'] = policy_caps['max_eligible']
+            check_result['policy_caps'] = policy_caps
+
+            if principal > policy_caps['max_eligible']:
+                check_result['sufficient'] = False
+                check_result['message'] = (
+                    'Requested principal exceeds your current maximum eligible loan of '
+                    f"{fmt_money(policy_caps['max_eligible'])}."
+                )
+
             if g1_id:
                 g1_row = db.execute("SELECT * FROM members WHERE id=?",
                                     (g1_id,)).fetchone()
@@ -373,9 +471,7 @@ def loan_eligibility():
         'member/eligibility.html',
         member=member,
         own_available=own,
-        candidates=enriched_candidates,
-        top_guarantors=top2,
-        suggested_max=suggested_max,
+        candidates=candidates,
         open_loan=open_loan,
         check_result=check_result,
         max_term=Config.LOAN_MAX_TERM_MONTHS,
@@ -449,6 +545,7 @@ def profile():
              FROM dividend_payouts dp
              JOIN dividend_runs dr ON dr.id = dp.dividend_run_id
             WHERE dp.member_id=?
+              AND dr.status IN ('Published', 'Distributed')
             ORDER BY dr.year DESC""",
         (member['id'],),
     ).fetchall()

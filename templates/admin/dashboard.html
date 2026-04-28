@@ -129,6 +129,18 @@
   color: #6b7886;
 }
 
+.dash-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #5879a0;
+  padding: 16px 2px 5px;
+  border-bottom: 2px solid #e2eaf4;
+  margin-bottom: 10px;
+}
+.dash-group-label i { font-size: 13px; vertical-align: -1px; }
+
 .section-shell {
   background: #fff;
   border: 1px solid var(--border);
@@ -258,6 +270,25 @@
   color: #45586c;
 }
 
+.dash-alert-stack {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.dash-alert-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.dash-alert-line i { font-size: 18px; }
+.dash-alert-danger { color: #b71c1c; background: #ffebee; border: 1px solid #ef9a9a; }
+.dash-alert-warn { color: #8d5b00; background: #fff8e1; border: 1px solid #ffd180; }
+.dash-alert-line:hover { filter: brightness(.98); }
+
 @media (max-width: 840px) {
   .snapshot-grid { grid-template-columns: 1fr; }
   .trend-row { grid-template-columns: 1fr; }
@@ -279,6 +310,19 @@
   </div>
 </div>
 
+<div class="dash-alert-stack">
+  {% if overdue_count > 0 %}
+  <a class="dash-alert-line dash-alert-danger" href="{{ url_for('admin.loans_list', status='Active', sort='overdue', dir='desc') }}">
+    <i class="ph ph-warning-circle"></i> {{ overdue_count }} loan(s) overdue.
+  </a>
+  {% endif %}
+  {% if current_month_defaulters|length > 0 %}
+  <a class="dash-alert-line dash-alert-warn" href="{{ url_for('admin.savings_list', view='calendar') }}">
+    <i class="ph ph-money"></i> {{ current_month_defaulters|length }} member(s) haven't paid {{ today.strftime('%b') }}.
+  </a>
+  {% endif %}
+</div>
+
 <div class="snapshot-grid">
   <a class="snapshot-card text-decoration-none" href="{{ url_for('admin.loans_list') }}">
     <span class="snapshot-icon"><i class="ph ph-bank"></i></span>
@@ -298,6 +342,35 @@
   </a>
 </div>
 
+<div class="dash-group-label"><i class="ph ph-hand-coins"></i> Loans</div>
+<div class="dash-grid">
+  <a class="dash-tile" href="{{ url_for('admin.loans_list') }}">
+    <div class="head"><span class="label">Loans Portfolio</span><i class="ph ph-hand-coins"></i></div>
+    <div class="value">{{ outstanding_principal|money }}</div>
+    <div class="sub">Interest + penalty outstanding: {{ (outstanding_interest + outstanding_penalty)|money }} | Overdue: {{ overdue_count }}</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.loans_list') }}">
+    <div class="head"><span class="label">Loan Interest Collected</span><i class="ph ph-coins"></i></div>
+    <div class="value">{{ loan_interest_collected|money }}</div>
+    <div class="sub">Cash-realized interest to date</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.loans_list') }}">
+    <div class="head"><span class="label">Loan Interest Projection</span><i class="ph ph-chart-line-up"></i></div>
+    <div class="value">{{ loan_interest_projected|money }}</div>
+    <div class="sub">Outstanding interest + penalties on active loans</div>
+  </a>
+</div>
+
+<div class="dash-group-label"><i class="ph ph-piggy-bank"></i> Savings</div>
+<div class="dash-grid">
+  <a class="dash-tile" href="{{ url_for('admin.savings_list') }}">
+    <div class="head"><span class="label">Current Month Savings</span><i class="ph ph-calendar-check"></i></div>
+    <div class="value">{{ month_paid_members }}/{{ total_members }}</div>
+    <div class="sub">Members covered | Outstanding amount: {{ month_outstanding_amount|money }}</div>
+  </a>
+</div>
+
+<div class="dash-group-label"><i class="ph ph-receipt"></i> Fees &amp; Fines</div>
 <div class="dash-grid">
   <a class="dash-tile" href="{{ url_for('admin.fees_list', year=current_year) }}">
     <div class="head"><span class="label">Annual Fees Pool {{ current_year }}</span><i class="ph ph-receipt"></i></div>
@@ -309,27 +382,55 @@
     <div class="value">{{ fines_outstanding|money }}</div>
     <div class="sub">Outstanding fines ({{ fines_unpaid_count }} records) | Collected: {{ fines_collected|money }}</div>
   </a>
+</div>
+
+<div class="dash-group-label"><i class="ph ph-chart-line-up"></i> Operations</div>
+<div class="dash-grid">
+  <a class="dash-tile" href="{{ url_for('admin.reports') }}">
+    <div class="head"><span class="label">Operations (Fees + Fines)</span><i class="ph ph-chart-line-up"></i></div>
+    <div class="value">{{ operations_income|money }}</div>
+    <div class="sub">Fees + fines - approved expenses | Fund now: {{ operations_fund_total|money }} | After pending: {{ operations_available_after_pending|money }}</div>
+  </a>
+  <a class="dash-tile" href="{{ url_for('admin.expenses_list') }}">
+    <div class="head"><span class="label">Expenses Spent</span><i class="ph ph-wallet"></i></div>
+    <div class="value">{{ expenses_spent|money }}</div>
+    <div class="sub">{{ expenses_spent_count }} approved request(s) | Pending requests: {{ expenses_pending|money }}</div>
+  </a>
+</div>
+
+<div class="dash-group-label"><i class="ph ph-notepad"></i> Governance</div>
+<div class="dash-grid">
   <a class="dash-tile" href="{{ url_for('admin.minutes_list') }}">
     <div class="head"><span class="label">Minutes Published</span><i class="ph ph-notepad"></i></div>
     <div class="value">{{ minutes_published }}</div>
     <div class="sub">Published out of {{ minutes_total }} records</div>
   </a>
-  <a class="dash-tile" href="{{ url_for('admin.reports') }}">
-    <div class="head"><span class="label">Operations (Fees + Fines)</span><i class="ph ph-chart-line-up"></i></div>
-    <div class="value">{{ operations_collected|money }}</div>
-    <div class="sub">Projection: {{ operations_projection|money }} | Outstanding: {{ operations_outstanding|money }}</div>
-  </a>
-  <a class="dash-tile" href="{{ url_for('admin.savings_list') }}">
-    <div class="head"><span class="label">Current Month Savings</span><i class="ph ph-calendar-check"></i></div>
-    <div class="value">{{ month_paid_members }}/{{ total_members }}</div>
-    <div class="sub">Members covered | Outstanding amount: {{ month_outstanding_amount|money }}</div>
-  </a>
-  <a class="dash-tile" href="{{ url_for('admin.loans_list') }}">
-    <div class="head"><span class="label">Loans Portfolio</span><i class="ph ph-hand-coins"></i></div>
-    <div class="value">{{ outstanding_principal|money }}</div>
-    <div class="sub">Interest + penalty outstanding: {{ (outstanding_interest + outstanding_penalty)|money }} | Overdue: {{ overdue_count }}</div>
-  </a>
 </div>
+
+{% if session.role == 'CHAIRMAN' and pending_rows %}
+<div class="section-shell attached-red" style="border-color:#e65100">
+  <div class="section-head" style="background:#fff3e0;color:#bf360c"><i class="ph ph-hourglass-medium"></i> Pending Expense Approvals ({{ pending_rows|length }})</div>
+  <div class="table-responsive">
+    <table class="section-table">
+      <thead><tr><th>Ref</th><th>Date</th><th>Amount</th><th>Purpose</th><th>Requested By</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for e in pending_rows %}
+        <tr>
+          <td><strong>{{ e.expense_no }}</strong></td>
+          <td>{{ e.expense_date|datefmt }}</td>
+          <td class="text-danger fw-bold">{{ e.amount|money }}</td>
+          <td>{{ e.purpose }}</td>
+          <td>{{ e.requested_by_full or e.requested_by_name or '-' }}</td>
+          <td>
+            <a class="notice-btn" href="{{ url_for('admin.expenses_list', tab='pending') }}"><i class="ph ph-arrow-right"></i> Review</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
 <div class="section-shell">
   <div class="section-head"><i class="ph ph-warning-circle"></i> Current Month Defaulters ({{ current_month_defaulters|length }})</div>
@@ -448,10 +549,12 @@
         {% if unread_notifications %}
           <ul class="list-group list-group-flush">
             {% for n in unread_notifications %}
-            <li class="list-group-item small">
-              <div class="fw-semibold">{{ n.title }}</div>
-              <div class="text-muted">{{ n.message }}</div>
-              {% if n.link %}<a href="{{ n.link }}" class="small">Open</a>{% endif %}
+            <li class="list-group-item small p-0">
+              <a href="{{ url_for('admin.notification_open', notification_id=n.id) }}" class="d-block text-decoration-none p-3">
+                <div class="fw-semibold text-dark">{{ n.title }}</div>
+                <div class="text-muted">{{ n.message }}</div>
+                <div class="small mt-1">Open &rarr;</div>
+              </a>
             </li>
             {% endfor %}
           </ul>

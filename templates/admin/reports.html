@@ -2,73 +2,250 @@
 {% block title %}Reports{% endblock %}
 {% block topbar %}Reports{% endblock %}
 {% block content %}
+<style>
+.reports-hero {
+  border: 1px solid #d7e0ef;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 55%, #f6fbf9 100%);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.reports-hero h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -.4px;
+  background: linear-gradient(135deg, #244f8e, #1565c0 62%, #0f7d94);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.reports-top-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.reports-top-stat {
+  border: 1px solid #d9e3f2;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.reports-top-stat .k {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .75px;
+  color: #6a7b8f;
+  font-weight: 700;
+}
+
+.reports-top-stat .v {
+  margin-top: 4px;
+  font-size: 21px;
+  font-weight: 800;
+  color: #23374c;
+  font-variant-numeric: tabular-nums;
+}
+
+.reports-group-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #5879a0;
+  padding: 18px 4px 6px;
+  border-bottom: 2px solid #e2eaf4;
+  margin-bottom: 10px;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.report-tile {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid #d3deed;
+  background: #fff;
+  padding: 14px;
+  box-shadow: 0 8px 18px rgba(30,42,58,.07);
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.report-tile::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #2f6fa8, #66a7e5);
+}
+
+.report-tile.tone-accent::before { background: linear-gradient(90deg, #1f8f68, #36b38a); }
+.report-tile.tone-gold::before { background: linear-gradient(90deg, #c58d22, #e1b451); }
+.report-tile.tone-warn::before { background: linear-gradient(90deg, #b46d1f, #de9d4c); }
+.report-tile.tone-danger::before { background: linear-gradient(90deg, #ac3838, #dc6767); }
+.report-tile.tone-ok::before { background: linear-gradient(90deg, #1d8a5b, #42bf84); }
+.report-tile.tone-info::before { background: linear-gradient(90deg, #356d9e, #5ca0dc); }
+
+.report-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(30,42,58,.12);
+}
+
+.report-tile-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.report-tile-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  font-weight: 800;
+  color: #5f7185;
+}
+
+.report-tile-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #edf3fb 0%, #dce8f8 100%);
+  color: #2f6fa8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.report-tile-value {
+  margin-top: 8px;
+  font-size: 28px;
+  font-weight: 900;
+  color: #223649;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.report-tile-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #667889;
+  min-height: 34px;
+}
+
+.report-tile-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.report-tile-actions .btn {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 9px;
+}
+
+.reports-chart-card {
+  margin-top: 16px;
+}
+
+@media (max-width: 1090px) {
+  .reports-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reports-top-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 680px) {
+  .reports-grid { grid-template-columns: 1fr; }
+  .reports-top-strip { grid-template-columns: 1fr; }
+}
+</style>
+
 <div class="page-header">
   <div><h1>Reports</h1><div class="subtitle">Financial position &amp; trends</div></div>
 </div>
 
-<div class="row g-3">
-  <div class="col-lg-7">
-    <div class="card mb-3">
-      <div class="card-header"><i class="ph ph-bank"></i> Position Summary</div>
-      <div class="card-body p-0">
-        <table class="table mb-0">
-          <tbody>
-            <tr><td><strong>ASSETS</strong></td><td></td></tr>
-            <tr><td>Cash on hand (savings &minus; principal lent)</td><td class="table-money money-positive">{{ cash_available|money }}</td></tr>
-            <tr><td>Loans outstanding (principal)</td><td class="table-money">{{ out_principal|money }}</td></tr>
-            <tr><td>Interest receivable</td><td class="table-money">{{ out_interest|money }}</td></tr>
-            <tr><td>Penalty receivable</td><td class="table-money">{{ out_penalty|money }}</td></tr>
-            <tr><td>Fines receivable</td><td class="table-money">{{ fines_receivable|money }}</td></tr>
-            <tr><td>Annual fees receivable</td><td class="table-money">{{ fees_receivable|money }}</td></tr>
-            <tr class="table-active"><td><strong>Total Assets</strong></td><td class="table-money"><strong>{{ (cash_available + out_principal + out_interest + out_penalty + fines_receivable + fees_receivable)|money }}</strong></td></tr>
-            <tr><td colspan="2">&nbsp;</td></tr>
-            <tr><td><strong>EQUITY (member savings)</strong></td><td class="table-money money-positive">{{ total_savings|money }}</td></tr>
-            <tr><td colspan="2">&nbsp;</td></tr>
-            <tr><td><strong>OPERATING INCOME</strong></td><td></td></tr>
-            <tr><td>Interest collected</td><td class="table-money">{{ interest_collected|money }}</td></tr>
-            <tr><td>Annual fees collected</td><td class="table-money">{{ income_fees|money }}</td></tr>
-            <tr><td>Fines collected</td><td class="table-money">{{ income_fines|money }}</td></tr>
-            <tr class="table-active"><td><strong>Total Operating Income</strong></td><td class="table-money"><strong>{{ (interest_collected + income_fees + income_fines)|money }}</strong></td></tr>
-          </tbody>
-        </table>
-      </div>
+<div class="reports-hero">
+  <div class="reports-top-strip">
+    <div class="reports-top-stat">
+      <div class="k">Total Assets</div>
+      <div class="v">{{ total_assets|money }}</div>
+    </div>
+    <div class="reports-top-stat">
+      <div class="k">Operating Income</div>
+      <div class="v">{{ operating_income|money }}</div>
+    </div>
+    <div class="reports-top-stat">
+      <div class="k">Total Savings Equity</div>
+      <div class="v">{{ total_savings|money }}</div>
+    </div>
+    <div class="reports-top-stat">
+      <div class="k">Loan Book Records</div>
+      <div class="v">{{ loan_total_count }}</div>
     </div>
   </div>
+</div>
 
-  <div class="col-lg-5">
-    <div class="card">
-      <div class="card-header"><i class="ph ph-chart-bar"></i> Savings Trend</div>
-      <div class="card-body">
-        {% set max_total = (trend|map(attribute='total')|max) or 1 %}
-        <div class="bar-chart">
-          {% for t in trend %}
-          <div class="bar" style="height: {{ ((t.total / max_total) * 100)|int if t.total else 5 }}%">
-            <div class="bar-value">{{ (t.total/1000)|round(0)|int }}k</div>
-            <div class="bar-label">{{ t.label.split()[0] }}</div>
-          </div>
-          {% endfor %}
+{% set ns = namespace(last_group='') %}
+{% for tile in report_tiles %}
+  {% if tile.group != ns.last_group %}
+    {% if not loop.first %}</div>{% endif %}
+    <div class="reports-group-label"><i class="bi bi-grid-3x3-gap-fill me-1"></i>{{ tile.group }}</div>
+    <div class="reports-grid">
+    {% set ns.last_group = tile.group %}
+  {% endif %}
+  <div class="report-tile tone-{{ tile.tone }}">
+    <div>
+      <div class="report-tile-head">
+        <div class="report-tile-title">{{ tile.title }}</div>
+        <div class="report-tile-icon"><i class="{{ tile.icon }}"></i></div>
+      </div>
+      <div class="report-tile-value">{{ tile.value }}</div>
+      <div class="report-tile-sub">{{ tile.sub }}</div>
+    </div>
+    <div class="report-tile-actions">
+      <a href="{{ tile.href }}" class="btn btn-sm btn-primary">Open</a>
+      <a href="{{ url_for('admin.reports_export', report_key=tile.key) }}" class="btn btn-sm btn-outline-primary">Export CSV</a>
+    </div>
+  </div>
+{% endfor %}
+{% if report_tiles %}</div>{% endif %}
+
+<div class="card reports-chart-card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-bar-chart-line"></i> 6-Month Savings Collection Trend</span>
+    <a href="{{ url_for('admin.reports_export', report_key='savings-trend') }}" class="btn btn-sm btn-outline-primary">Export Trend</a>
+  </div>
+  <div class="card-body">
+    {% set max_total = (trend|map(attribute='total')|max) or 1 %}
+    <div class="bar-chart">
+      {% for t in trend %}
+      <div class="bar" style="height: {{ ((t.total / max_total) * 100)|int if t.total else 6 }}%">
+        <div class="bar-value">
+          {% if t.total >= 1000000 %}{{ '%.1f'|format(t.total / 1000000) }}M
+          {% elif t.total >= 1000 %}{{ (t.total / 1000)|round(0)|int }}K
+          {% else %}{{ t.total }}{% endif %}
         </div>
-        <div class="text-center mt-4 small text-muted">Total monthly savings collected</div>
+        <div class="bar-label">{{ t.label }}</div>
       </div>
+      {% endfor %}
     </div>
-
-    <div class="card mt-3">
-      <div class="card-header"><i class="ph ph-table"></i> Period Detail</div>
-      <div class="card-body p-0" style="max-height:280px;overflow:auto">
-        <table class="table mb-0">
-          <thead><tr><th>Period</th><th>Members</th><th>Total</th></tr></thead>
-          <tbody>
-            {% for t in trend|reverse %}
-            <tr>
-              <td>{{ t.label }}</td>
-              <td>{{ t.count }}</td>
-              <td class="table-money">{{ t.total|money }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <div class="text-center mt-4 small text-muted">Monthly savings collections with contributor volume in the period detail export.</div>
   </div>
 </div>
 {% endblock %}

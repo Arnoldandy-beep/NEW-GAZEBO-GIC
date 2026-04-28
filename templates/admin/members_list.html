@@ -29,7 +29,7 @@
           <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
           <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
           <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
-          <option value="Archived" {% if status_filter == 'Archived' %}selected{% endif %}>Archived</option>
+          <option value="Exited" {% if status_filter == 'Exited' %}selected{% endif %}>Exited</option>
         </select>
       </div>
       <div class="col-md-2">
@@ -65,10 +65,12 @@
           </td>
           <td>{{ m.phone or '-' }}</td>
           <td><span class="role-badge role-{{ m.role|lower }}">{{ ROLES[m.role].name }}</span></td>
-          <td class="table-money money-positive">{{ m.savings_total|money }}</td>
-          <td class="table-money">{{ m.locked|money }}</td>
+          <td class="table-money money-positive">{{ m.savings_total|money if m.savings_total is not none else '-' }}</td>
+          <td class="table-money">{{ m.locked|money if m.locked is not none else '-' }}</td>
           <td>{% if m.has_login %}<i class="ph ph-check-circle text-success"></i>{% else %}<i class="ph ph-minus-circle text-muted"></i>{% endif %}</td>
-          <td><span class="badge-pill badge-{% if m.status == 'Active' %}active{% else %}defaulted{% endif %}">{{ m.status }}</span></td>
+          <td>
+            <span class="badge-pill badge-{% if m.status == 'Active' %}active{% elif m.status == 'Exited' %}exited{% else %}defaulted{% endif %}">{{ m.status }}</span>
+          </td>
           <td><a href="{{ url_for('admin.member_detail', member_id=m.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
         </tr>
         {% else %}
@@ -80,7 +82,7 @@
 </div>
 
 <div class="alert alert-secondary mt-3 mb-0">
-  Members with deletion history and financial references are archived instead of hard-deleted. Archived members are hidden from the default list and can still be reviewed using the status filter.
+  Members with deletion history and financial references are marked as Exited instead of hard-deleted. Exited members are hidden from the default list and can still be reviewed using the status filter.
 </div>
 {% endblock %}
 

@@ -104,6 +104,11 @@ body.app-body{
 .nav-link.active i{background:linear-gradient(135deg,#d0a245,#b68931);color:#1f2d38}
 .nav-logout{color:#ffb4b4 !important;margin-top:4px}
 .nav-logout:hover{background:rgba(198,40,40,.18);color:#ffd9d9 !important}
+.nav-badge-exp{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:#e65100;color:#fff;font-size:10px;font-weight:800;
+  padding:1px 6px;border-radius:99px;line-height:1.6;
+}
 
 .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--sidebar-muted)}
 
@@ -114,6 +119,33 @@ body.app-body{
   position:sticky;top:0;z-index:10;
 }
 .topbar-title{font-family:"Space Grotesk","Manrope",sans-serif;font-weight:600;font-size:16px;color:var(--text)}
+
+.sidebar-toggle{
+  width:44px;
+  height:40px;
+  padding:0;
+  border-radius:10px;
+  border:1px solid #c8baa7;
+  background:#fff;
+  color:#243340;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 14px rgba(34,45,58,.1);
+}
+
+.sidebar-toggle i{
+  font-size:28px;
+  font-weight:900;
+  line-height:1;
+}
+
+.sidebar-toggle:hover,
+.sidebar-toggle:focus{
+  background:#f8f2e8;
+  border-color:#bfae97;
+  color:#1f2c3b;
+}
 
 /* ===== Cards ===== */
 .card{
@@ -186,6 +218,14 @@ body.app-body{
 .badge-cleared{background:#e8f5e9;color:#2e7d32}
 .badge-declined{background:#eceff1;color:#455a64}
 .badge-defaulted{background:#ffebee;color:#c62828}
+.badge-exited{
+  background:linear-gradient(180deg,#f57b7b 0%,#c62828 100%);
+  color:#fff;
+  font-weight:800;
+  border:1px solid #8f1a1a;
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 2px 4px rgba(82,18,18,.35);
+}
 .badge-overdue{background:#ffebee;color:#c62828}
 .badge-paid{background:#e8f5e9;color:#2e7d32}
 .badge-unpaid{background:#fff3e0;color:#e65100}
@@ -858,17 +898,58 @@ body.app-body{
 .bar-label{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:10px;color:var(--text-muted)}
 .bar-value{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:10px;color:var(--text);font-weight:600}
 
-/* ===== Mobile ===== */
-@media (max-width:768px){
+/* ===== Mobile / Tablet ===== */
+@media (max-width:991.98px){
   .app-sidebar{
     position:fixed;left:-280px;top:0;height:100vh;z-index:1000;
     transition:left .25s;
   }
   .app-sidebar.open{left:0;box-shadow:0 0 30px rgba(0,0,0,.4)}
   .app-main{padding:16px}
+  .app-footer{padding:12px 16px}
+  .app-topbar{padding:10px 14px;gap:10px}
+  .topbar-title{font-size:15px}
+
+  .nav-link{
+    padding:11px 18px;
+    font-size:14.2px;
+  }
+  .nav-link i{
+    width:24px;
+    height:24px;
+    font-size:16px;
+    margin-right:10px;
+  }
+
+  .member-hero{
+    padding:16px;
+    border-radius:14px;
+  }
+  .member-hero h1{
+    font-size:24px;
+  }
+  .member-dash-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+  }
+
   .stat-grid{grid-template-columns:1fr 1fr;gap:10px}
   .stat-card .value{font-size:18px}
 }
+
+@media (max-width:767.98px){
+  .member-dash-grid{
+    grid-template-columns:1fr;
+  }
+  .member-dash-tile{
+    padding:12px;
+  }
+  .member-dash-tile .value{
+    font-size:22px;
+  }
+}
+
 @media (max-width:480px){
   .stat-grid{grid-template-columns:1fr}
+  .member-hero h1{font-size:21px}
 }

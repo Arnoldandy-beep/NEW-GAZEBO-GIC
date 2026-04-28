@@ -35,7 +35,7 @@
               <select name="guarantor1_id" class="form-select" required>
                 <option value="">-- Select --</option>
                 {% for c in candidates %}
-                <option value="{{ c.id }}">{{ c.member_no }} - {{ c.full_name }} ({{ c.available_savings|money }} avail.)</option>
+                <option value="{{ c.id }}">{{ c.member_no }} - {{ c.full_name }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -44,7 +44,7 @@
               <select name="guarantor2_id" class="form-select" required>
                 <option value="">-- Select --</option>
                 {% for c in candidates %}
-                <option value="{{ c.id }}">{{ c.member_no }} - {{ c.full_name }} ({{ c.available_savings|money }} avail.)</option>
+                <option value="{{ c.id }}">{{ c.member_no }} - {{ c.full_name }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -71,6 +71,10 @@
               <dt>Term</dt><dd>{{ check_result.term_months }} months</dd>
               <dt>Interest @ {{ rate_pct }}%/m</dt><dd>{{ check_result.interest|money }}</dd>
               <dt>Total repayable</dt><dd><strong>{{ check_result.total_due|money }}</strong></dd>
+              <dt>Monthly installment</dt><dd>{{ check_result.monthly_installment|money }}</dd>
+              <dt>Final installment</dt><dd>{{ check_result.final_installment|money }}</dd>
+              <dt>Due date</dt><dd>{{ check_result.due_date|datefmt }}</dd>
+              <dt>Possible penalty/month if late</dt><dd class="text-danger">{{ check_result.possible_penalty_monthly|money }}</dd>
             </dl>
           </div>
           <div class="col-sm-6">
@@ -94,20 +98,15 @@
         <dl class="kv-list">
           <dt>Member</dt><dd>{{ member.member_no }} - {{ member.full_name }}</dd>
           <dt>My available savings</dt><dd><strong>{{ own_available|money }}</strong></dd>
+          <dt>Max eligible</dt><dd><strong>{% if check_result %}{{ check_result.max_eligible|money }}{% else %}Run check to view{% endif %}</strong></dd>
           <dt>Loan rate</dt><dd>{{ rate_pct }}% per month</dd>
           <dt>Max term</dt><dd>{{ max_term }} months</dd>
           <dt>Guarantors required</dt><dd>{{ CONFIG.GUARANTORS_REQUIRED }}</dd>
         </dl>
         <hr>
-        <p class="small text-muted mb-1"><i class="ph ph-lightbulb"></i> <strong>Suggested top guarantors</strong> (by available savings)</p>
-        <ul class="list-unstyled small mb-0">
-          {% for g in top_guarantors %}
-          <li><strong>{{ g.member_no }}</strong> - {{ g.full_name }} <span class="text-muted">({{ g.available_savings|money }})</span></li>
-          {% endfor %}
-        </ul>
-        <hr>
-        <p class="small mb-0"><strong>Approximate maximum loan</strong> with these two guarantors:
-          <br><span class="money-amount-large money-positive">{{ suggested_max|money }}</span>
+        <p class="small text-muted mb-1"><i class="ph ph-handshake"></i> <strong>Guarantor selection policy</strong></p>
+        <p class="small mb-0">
+          Choose members who have already agreed to guarantee your loan. Guarantor savings balances are intentionally not displayed in the member portal.
         </p>
       </div>
     </div>
@@ -119,6 +118,20 @@
           <li>Your <strong>own available savings</strong> are locked first as collateral.</li>
           <li>If the loan exceeds your savings, the difference is split between your <strong>two guarantors</strong>' available savings.</li>
           <li>Loans are due on the 30th of the agreed month and accrue {{ rate_pct }}% interest per month plus penalty if overdue.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><i class="ph ph-list-checks"></i> How to Apply for a Loan</div>
+      <div class="card-body small">
+        <ol class="ps-3 mb-0">
+          <li>Obtain a loan application form from the Treasurer or Secretary.</li>
+          <li>Complete the form and nominate two (2) GIC members as guarantors.</li>
+          <li>Submit the signed form to the Treasurer.</li>
+          <li>Upon verification, the Treasurer will capture the application in the system.</li>
+          <li>The Loan Committee — Chairman, Treasurer, Secretary, and Committee Member — reviews all requests. Any three (3) approvals will activate the loan.</li>
+          <li>Approval progress is visible in real time once the application is submitted.</li>
         </ol>
       </div>
     </div>

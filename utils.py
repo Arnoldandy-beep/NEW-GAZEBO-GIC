@@ -396,6 +396,101 @@ def determine_loan_security(db, member_id, principal, guarantor1_id, guarantor2_
     }
 
 
+def _tenure_ceiling(term_months):
+    """
+    Tenure ceiling policy:
+    - < 6 months  -> 500,000
+    - 6 - 12      -> 1,000,000
+    - > 12        -> no cap
+    """
+    if term_months < 6:
+        return 500_000
+    if term_months <= 12:
+        return 1_000_000
+    return None
+
+
+def _history_multiplier(db, member_id):
+    """
+    History multiplier policy:
+    - Prior default: 0.0x
+    - At least one late loan: 0.75x
+    - Clean history: 1.0x
+    """
+    has_default = db.execute(
+        "SELECT 1 FROM loans WHERE member_id=? AND status='Defaulted' LIMIT 1",
+        (member_id,),
+    ).fetchone()
+    if has_default:
+        return 0.0, 'prior_default', 0
+
+    late_row = db.execute(
+        """SELECT COUNT(DISTINCT lp.loan_id) AS c
+             FROM loan_penalties lp
+             JOIN loans l ON l.id = lp.loan_id
+            WHERE l.member_id = ?""",
+        (member_id,),
+    ).fetchone()
+    late_count = int(late_row['c'] or 0)
+    if late_count >= 1:
+        return 0.75, 'late_history', late_count
+
+    return 1.0, 'clean', 0
+
+
+def calculate_member_max_eligible_loan(
+    db, member_id, guarantor1_id=None, guarantor2_id=None, term_months=1
+):
+    """
+    Policy formula:
+    Max Eligible Loan = MIN(
+      1) 0.75 * (borrower available + g1 available + g2 available)
+      2) 3 * borrower cumulative savings
+      3) 0.25 * available-to-lend pool
+      4) tenure ceiling
+    ) * history_multiplier
+    """
+    own_available = get_member_available_savings(db, member_id)
+    own_cumulative = get_member_total_savings(db, member_id)
+    g1_available = get_member_available_savings(db, guarantor1_id) if guarantor1_id else 0
+    g2_available = get_member_available_savings(db, guarantor2_id) if guarantor2_id else 0
+
+    active_ids = db.execute(
+        "SELECT id FROM members WHERE status='Active'"
+    ).fetchall()
+    available_pool = sum(get_member_available_savings(db, m['id']) for m in active_ids)
+
+    cap_security = int(0.75 * (own_available + g1_available + g2_available))
+    cap_own_multiple = int(3 * own_cumulative)
+    cap_pool = int(0.25 * available_pool)
+    cap_tenure = _tenure_ceiling(term_months)
+
+    caps = [cap_security, cap_own_multiple, cap_pool]
+    if cap_tenure is not None:
+        caps.append(cap_tenure)
+    pre_history_cap = max(0, min(caps))
+
+    history_mult, history_bucket, late_count = _history_multiplier(db, member_id)
+    max_eligible = int(pre_history_cap * history_mult)
+
+    return {
+        'max_eligible': max_eligible,
+        'cap_security': cap_security,
+        'cap_own_multiple': cap_own_multiple,
+        'cap_pool': cap_pool,
+        'cap_tenure': cap_tenure,
+        'pre_history_cap': pre_history_cap,
+        'history_multiplier': history_mult,
+        'history_bucket': history_bucket,
+        'late_count': late_count,
+        'own_available': own_available,
+        'own_cumulative': own_cumulative,
+        'g1_available': g1_available,
+        'g2_available': g2_available,
+        'available_pool': available_pool,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Authorization decorators
 # ---------------------------------------------------------------------------
