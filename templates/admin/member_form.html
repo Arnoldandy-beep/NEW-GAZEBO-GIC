@@ -1,290 +1,469 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}{% if member %}Edit Member{% else %}New Member{% endif %}{% endblock %}
-{% block topbar %}{% if member %}Edit {{ member.first_name or '' }} {{ member.surname or member.full_name }}{% else %}New Member{% endif %}{% endblock %}
+{% block topbar %}{% if member %}Edit {{ member.first_name or '' }} {{ member.surname or member.full_name }}{% else %}Add New Member{% endif %}{% endblock %}
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1>{% if member %}Edit member{% else %}Add new member{% endif %}</h1>
-    {% if member %}<div class="subtitle">{{ member.member_no }}</div>{% endif %}
+<style>
+/* ── FORM HERO ── */
+.mf-hero{background:linear-gradient(135deg,#0d1f3c 0%,#1a3a6b 50%,#1e4d8c 100%);border-radius:16px;padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:relative;overflow:hidden}
+.mf-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.04)}
+.mf-hero-title{font-size:20px;font-weight:900;color:#fff;margin:0}
+.mf-hero-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:3px}
+.mf-hero-back{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:9px;font-size:12px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);text-decoration:none;transition:all .15s;z-index:2}
+.mf-hero-back:hover{background:rgba(255,255,255,.2);color:#fff;text-decoration:none}
+
+/* ── STEP INDICATORS ── */
+.mf-steps{display:flex;gap:0;margin-bottom:22px;overflow-x:auto;padding-bottom:2px}
+.mf-step{display:flex;align-items:center;gap:8px;padding:9px 14px 9px 10px;font-size:11px;font-weight:700;color:#8fa0b8;cursor:pointer;white-space:nowrap;position:relative;transition:color .15s;border-bottom:2px solid #e2e8f0;flex-shrink:0}
+.mf-step:hover{color:#1e3a6e}
+.mf-step.active{color:#1e3a6e;border-bottom-color:#3b82f6}
+.mf-step .snum{width:20px;height:20px;border-radius:50%;background:#e8eff8;color:#8fa0b8;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.mf-step.active .snum{background:#3b82f6;color:#fff}
+.mf-step.done .snum{background:#22c55e;color:#fff}
+.mf-step.done{color:#22c55e}
+
+/* ── SECTION CARDS ── */
+.mf-section{border-radius:14px;border:1px solid #e2e8f0;background:#fff;margin-bottom:16px;overflow:hidden;box-shadow:0 2px 8px rgba(30,60,120,.05)}
+.mf-section-header{padding:12px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #eef2f8}
+.mf-section-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.mf-section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#1a334f}
+.mf-section-sub{font-size:10px;color:#8fa0b8;margin-top:1px}
+.mf-section-body{padding:16px 18px}
+.mf-section-body .row{margin:0 -6px}
+.mf-section-body .col-md-4,.mf-section-body .col-md-6,.mf-section-body .col-12{padding:0 6px}
+
+/* Section accent colors */
+.mf-s1 .mf-section-icon{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff}
+.mf-s2 .mf-section-icon{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.mf-s3 .mf-section-icon{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.mf-s4 .mf-section-icon{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff}
+.mf-s5 .mf-section-icon{background:linear-gradient(135deg,#ec4899,#be185d);color:#fff}
+.mf-snotes .mf-section-icon{background:linear-gradient(135deg,#64748b,#475569);color:#fff}
+
+/* ── FORM FIELDS ── */
+.form-label{font-size:11px;font-weight:700;color:#475569;margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.04em}
+.form-label .req{color:#ef4444;margin-left:2px}
+.form-control,.form-select{border-radius:9px;font-size:13px;border-color:#dde4ef;color:#1a334f;transition:border-color .15s,box-shadow .15s}
+.form-control:focus,.form-select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.form-text{font-size:10px;color:#8fa0b8;margin-top:3px}
+.form-check-input:checked{background-color:#3b82f6;border-color:#3b82f6}
+
+/* ── PHOTO PREVIEW ── */
+.mf-photo-area{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.mf-photo-preview{width:88px;height:88px;border-radius:50%;overflow:hidden;border:3px solid #e2e8f0;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.mf-photo-preview img{width:100%;height:100%;object-fit:cover}
+.mf-photo-preview .ph-init{font-size:32px;color:#94a3b8}
+.mf-photo-hint{font-size:11px;color:#8fa0b8;margin-top:4px}
+.mf-photo-body{flex:1;min-width:200px}
+
+/* ── SIDEBAR CARD ── */
+.mf-sidebar-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 8px rgba(30,60,120,.05)}
+.mf-sidebar-card .card-header{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#475569;padding:10px 14px;background:#f8faff;border-bottom:1px solid #eef2f8}
+.mf-sidebar-card .card-body{padding:14px}
+
+/* ── SAVE STRIP ── */
+.mf-save-strip{background:linear-gradient(135deg,#0d1f3c,#1e3a6e);border-radius:14px;padding:14px 16px;position:sticky;top:14px;z-index:10}
+.mf-save-strip .title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.5);margin-bottom:10px}
+.mf-save-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;transition:all .15s;letter-spacing:.02em;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;margin-bottom:8px}
+.mf-save-btn:hover{opacity:.9;transform:translateY(-1px)}
+.mf-cancel-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:none;transition:all .15s}
+.mf-cancel-btn:hover{background:rgba(255,255,255,.08);color:#fff;text-decoration:none}
+
+/* ── NOTICE ── */
+.mf-notice{display:flex;align-items:flex-start;gap:9px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;font-size:11.5px;color:#92400e}
+.mf-notice i{flex-shrink:0;font-size:16px;color:#d97706;margin-top:1px}
+
+/* ── RADIO GROUP ── */
+.mf-radio-group{display:flex;flex-wrap:wrap;gap:8px}
+.mf-radio-chip{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1.5px solid #dde4ef;font-size:12px;font-weight:600;color:#64748b;cursor:pointer;transition:all .15s;background:#fff}
+.mf-radio-chip input{display:none}
+.mf-radio-chip.checked,.mf-radio-chip:has(input:checked){border-color:#3b82f6;background:#eff6ff;color:#1e40af}
+
+/* REQUIRED dot */
+.req-list{list-style:none;padding:0;margin:0}
+.req-list li{font-size:11px;color:#64748b;padding:3px 0;display:flex;align-items:center;gap:6px}
+.req-list li i{color:#22c55e;font-size:12px}
+</style>
+
+<!-- HERO -->
+<div class="mf-hero">
+  <div style="z-index:2">
+    <div class="mf-hero-title">
+      <i class="ph {% if member %}ph-pencil-simple{% else %}ph-user-plus{% endif %}" style="opacity:.8"></i>
+      {% if member %}Edit Member Profile{% else %}Add New Member{% endif %}
+    </div>
+    <div class="mf-hero-sub">
+      {% if member %}
+        {{ member.member_no }} &middot; {{ ROLES[member.role].name }} &middot; {{ member.status }}
+      {% else %}
+        Fill all required sections below and save.
+      {% endif %}
+    </div>
   </div>
-  <a href="{{ url_for('admin.members_list') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Cancel</a>
+  <a href="{{ url_for('admin.members_list') }}" class="mf-hero-back">
+    <i class="ph ph-arrow-left"></i> Back to Members
+  </a>
 </div>
 
-<form method="post" enctype="multipart/form-data" class="row g-3">
+<!-- STEP LABELS (visual only) -->
+<div class="mf-steps">
+  <div class="mf-step active"><span class="snum">1</span> Personal</div>
+  <div class="mf-step"><span class="snum">2</span> Contact</div>
+  <div class="mf-step"><span class="snum">3</span> Occupation</div>
+  <div class="mf-step"><span class="snum">4</span> Contributions</div>
+  <div class="mf-step"><span class="snum">5</span> Next of Kin</div>
+  <div class="mf-step"><span class="snum">6</span> Membership</div>
+</div>
 
-  {# ===== LEFT COLUMN ===== #}
+<form method="post" enctype="multipart/form-data" id="memberForm">
+<div class="row g-3">
+
+  <!-- ══ LEFT (8) ══ -->
   <div class="col-lg-8">
 
-    {# PHOTO #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Photo</div>
-      <div class="card-body">
-        <div class="d-flex align-items-center gap-3">
-          {% if member and member.photo_url %}
-            <img src="{{ url_for('static', filename=member.photo_url) }}" alt="Profile photo"
-                 class="rounded" style="width:80px;height:80px;object-fit:cover;border:1px solid #ddd;">
-          {% else %}
-            <div class="d-flex align-items-center justify-content-center rounded bg-light"
-                 style="width:80px;height:80px;border:1px dashed #ccc;">
-              <i class="ph ph-user fs-1 text-muted"></i>
-            </div>
-          {% endif %}
-          <div>
-            <label class="form-label small mb-1">Upload profile photo (JPG/PNG, max 5 MB)</label>
-            <input type="file" name="photo" class="form-control form-control-sm" accept="image/*">
+    <!-- PHOTO -->
+    <div class="mf-section mf-s1">
+      <div class="mf-section-header">
+        <div class="mf-section-icon"><i class="ph ph-camera"></i></div>
+        <div>
+          <div class="mf-section-title">Profile Photo</div>
+          <div class="mf-section-sub">JPG or PNG, max 5 MB</div>
+        </div>
+      </div>
+      <div class="mf-section-body">
+        <div class="mf-photo-area">
+          <div class="mf-photo-preview" id="photoRing">
+            {% if member and member.photo_url %}
+              <img src="{{ url_for('static', filename=member.photo_url) }}" id="photoImg" alt="Photo">
+            {% else %}
+              <i class="ph ph-user ph-init" id="photoIcon"></i>
+              <img id="photoImg" style="display:none">
+            {% endif %}
+          </div>
+          <div class="mf-photo-body">
+            <label class="form-label">Upload photo</label>
+            <input type="file" name="photo" id="photoInput" class="form-control" accept="image/*" onchange="previewPhoto(this)">
+            <div class="mf-photo-hint">Photo will be displayed on the member card and login. Recommended square crop.</div>
           </div>
         </div>
       </div>
     </div>
 
-    {# SECTION 1: PERSONAL DETAILS #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Section 1: Personal Details</div>
-      <div class="card-body row g-3">
-        <div class="col-md-4">
-          <label class="form-label small">* Surname</label>
-          <input type="text" name="surname" class="form-control text-uppercase" required
-                 value="{{ member.surname if member else '' }}">
+    <!-- SECTION 1: PERSONAL -->
+    <div class="mf-section mf-s1">
+      <div class="mf-section-header">
+        <div class="mf-section-icon"><i class="ph ph-user"></i></div>
+        <div>
+          <div class="mf-section-title">Section 1 — Personal Details</div>
+          <div class="mf-section-sub">Identity and basic demographics</div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label small">* First Name</label>
-          <input type="text" name="first_name" class="form-control text-uppercase" required
-                 value="{{ member.first_name if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Other Names</label>
-          <input type="text" name="other_names" class="form-control text-uppercase"
-                 value="{{ member.other_names if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">* Gender</label>
-          <select name="gender" class="form-select" required>
-            <option value="">- select -</option>
-            <option value="M" {% if member and member.gender == 'M' %}selected{% endif %}>M</option>
-            <option value="F" {% if member and member.gender == 'F' %}selected{% endif %}>F</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Date of Birth</label>
-          <input type="date" name="date_of_birth" class="form-control"
-                 value="{{ member.date_of_birth if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Nationality</label>
-          <input type="text" name="nationality" class="form-control"
-                 value="{{ member.nationality if member else 'Ugandan' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Marital Status</label>
-          <select name="marital_status" class="form-select">
-            <option value="">- select -</option>
-            {% for ms in ['Single','Married','Divorced','Widowed'] %}
-            <option value="{{ ms }}" {% if member and member.marital_status == ms %}selected{% endif %}>{{ ms }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">* National ID No.</label>
-          <input type="text" name="national_id" class="form-control" required
-                 value="{{ member.national_id if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">TIN</label>
-          <input type="text" name="tin" class="form-control"
-                 value="{{ member.tin if member else '' }}">
-        </div>
-        <div class="col-12">
-          <label class="form-label small">National ID Copy (image)</label>
-          {% if member and member.nid_copy_url %}
-            <div class="mb-1">
-              <a href="{{ url_for('static', filename=member.nid_copy_url) }}" target="_blank" class="small">
+      </div>
+      <div class="mf-section-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Surname <span class="req">*</span></label>
+            <input type="text" name="surname" class="form-control text-uppercase" required
+                   value="{{ member.surname if member else '' }}" placeholder="FAMILY NAME">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">First Name <span class="req">*</span></label>
+            <input type="text" name="first_name" class="form-control text-uppercase" required
+                   value="{{ member.first_name if member else '' }}" placeholder="FIRST NAME">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Other Names</label>
+            <input type="text" name="other_names" class="form-control text-uppercase"
+                   value="{{ member.other_names if member else '' }}" placeholder="MIDDLE NAME(S)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Gender <span class="req">*</span></label>
+            <select name="gender" class="form-select" required>
+              <option value="">— select —</option>
+              <option value="M" {% if member and member.gender == 'M' %}selected{% endif %}>Male</option>
+              <option value="F" {% if member and member.gender == 'F' %}selected{% endif %}>Female</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" name="date_of_birth" class="form-control"
+                   value="{{ member.date_of_birth if member else '' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nationality</label>
+            <input type="text" name="nationality" class="form-control"
+                   value="{{ member.nationality if member else 'Ugandan' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Marital Status</label>
+            <select name="marital_status" class="form-select">
+              <option value="">— select —</option>
+              {% for ms in ['Single','Married','Divorced','Widowed'] %}
+              <option value="{{ ms }}" {% if member and member.marital_status == ms %}selected{% endif %}>{{ ms }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">National ID No. <span class="req">*</span></label>
+            <input type="text" name="national_id" class="form-control" required
+                   value="{{ member.national_id if member else '' }}" placeholder="CM12345678ABC">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">TIN</label>
+            <input type="text" name="tin" class="form-control"
+                   value="{{ member.tin if member else '' }}" placeholder="Optional">
+          </div>
+          <div class="col-12">
+            <label class="form-label">National ID Copy (image)</label>
+            {% if member and member.nid_copy_url %}
+            <div class="mb-2">
+              <a href="{{ url_for('static', filename=member.nid_copy_url) }}" target="_blank" class="small text-primary">
                 <i class="ph ph-image"></i> View current NID copy
               </a>
             </div>
-          {% endif %}
-          <div class="input-group">
-            <span class="input-group-text"><i class="ph ph-upload-simple"></i> Upload NID copy</span>
-            <input type="file" name="nid_copy" class="form-control form-control-sm" accept="image/*">
-          </div>
-          <div class="form-text small">JPG / PNG / WEBP - max 5 MB</div>
-        </div>
-      </div>
-    </div>
-
-    {# SECTION 2: CONTACT DETAILS #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Section 2: Contact Details</div>
-      <div class="card-body row g-3">
-        <div class="col-md-4">
-          <label class="form-label small">* Mobile Phone</label>
-          <input type="tel" name="phone" class="form-control" required
-                 value="{{ member.phone if member else '' }}" placeholder="0700-000000">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Alt. Phone</label>
-          <input type="tel" name="alt_phone" class="form-control"
-                 value="{{ member.alt_phone if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">WhatsApp No.</label>
-          <input type="tel" name="whatsapp_no" class="form-control"
-                 value="{{ member.whatsapp_no if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Email</label>
-          <input type="email" name="email" class="form-control"
-                 value="{{ member.email if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">* District</label>
-          <input type="text" name="district" class="form-control" required
-                 value="{{ member.district if member else 'Kampala' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Village / Street</label>
-          <input type="text" name="village_street" class="form-control"
-                 value="{{ member.village_street if member else '' }}">
-        </div>
-      </div>
-    </div>
-
-    {# SECTION 3: OCCUPATION #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Section 3: Occupation</div>
-      <div class="card-body row g-3">
-        <div class="col-12">
-          <label class="form-label small">Employment Status</label>
-          <div class="d-flex flex-wrap gap-3">
-            {% for es in ['Employed','Self-Employed','Business Owner','Student','Other'] %}
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="employment_status"
-                     id="es_{{ loop.index }}" value="{{ es }}"
-                     {% if (member and member.employment_status == es) or (not member and es == 'Employed') %}checked{% endif %}>
-              <label class="form-check-label small" for="es_{{ loop.index }}">{{ es }}</label>
+            {% endif %}
+            <div class="input-group">
+              <span class="input-group-text" style="background:#f8faff;border-color:#dde4ef"><i class="ph ph-upload-simple" style="color:#3b82f6"></i></span>
+              <input type="file" name="nid_copy" class="form-control" accept="image/*">
             </div>
-            {% endfor %}
+            <div class="form-text">JPG / PNG / WEBP — max 5 MB</div>
           </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label small">* Occupation</label>
-          <input type="text" name="occupation" class="form-control" required
-                 value="{{ member.occupation if member else '' }}">
+      </div>
+    </div>
+
+    <!-- SECTION 2: CONTACT -->
+    <div class="mf-section mf-s2">
+      <div class="mf-section-header">
+        <div class="mf-section-icon"><i class="ph ph-phone"></i></div>
+        <div>
+          <div class="mf-section-title">Section 2 — Contact Details</div>
+          <div class="mf-section-sub">Phone numbers and residential address</div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label small">Employer / Business</label>
-          <input type="text" name="employer_business" class="form-control"
-                 value="{{ member.employer_business if member else '' }}">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small">Monthly Income (UGX)</label>
-          <input type="number" name="monthly_income" class="form-control" min="0" step="1000"
-                 value="{{ member.monthly_income | int if member and member.monthly_income else '' }}">
+      </div>
+      <div class="mf-section-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Mobile Phone <span class="req">*</span></label>
+            <input type="tel" name="phone" class="form-control" required
+                   value="{{ member.phone if member else '' }}" placeholder="0700-000000">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Alt. Phone</label>
+            <input type="tel" name="alt_phone" class="form-control"
+                   value="{{ member.alt_phone if member else '' }}" placeholder="Optional">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">WhatsApp No.</label>
+            <input type="tel" name="whatsapp_no" class="form-control"
+                   value="{{ member.whatsapp_no if member else '' }}" placeholder="If different from phone">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Email Address</label>
+            <input type="email" name="email" class="form-control"
+                   value="{{ member.email if member else '' }}" placeholder="name@example.com">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">District <span class="req">*</span></label>
+            <input type="text" name="district" class="form-control" required
+                   value="{{ member.district if member else 'Kampala' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Village / Street</label>
+            <input type="text" name="village_street" class="form-control"
+                   value="{{ member.village_street if member else '' }}" placeholder="Zone, street, or LC1">
+          </div>
         </div>
       </div>
     </div>
 
-    {# SECTION 4: CONTRIBUTIONS #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Section 4: Contributions</div>
-      <div class="card-body row g-3">
-        <div class="col-md-3">
-          <label class="form-label small">* Monthly Contribution (UGX)</label>
-          <input type="number" name="monthly_contribution" class="form-control" required
-                 min="100000" step="1000"
-                 value="{{ member.monthly_contribution | int if member and member.monthly_contribution else 100000 }}">
-          <div class="form-text small text-danger fw-semibold">Minimum UGX 100,000/month</div>
+    <!-- SECTION 3: OCCUPATION -->
+    <div class="mf-section mf-s3">
+      <div class="mf-section-header">
+        <div class="mf-section-icon"><i class="ph ph-briefcase"></i></div>
+        <div>
+          <div class="mf-section-title">Section 3 — Occupation</div>
+          <div class="mf-section-sub">Employment and income details</div>
         </div>
-        <div class="col-md-3">
-          <label class="form-label small">Preferred Pay Date</label>
-          <input type="number" name="preferred_pay_date" class="form-control" min="1" max="31"
-                 value="{{ member.preferred_pay_date if member and member.preferred_pay_date else 5 }}"
-                 placeholder="Day 1â€“31">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label small">Mobile Money No.</label>
-          <input type="tel" name="mobile_money_no" class="form-control"
-                 value="{{ member.mobile_money_no if member else '' }}">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label small">Bank Account No.</label>
-          <input type="text" name="bank_account_no" class="form-control"
-                 value="{{ member.bank_account_no if member else '' }}">
+      </div>
+      <div class="mf-section-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Employment Status</label>
+            <div class="mf-radio-group">
+              {% for es in ['Employed','Self-Employed','Business Owner','Student','Other'] %}
+              <label class="mf-radio-chip {% if (member and member.employment_status == es) or (not member and es == 'Employed') %}checked{% endif %}">
+                <input type="radio" name="employment_status" value="{{ es }}"
+                       {% if (member and member.employment_status == es) or (not member and es == 'Employed') %}checked{% endif %}
+                       onchange="updateChip(this)">
+                {{ es }}
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Occupation <span class="req">*</span></label>
+            <input type="text" name="occupation" class="form-control" required
+                   value="{{ member.occupation if member else '' }}" placeholder="e.g. Teacher, Trader">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Employer / Business Name</label>
+            <input type="text" name="employer_business" class="form-control"
+                   value="{{ member.employer_business if member else '' }}" placeholder="Optional">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Monthly Income (UGX)</label>
+            <input type="number" name="monthly_income" class="form-control" min="0" step="1000"
+                   value="{{ member.monthly_income | int if member and member.monthly_income else '' }}"
+                   placeholder="Approximate">
+          </div>
         </div>
       </div>
     </div>
 
-    {# SECTION 5: NEXT OF KIN #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Section 5: Next of Kin</div>
-      <div class="card-body row g-3">
-        <div class="col-md-6">
-          <label class="form-label small">* Full Name</label>
-          <input type="text" name="next_of_kin" class="form-control" required
-                 value="{{ member.next_of_kin if member else '' }}">
+    <!-- SECTION 4: CONTRIBUTIONS -->
+    <div class="mf-section mf-s4">
+      <div class="mf-section-header">
+        <div class="mf-section-icon"><i class="ph ph-currency-circle-dollar"></i></div>
+        <div>
+          <div class="mf-section-title">Section 4 — Contributions</div>
+          <div class="mf-section-sub">Monthly savings commitment and payment details</div>
         </div>
-        <div class="col-md-6">
-          <label class="form-label small">* Relationship</label>
-          <input type="text" name="nok_relationship" class="form-control" required
-                 value="{{ member.nok_relationship if member else '' }}"
-                 placeholder="e.g. Spouse, Parent, Sibling">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label small">* Phone</label>
-          <input type="tel" name="nok_phone" class="form-control" required
-                 value="{{ member.nok_phone if member else '' }}">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label small">Address</label>
-          <input type="text" name="nok_address" class="form-control"
-                 value="{{ member.nok_address if member else '' }}">
+      </div>
+      <div class="mf-section-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Monthly Contribution (UGX) <span class="req">*</span></label>
+            <input type="number" name="monthly_contribution" class="form-control" required
+                   min="100000" step="1000"
+                   value="{{ member.monthly_contribution | int if member and member.monthly_contribution else 100000 }}">
+            <div class="form-text" style="color:#ef4444;font-weight:700">Min UGX 100,000/month</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Preferred Pay Date</label>
+            <input type="number" name="preferred_pay_date" class="form-control" min="1" max="31"
+                   value="{{ member.preferred_pay_date if member and member.preferred_pay_date else 5 }}"
+                   placeholder="Day 1–31">
+            <div class="form-text">Day of month for reminder</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Mobile Money No.</label>
+            <input type="tel" name="mobile_money_no" class="form-control"
+                   value="{{ member.mobile_money_no if member else '' }}" placeholder="For mobile money">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Bank Account No.</label>
+            <input type="text" name="bank_account_no" class="form-control"
+                   value="{{ member.bank_account_no if member else '' }}" placeholder="Optional">
+          </div>
         </div>
       </div>
     </div>
 
-    {# Notes #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Notes</div>
-      <div class="card-body">
+    <!-- SECTION 5: NEXT OF KIN -->
+    <div class="mf-section mf-s5">
+      <div class="mf-section-header">
+        <div class="mf-section-icon"><i class="ph ph-users-three"></i></div>
+        <div>
+          <div class="mf-section-title">Section 5 — Next of Kin</div>
+          <div class="mf-section-sub">Emergency contact and beneficiary</div>
+        </div>
+      </div>
+      <div class="mf-section-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name <span class="req">*</span></label>
+            <input type="text" name="next_of_kin" class="form-control" required
+                   value="{{ member.next_of_kin if member else '' }}" placeholder="Full legal name">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Relationship <span class="req">*</span></label>
+            <input type="text" name="nok_relationship" class="form-control" required
+                   value="{{ member.nok_relationship if member else '' }}"
+                   placeholder="e.g. Spouse, Parent, Sibling">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone <span class="req">*</span></label>
+            <input type="tel" name="nok_phone" class="form-control" required
+                   value="{{ member.nok_phone if member else '' }}" placeholder="0700-000000">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Address</label>
+            <input type="text" name="nok_address" class="form-control"
+                   value="{{ member.nok_address if member else '' }}" placeholder="Village / Town">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="mf-section mf-snotes">
+      <div class="mf-section-header">
+        <div class="mf-section-icon"><i class="ph ph-note-pencil"></i></div>
+        <div>
+          <div class="mf-section-title">Additional Notes</div>
+          <div class="mf-section-sub">Any remarks or special notes about this member</div>
+        </div>
+      </div>
+      <div class="mf-section-body">
         <textarea name="notes" rows="2" class="form-control"
-                  placeholder="Any additional notesâ€¦">{{ member.notes if member else '' }}</textarea>
+                  placeholder="Optional — special conditions, remarks, flags…">{{ member.notes if member else '' }}</textarea>
       </div>
     </div>
 
-  </div>{# end left column #}
+  </div><!-- /col-lg-8 -->
 
-  {# ===== RIGHT COLUMN ===== #}
+  <!-- ══ RIGHT SIDEBAR (4) ══ -->
   <div class="col-lg-4">
 
-    {# MEMBERSHIP DETAILS #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Membership Details</div>
-      <div class="card-body row g-3">
-        <div class="col-12">
-          <label class="form-label small">* Date Joined</label>
+    <!-- STICKY SAVE STRIP -->
+    <div class="mf-save-strip mb-3">
+      <div class="title"><i class="ph ph-floppy-disk"></i> Save Member</div>
+      <button type="submit" class="mf-save-btn">
+        <i class="ph ph-floppy-disk"></i>
+        {% if member %}Update Member{% else %}Create Member{% endif %}
+      </button>
+      <a href="{{ url_for('admin.members_list') }}" class="mf-cancel-btn">
+        <i class="ph ph-x"></i> Cancel
+      </a>
+    </div>
+
+    <!-- MEMBERSHIP DETAILS -->
+    <div class="mf-sidebar-card">
+      <div class="card-header" style="display:flex;align-items:center;gap:6px">
+        <i class="ph ph-identification-badge" style="color:#3b82f6"></i> Membership Details
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label">Date Joined <span class="req">*</span></label>
           <input type="date" name="join_date" class="form-control" required
-                 value="{{ member.join_date if member else today.isoformat() }}">
+                 value="{{ member.join_date if member else CONFIG.ESTABLISHED_DATE }}">
+          <div class="mf-notice mt-2">
+            <i class="ph ph-warning-circle"></i>
+            <div>This date determines savings obligations. For founding/backdated members, set the <strong>actual club join date</strong> — not today.</div>
+          </div>
         </div>
         {% if member %}
-        <div class="col-12">
-          <label class="form-label small">Status</label>
+        <div class="mb-3">
+          <label class="form-label">Status</label>
           <select name="status" class="form-select">
             <option value="Active"   {% if member.status == 'Active' %}selected{% endif %}>Active</option>
             <option value="Inactive" {% if member.status == 'Inactive' %}selected{% endif %}>Inactive</option>
           </select>
         </div>
         {% endif %}
-        <div class="col-12">
-          <label class="form-label small">Share Account No.</label>
+        <div>
+          <label class="form-label">Share Account No.</label>
           <input type="text" name="share_account_no" class="form-control"
                  value="{{ member.share_account_no if member else '' }}"
-                 placeholder="e.g. GIC-SA-GIC-001">
+                 placeholder="e.g. GIC-SA-001">
         </div>
       </div>
     </div>
 
-    {# ROLE #}
-    <div class="card mb-3">
-      <div class="card-header text-uppercase fw-semibold small">Role</div>
+    <!-- ROLE -->
+    <div class="mf-sidebar-card">
+      <div class="card-header" style="display:flex;align-items:center;gap:6px">
+        <i class="ph ph-crown-simple" style="color:#f59e0b"></i> Member Role
+      </div>
       <div class="card-body">
         <select name="role" class="form-select" required>
           {% for code, info in roles.items() %}
@@ -295,53 +474,89 @@
             {% endif %}
           {% endfor %}
         </select>
-        <div class="form-text small">Only IT Admin can assign IT Administrator role.</div>
+        <div class="form-text mt-2">Only IT Admin can assign the IT Administrator role.</div>
       </div>
     </div>
 
-    {# LOGIN ACCOUNT (new members only) #}
+    <!-- LOGIN ACCOUNT (new only) -->
     {% if not member %}
-    <div class="card mb-3">
-      <div class="card-header"><i class="ph ph-key"></i> Login Account</div>
+    <div class="mf-sidebar-card">
+      <div class="card-header" style="display:flex;align-items:center;gap:6px">
+        <i class="ph ph-key" style="color:#10b981"></i> Login Account
+      </div>
       <div class="card-body">
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="checkbox" name="create_login" id="cl" checked>
-          <label class="form-check-label small" for="cl">Create login account</label>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="create_login" id="clCheck" checked>
+          <label class="form-check-label" for="clCheck" style="font-size:12px;font-weight:600">Create login account automatically</label>
         </div>
-        <div class="mb-2">
-          <label class="form-label small">Username (optional)</label>
-          <input type="text" name="username" class="form-control form-control-sm"
-                 placeholder="auto = GIC-xxx">
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-control form-control-sm" placeholder="auto — GIC-xxx">
+          <div class="form-text">Leave blank to auto-generate from member number.</div>
         </div>
         <div>
-          <label class="form-label small">Initial Password</label>
-          <input type="text" name="password" class="form-control form-control-sm"
-                 placeholder="default: gazebo123">
-          <div class="form-text small">User must change on first login.</div>
+          <label class="form-label">Initial Password</label>
+          <input type="text" name="password" class="form-control form-control-sm" placeholder="default: gazebo123">
+          <div class="form-text">Member must change password on first login.</div>
         </div>
       </div>
     </div>
     {% endif %}
 
-    {# APPLICATION DATE NOTICE #}
-    <div class="alert alert-info small py-2">
-      Complete all required (<span class="text-danger fw-bold">*</span>) fields.
-      Application Date: <strong>{{ today.strftime('%d %b %Y') }}</strong>
+    <!-- CHECKLIST -->
+    <div class="mf-sidebar-card">
+      <div class="card-header" style="display:flex;align-items:center;gap:6px">
+        <i class="ph ph-list-checks" style="color:#8b5cf6"></i> Required Fields
+      </div>
+      <div class="card-body" style="padding:10px 14px">
+        <ul class="req-list">
+          <li><i class="ph ph-check-circle"></i> Surname &amp; First Name</li>
+          <li><i class="ph ph-check-circle"></i> Gender &amp; National ID</li>
+          <li><i class="ph ph-check-circle"></i> Mobile Phone</li>
+          <li><i class="ph ph-check-circle"></i> District</li>
+          <li><i class="ph ph-check-circle"></i> Occupation</li>
+          <li><i class="ph ph-check-circle"></i> Monthly Contribution</li>
+          <li><i class="ph ph-check-circle"></i> Next of Kin (name, rel, phone)</li>
+          <li><i class="ph ph-check-circle"></i> Date Joined</li>
+        </ul>
+        <div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px solid #f1f5f9;padding-top:8px">
+          Application Date: <strong>{{ today.strftime('%d %b %Y') }}</strong>
+        </div>
+      </div>
     </div>
 
-    {# SUBMIT BUTTONS #}
-    <div class="d-grid gap-2">
-      <button type="submit" class="btn btn-primary">
-        <i class="ph ph-floppy-disk"></i> {% if member %}Update{% else %}Create Member{% endif %}
-      </button>
-      <a href="{{ url_for('admin.members_list') }}" class="btn btn-outline-secondary">
-        <i class="ph ph-x"></i> Cancel
-      </a>
-    </div>
+  </div><!-- /sidebar -->
 
-  </div>{# end right column #}
-
+</div>
 </form>
+
+<script>
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('photoImg');
+      const icon = document.getElementById('photoIcon');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      if (icon) icon.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function updateChip(input) {
+  document.querySelectorAll('.mf-radio-chip').forEach(chip => chip.classList.remove('checked'));
+  input.closest('.mf-radio-chip').classList.add('checked');
+}
+
+// Highlight step labels as user scrolls
+const steps = document.querySelectorAll('.mf-step');
+steps.forEach((step, i) => {
+  step.addEventListener('click', () => {
+    steps.forEach(s => s.classList.remove('active'));
+    step.classList.add('active');
+  });
+});
+</script>
 {% endblock %}
-
-

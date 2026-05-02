@@ -1,109 +1,151 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}System Users{% endblock %}
 {% block topbar %}System Users{% endblock %}
 {% block content %}
+<style>
+.usr-row{cursor:default;transition:background .12s}
+.usr-row:hover{background:#f7fbff!important}
+.usr-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.usr-status-dot.active{background:#1fb76c}
+.usr-status-dot.inactive{background:#c0c5cc}
+.tg-card{background:linear-gradient(135deg,#0e1a2e 0%,#173056 100%);border-radius:12px;padding:16px 18px;color:#fff;margin-bottom:20px}
+.tg-card .tg-title{font-size:13px;font-weight:800;letter-spacing:.04em;display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.tg-card .tg-sub{font-size:11px;opacity:.75;margin-bottom:12px}
+.tg-card label{font-size:10px;font-weight:700;opacity:.85;letter-spacing:.05em;text-transform:uppercase}
+.tg-card .form-control{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12px}
+.tg-card .form-control::placeholder{color:rgba(255,255,255,.4)}
+.tg-card .form-control:focus{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.45);color:#fff;box-shadow:none}
+.section-head{font-size:12px;font-weight:800;color:#29527d;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px;display:flex;align-items:center;gap:6px}
+</style>
+
 <div class="page-header">
-  <div><h1>System Users</h1><div class="subtitle">Manage login accounts and access. Deleting here removes login access only, not the member record.</div></div>
-  <a href="{{ url_for('admin.users_add') }}" class="btn btn-primary"><i class="ph ph-user-plus"></i> Add User</a>
-</div>
-
-<div class="alert alert-warning">
-  <strong>Important:</strong> System Users manages login accounts only. If you delete a user here, that person will still appear in the Members module until you deactivate or remove the member record there.
-</div>
-
-{% if session.role == 'IT_ADMIN' %}
-<div class="card mb-4">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="mb-0"><i class="ph ph-bell-ringing"></i> Alerting Configuration</h5>
-    <span class="badge bg-dark">IT Admin Only</span>
+  <div>
+    <h1>System Users</h1>
+    <div class="subtitle">Manage login accounts and access — IT Admin controlled</div>
   </div>
-  <div class="card-body">
-    <p class="text-muted small mb-3">Configure Telegram alerts used for admin logins and key business events.</p>
-    <form method="post" action="{{ url_for('admin.users_alerting_save') }}" class="row g-3 mb-2">
-      <div class="col-lg-6">
-        <label class="form-label">Telegram Bot Token</label>
-        <input type="text" class="form-control" name="telegram_bot_token" value="{{ telegram_bot_token }}" placeholder="e.g. 123456789:AA..." autocomplete="off">
-      </div>
-      <div class="col-lg-6">
-        <label class="form-label">Telegram Chat ID</label>
-        <input type="text" class="form-control" name="telegram_chat_id" value="{{ telegram_chat_id }}" placeholder="e.g. -1001234567890" autocomplete="off">
-      </div>
-      <div class="col-12 d-flex gap-2">
-        <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> Save Config</button>
-        <button type="submit" class="btn btn-outline-success" formaction="{{ url_for('admin.users_alerting_test') }}"><i class="ph ph-paper-plane-tilt"></i> Test Alert</button>
-        <span class="small text-muted ms-2">Test uses the values currently in the form.</span>
-      </div>
-    </form>
+  {% if session.role == 'IT_ADMIN' %}
+  <a href="{{ url_for('admin.users_add') }}" class="btn btn-primary"><i class="ph ph-user-plus"></i> Add User</a>
+  {% endif %}
+</div>
+
+<!-- Stats -->
+{% set all_users = admin_users + member_users %}
+{% set active_count = all_users | selectattr('is_active', 'eq', 1) | list | length %}
+{% set inactive_count = all_users | length - active_count %}
+{% set must_change_count = all_users | selectattr('must_change_pw', 'eq', 1) | list | length %}
+<div class="stat-grid" style="grid-template-columns:repeat(4,minmax(170px,1fr));margin-bottom:18px">
+  <div class="stat-card accent">
+    <i class="ph ph-users ico"></i>
+    <div class="label">Total Accounts</div>
+    <div class="value">{{ all_users | length }}</div>
+    <div class="sub">{{ admin_users | length }} admin &middot; {{ member_users | length }} member</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #1fb76c">
+    <i class="ph ph-check-circle ico"></i>
+    <div class="label">Active</div>
+    <div class="value" style="color:#0e6640">{{ active_count }}</div>
+    <div class="sub">Accounts that can log in</div>
+  </div>
+  <div class="stat-card danger">
+    <i class="ph ph-lock ico"></i>
+    <div class="label">Inactive</div>
+    <div class="value">{{ inactive_count }}</div>
+    <div class="sub">Access suspended</div>
+  </div>
+  <div class="stat-card warn">
+    <i class="ph ph-key ico"></i>
+    <div class="label">Pending PW Change</div>
+    <div class="value">{{ must_change_count }}</div>
+    <div class="sub">Must change password on next login</div>
+  </div>
+</div>
+
+{% if unlinked_members %}
+<div class="alert alert-warning d-flex align-items-start gap-2 mb-3">
+  <i class="ph ph-warning" style="font-size:18px;margin-top:2px"></i>
+  <div>
+    <strong>{{ unlinked_members | length }} member{{ unlinked_members|length != 1 and 's have' or ' has' }} no login account yet:</strong>
+    {{ unlinked_members | map(attribute='full_name') | join(', ') }}.
+    <a href="{{ url_for('admin.users_add') }}" class="alert-link">Create accounts &rarr;</a>
   </div>
 </div>
 {% endif %}
 
+<!-- Telegram alerting — IT Admin only -->
+{% if session.role == 'IT_ADMIN' %}
+<div class="tg-card">
+  <div class="tg-title"><i class="ph ph-paper-plane-tilt"></i> Telegram Alerting Configuration <span style="font-size:10px;background:rgba(255,255,255,.15);padding:2px 7px;border-radius:6px;margin-left:4px">IT Admin Only</span></div>
+  <div class="tg-sub">Configure the bot token and chat ID used for admin login alerts and key business event notifications.</div>
+  <form method="post" action="{{ url_for('admin.users_alerting_save') }}" class="row g-2">
+    <div class="col-lg-5">
+      <label>Telegram Bot Token</label>
+      <input type="text" class="form-control form-control-sm mt-1" name="telegram_bot_token" value="{{ telegram_bot_token }}" placeholder="123456789:AA..." autocomplete="off">
+    </div>
+    <div class="col-lg-4">
+      <label>Chat ID</label>
+      <input type="text" class="form-control form-control-sm mt-1" name="telegram_chat_id" value="{{ telegram_chat_id }}" placeholder="-1001234567890" autocomplete="off">
+    </div>
+    <div class="col-lg-3 d-flex align-items-end gap-2">
+      <button type="submit" class="btn btn-light btn-sm"><i class="ph ph-floppy-disk"></i> Save</button>
+      <button type="submit" class="btn btn-outline-light btn-sm" formaction="{{ url_for('admin.users_alerting_test') }}"><i class="ph ph-paper-plane-tilt"></i> Test</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<!-- Administrative users -->
 {% if admin_users %}
+<div class="section-head"><i class="ph ph-shield-lock"></i> Administrative Accounts</div>
 <div class="card mb-4">
-  <div class="card-header">
-    <h5 class="mb-0"><i class="ph ph-shield-lock"></i> Administrative Users</h5>
-  </div>
   <div class="card-body p-0 table-responsive">
     <table class="table mb-0">
       <thead>
         <tr>
-          <th>Username</th><th>Member</th><th>Member Role</th><th>Status</th><th>Last Login</th><th></th>
+          <th>Username</th><th>Member</th><th>Role</th><th>Status</th><th>PW Flag</th><th>Last Login</th><th></th>
         </tr>
       </thead>
       <tbody>
         {% for user in admin_users %}
-        <tr>
-          <td><strong>{{ user.username }}</strong></td>
+        <tr class="usr-row">
+          <td>
+            <strong>{{ user.username }}</strong>
+            {% if user.id == session.user_id %}<span class="badge bg-secondary ms-1" style="font-size:9px">You</span>{% endif %}
+          </td>
           <td>
             {% if user.member_id %}
-              <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}">{{ user.member_no }} - {{ user.member_name }}</a>
-            {% else %}
-              <em class="text-muted">Not linked</em>
-            {% endif %}
+              <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}" style="font-size:12px">{{ user.member_no }} — {{ user.member_name }}</a>
+            {% else %}<em class="text-muted" style="font-size:12px">Unlinked</em>{% endif %}
           </td>
           <td>
             {% if user.member_role %}
               <span class="role-badge role-{{ user.member_role|lower }}">{{ ROLES[user.member_role].name }}</span>
-            {% else %}
-              <em class="text-muted">-</em>
-            {% endif %}
+            {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
           <td>
-            {% if user.is_active %}
-              <span class="badge bg-success">Active</span>
-            {% else %}
-              <span class="badge bg-secondary">Inactive</span>
-            {% endif %}
+            <span class="usr-status-dot {{ user.is_active and 'active' or 'inactive' }}"></span>
+            {{ user.is_active and 'Active' or 'Inactive' }}
           </td>
-          <td>{{ user.last_login|datetimefmt if user.last_login else '-' }}</td>
+          <td>
+            {% if user.must_change_pw %}<span class="badge bg-warning text-dark" style="font-size:10px">Change required</span>{% else %}<span class="text-muted" style="font-size:12px">—</span>{% endif %}
+          </td>
+          <td><small class="text-muted">{{ user.last_login | datetimefmt if user.last_login else 'Never' }}</small></td>
           <td>
             <div class="btn-group btn-group-sm">
-              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary" title="Edit">
-                <i class="ph ph-pencil-simple"></i>
-              </a>
+              {% if session.role == 'IT_ADMIN' %}
+              <a href="{{ url_for('admin.users_detail', user_id=user.id) }}" class="btn btn-outline-secondary" title="View Activity"><i class="ph ph-magnifying-glass"></i></a>
+              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary" title="Edit"><i class="ph ph-pencil-simple"></i></a>
               {% if user.id != session.user_id %}
-                <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Toggle status for {{ user.username }}?');">
-                  <button type="submit" class="btn btn-outline-warning" title="Toggle Active">
-                    {% if user.is_active %}<i class="ph ph-lock"></i>{% else %}<i class="ph ph-lock-open"></i>{% endif %}
-                  </button>
-                </form>
-                <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Delete login {{ user.username }}? This removes system access only and does not delete the member record.');">
-                  <button type="submit" class="btn btn-outline-danger" title="Delete Login">
-                    <i class="ph ph-trash"></i>
-                  </button>
-                </form>
-                {% if user.member_id %}
-                <form method="post" action="{{ url_for('admin.users_delete_member', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be marked as Exited and hidden from the default members list; clean records will be fully deleted.');">
-                  <button type="submit" class="btn btn-outline-dark" title="Delete Member Too">
-                    <i class="ph ph-user-minus"></i>
-                  </button>
-                </form>
-                {% endif %}
+              <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Toggle access for {{ user.username }}?')">
+                <button type="submit" class="btn btn-outline-warning" title="{{ user.is_active and 'Deactivate' or 'Activate' }}">
+                  {% if user.is_active %}<i class="ph ph-lock"></i>{% else %}<i class="ph ph-lock-open"></i>{% endif %}
+                </button>
+              </form>
+              <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Delete login {{ user.username }}? The member record is kept.')">
+                <button type="submit" class="btn btn-outline-danger" title="Delete Login"><i class="ph ph-trash"></i></button>
+              </form>
+              {% endif %}
               {% else %}
-                <span class="btn btn-outline-secondary disabled" title="Cannot manage own account">(Current)</span>
+              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary btn-sm">Edit</a>
               {% endif %}
             </div>
           </td>
@@ -115,65 +157,54 @@
 </div>
 {% endif %}
 
+<!-- Member users -->
 {% if member_users %}
+<div class="section-head"><i class="ph ph-user"></i> Member Accounts</div>
 <div class="card mb-4">
-  <div class="card-header">
-    <h5 class="mb-0"><i class="ph ph-user"></i> Member Users</h5>
-  </div>
   <div class="card-body p-0 table-responsive">
     <table class="table mb-0">
       <thead>
-        <tr>
-          <th>Username</th><th>Member</th><th>Status</th><th>Last Login</th><th></th>
-        </tr>
+        <tr><th>Username</th><th>Member</th><th>Status</th><th>PW Flag</th><th>Last Login</th><th></th></tr>
       </thead>
       <tbody>
         {% for user in member_users %}
-        <tr>
+        <tr class="usr-row">
           <td><strong>{{ user.username }}</strong></td>
           <td>
             {% if user.member_id %}
-              <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}">{{ user.member_no }} - {{ user.member_name }}</a>
-            {% else %}
-              <em class="text-muted">Not linked</em>
-            {% endif %}
+              <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}" style="font-size:12px">{{ user.member_no }} — {{ user.member_name }}</a>
+            {% else %}<em class="text-muted" style="font-size:12px">Unlinked</em>{% endif %}
           </td>
           <td>
-            {% if user.is_active %}
-              <span class="badge bg-success">Active</span>
-            {% else %}
-              <span class="badge bg-secondary">Inactive</span>
-            {% endif %}
+            <span class="usr-status-dot {{ user.is_active and 'active' or 'inactive' }}"></span>
+            {{ user.is_active and 'Active' or 'Inactive' }}
           </td>
-          <td>{{ user.last_login|datetimefmt if user.last_login else '-' }}</td>
+          <td>
+            {% if user.must_change_pw %}<span class="badge bg-warning text-dark" style="font-size:10px">Change required</span>{% else %}<span class="text-muted" style="font-size:12px">—</span>{% endif %}
+          </td>
+          <td><small class="text-muted">{{ user.last_login | datetimefmt if user.last_login else 'Never' }}</small></td>
           <td>
             <div class="btn-group btn-group-sm">
-              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary" title="Edit">
-                <i class="ph ph-pencil-simple"></i>
-              </a>
+              {% if session.role == 'IT_ADMIN' %}
+              <a href="{{ url_for('admin.users_detail', user_id=user.id) }}" class="btn btn-outline-secondary" title="View Activity"><i class="ph ph-magnifying-glass"></i></a>
+              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary" title="Edit"><i class="ph ph-pencil-simple"></i></a>
               {% if user.id != session.user_id %}
-                <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Toggle status for {{ user.username }}?');">
-                  <button type="submit" class="btn btn-outline-warning" title="Toggle Active">
-                    {% if user.is_active %}<i class="ph ph-lock"></i>{% else %}<i class="ph ph-lock-open"></i>{% endif %}
-                  </button>
-                </form>
-                <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Delete login {{ user.username }}? This removes system access only and does not delete the member record.');">
-                  <button type="submit" class="btn btn-outline-danger" title="Delete Login">
-                    <i class="ph ph-trash"></i>
-                  </button>
-                </form>
-                {% if user.member_id %}
-                <form method="post" action="{{ url_for('admin.users_delete_member', user_id=user.id) }}" class="d-inline"
-                      onsubmit="return confirm('Remove linked member {{ user.member_no }} as well? Members with history will be marked as Exited and hidden from the default members list; clean records will be fully deleted.');">
-                  <button type="submit" class="btn btn-outline-dark" title="Delete Member Too">
-                    <i class="ph ph-user-minus"></i>
-                  </button>
-                </form>
-                {% endif %}
+              <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Toggle access for {{ user.username }}?')">
+                <button type="submit" class="btn btn-outline-warning" title="{{ user.is_active and 'Deactivate' or 'Activate' }}">
+                  {% if user.is_active %}<i class="ph ph-lock"></i>{% else %}<i class="ph ph-lock-open"></i>{% endif %}
+                </button>
+              </form>
+              <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Delete login {{ user.username }}?')">
+                <button type="submit" class="btn btn-outline-danger" title="Delete Login"><i class="ph ph-trash"></i></button>
+              </form>
+              {% if user.member_id %}
+              <form method="post" action="{{ url_for('admin.users_delete_member', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Remove linked member {{ user.member_no }} too? Historical records are marked Exited.')">
+                <button type="submit" class="btn btn-outline-dark" title="Remove Member Record Too"><i class="ph ph-user-minus"></i></button>
+              </form>
+              {% endif %}
+              {% endif %}
               {% else %}
-                <span class="btn btn-outline-secondary disabled" title="Cannot manage own account">(Current)</span>
+              <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-outline-primary btn-sm">Edit</a>
               {% endif %}
             </div>
           </td>
@@ -185,34 +216,31 @@
 </div>
 {% endif %}
 
-{% if unlinked_members %}
-<div class="card alert-info">
-  <div class="card-header bg-info text-white">
-    <h5 class="mb-0"><i class="ph ph-info"></i> Members Without User Accounts</h5>
-  </div>
-  <div class="card-body">
-    <p><strong>{{ unlinked_members|length }}</strong> members do not have user accounts yet:</p>
-    <ul class="small mb-0">
-      {% for m in unlinked_members %}
-      <li>{{ m.member_no }} - {{ m.full_name }}</li>
-      {% endfor %}
-    </ul>
-    <p class="mt-3 mb-0"><a href="{{ url_for('admin.users_add') }}" class="btn btn-sm btn-primary">Create Accounts for These Members</a></p>
-  </div>
-</div>
+{% if not admin_users and not member_users %}
+<div class="card"><div class="empty-state"><i class="ph ph-users"></i><div>No users found.</div></div></div>
 {% endif %}
 
-<div class="alert alert-secondary mt-4">
-  <strong>Quick Reference:</strong>
-  <ul class="mb-0">
-    <li><strong>Admin Users:</strong> Accounts for committee members (IT Admin, Chairman, Treasurer, etc.)</li>
-    <li><strong>Member Users:</strong> Accounts for regular club members (login credentials for their dashboards)</li>
-    <li>Use "Edit" to change passwords or reset account status</li>
-    <li>Use "Toggle" to activate/deactivate accounts without deleting</li>
-    <li>Deleting a user here removes login access only; it does not remove the member from the Members module</li>
-    <li>Use the new person-remove button to remove the linked member too; historical records are marked as Exited instead of being destroyed</li>
-  </ul>
+<div class="card mt-2">
+  <div class="card-header"><i class="ph ph-info"></i> Quick Reference</div>
+  <div class="card-body small text-muted">
+    <div class="row">
+      <div class="col-md-6">
+        <strong>Account types:</strong>
+        <ul class="mb-0 mt-1">
+          <li><strong>Admin accounts</strong> — committee members (IT Admin, Chairman, Treasurer, etc.)</li>
+          <li><strong>Member accounts</strong> — regular club members with portal login</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <strong>Actions:</strong>
+        <ul class="mb-0 mt-1">
+          <li><i class="ph ph-magnifying-glass"></i> View — see activity log for that user</li>
+          <li><i class="ph ph-pencil-simple"></i> Edit — reset password, toggle access</li>
+          <li><i class="ph ph-lock"></i> Toggle — suspend/restore without deleting</li>
+          <li><i class="ph ph-trash"></i> Delete — removes login only, not the member record</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
-
-

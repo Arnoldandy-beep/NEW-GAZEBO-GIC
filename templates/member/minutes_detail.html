@@ -6,59 +6,11 @@
 {% set file_is_image = m.signed_file and (m.signed_file.lower().endswith('.jpg') or m.signed_file.lower().endswith('.jpeg') or m.signed_file.lower().endswith('.png') or m.signed_file.lower().endswith('.webp')) %}
 
 <style>
-.member-minutes-detail-hero {
-  margin-bottom: 22px;
-  padding: 22px 20px;
-  border-radius: 16px;
-  border: 1px solid #d9e6f4;
-  background: linear-gradient(135deg, #fbfdff 0%, #f2f8ff 55%, #f8fcff 100%);
-  box-shadow: 0 10px 24px rgba(41,74,144,.07);
-}
-.member-minutes-detail-hero h1 {
-  margin: 0;
-  font-size: 30px;
-  font-weight: 900;
-  letter-spacing: -.5px;
-  background: linear-gradient(135deg, #244f8e, #1565c0 60%, #0f7d94);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.member-minutes-detail-grid {
-  display: grid;
-  grid-template-columns: 1.8fr 1fr;
-  gap: 16px;
-}
-.member-minutes-doc {
-  border: 1px solid #dce7f4;
-  border-radius: 12px;
-  background: #fff;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(44,33,20,.05);
-}
-.member-minutes-doc iframe,
-.member-minutes-doc img {
-  display: block;
-  width: 100%;
-  min-height: 620px;
-  border: 0;
-  object-fit: contain;
-  background: #f7fafc;
-}
-@media (max-width: 980px) {
-  .member-minutes-detail-grid { grid-template-columns: 1fr; }
-}
+.md-root{--a:#10213b;--b:#21497d;--c:#6090d3;--line:#d9e4ef;--ink:#18324b;--muted:#61788f}.md-hero{background:linear-gradient(140deg,var(--a) 0%,var(--b) 60%,var(--c) 100%);border-radius:18px;color:#fff;padding:18px;display:grid;grid-template-columns:1.35fr .85fr;gap:10px;position:relative;overflow:hidden;margin-bottom:12px}.md-hero:before{content:"";position:absolute;right:-70px;top:-70px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 66%)}.md-id{display:flex;align-items:center;gap:14px}.md-avatar{width:64px;height:64px;border-radius:18px;overflow:hidden;border:3px solid rgba(255,255,255,.34);background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px}.md-avatar img{width:100%;height:100%;object-fit:cover}.md-hero h1{margin:0;font-size:24px;font-weight:900}.md-sub{margin-top:4px;font-size:12px;opacity:.9}.md-grid{display:grid;grid-template-columns:1.8fr 1fr;gap:12px}.md-doc{border:1px solid #dce7f4;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 4px 12px rgba(44,33,20,.05)}.md-doc iframe,.md-doc img{display:block;width:100%;min-height:620px;border:0;object-fit:contain;background:#f7fafc}.md-panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 3px 10px rgba(17,40,64,.06);overflow:hidden;margin-bottom:12px}.md-head{padding:10px 12px;border-bottom:1px solid #edf2f8;font-size:12px;font-weight:800;color:#29527d;background:linear-gradient(180deg,#f7fbff,#fff)}@media (max-width:980px){.md-hero,.md-grid{grid-template-columns:1fr}}
 </style>
 
-<div class="member-minutes-detail-hero">
-  <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-    <div>
-      <h1>{{ m.title }}</h1>
-      <div class="subtitle">{{ m.meeting_date|datefmt }} &middot; {{ m.venue or '-' }} &middot; Chair: {{ m.chair_name or '-' }}</div>
-    </div>
-    <a href="{{ url_for('member.minutes') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-left"></i> Back</a>
-  </div>
-</div>
+<div class="md-root">
+<div class="md-hero"><div class="md-id"><div class="md-avatar">{% if member.photo_url %}<img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}">{% else %}{{ (member.full_name or 'U')[0]|upper }}{% endif %}</div><div><h1>{{ m.title }}</h1><div class="md-sub">{{ m.meeting_date|datefmt }} &middot; {{ m.venue or '-' }} &middot; Chair: {{ m.chair_name or '-' }}</div></div></div><div class="text-end"><a href="{{ url_for('member.minutes') }}" class="btn btn-outline-light btn-sm"><i class="ph ph-arrow-left"></i> Back</a></div></div>
 
 <div class="row g-3 mb-3">
   <div class="col-md-4"><div class="stat-card info"><div class="label">Published</div><div class="value">Yes</div><div class="sub">Visible in member portal</div></div></div>
@@ -66,13 +18,13 @@
   <div class="col-md-4"><div class="stat-card gold"><div class="label">Signed Copy</div><div class="value">{% if m.signed_file %}Ready{% else %}Missing{% endif %}</div><div class="sub">Readable inside the app</div></div></div>
 </div>
 
-<div class="member-minutes-detail-grid">
+<div class="md-grid">
   <div>
     {% if m.signed_file %}
-    <div class="card mb-3">
-      <div class="card-header d-flex justify-content-between align-items-center"><span><i class="ph ph-file-text"></i> Signed Minutes Copy</span><a href="{{ url_for('static', filename=m.signed_file) }}" target="_blank" class="btn btn-sm btn-outline-secondary">Open File</a></div>
+    <div class="md-panel">
+      <div class="md-head d-flex justify-content-between align-items-center"><span><i class="ph ph-file-text"></i> Signed Minutes Copy</span><a href="{{ url_for('static', filename=m.signed_file) }}" target="_blank" class="btn btn-sm btn-outline-secondary">Open File</a></div>
       <div class="card-body p-0">
-        <div class="member-minutes-doc">
+        <div class="md-doc">
           {% if file_is_pdf %}
           <iframe src="{{ url_for('static', filename=m.signed_file) }}"></iframe>
           {% elif file_is_image %}
@@ -86,24 +38,24 @@
     {% endif %}
 
     {% if m.agenda %}
-    <div class="card mb-3"><div class="card-header"><i class="ph ph-list-checks"></i> Agenda</div>
+    <div class="md-panel"><div class="md-head"><i class="ph ph-list-checks"></i> Agenda</div>
       <div class="card-body" style="white-space:pre-wrap">{{ m.agenda }}</div>
     </div>
     {% endif %}
     {% if m.discussion %}
-    <div class="card mb-3"><div class="card-header"><i class="ph ph-chat-text"></i> Discussion</div>
+    <div class="md-panel"><div class="md-head"><i class="ph ph-chat-text"></i> Discussion</div>
       <div class="card-body" style="white-space:pre-wrap">{{ m.discussion }}</div>
     </div>
     {% endif %}
     {% if m.resolutions %}
-    <div class="card mb-3"><div class="card-header"><i class="ph ph-flag"></i> Resolutions</div>
+    <div class="md-panel"><div class="md-head"><i class="ph ph-flag"></i> Resolutions</div>
       <div class="card-body" style="white-space:pre-wrap">{{ m.resolutions }}</div>
     </div>
     {% endif %}
   </div>
   <div>
-    <div class="card">
-      <div class="card-header"><i class="ph ph-users-three"></i> Attendees ({{ attendees|length }})</div>
+    <div class="md-panel">
+      <div class="md-head"><i class="ph ph-users-three"></i> Attendees ({{ attendees|length }})</div>
       <div class="card-body p-0">
         {% if attendees %}
           <ul class="list-group list-group-flush">
@@ -118,11 +70,12 @@
     </div>
 
     {% if m.next_meeting %}
-    <div class="card mt-3"><div class="card-header"><i class="ph ph-calendar-dots"></i> Next Meeting</div>
+    <div class="md-panel"><div class="md-head"><i class="ph ph-calendar-dots"></i> Next Meeting</div>
       <div class="card-body">{{ m.next_meeting|datefmt }}</div>
     </div>
     {% endif %}
   </div>
+</div>
 </div>
 {% endblock %}
 

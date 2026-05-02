@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Audit Event #{{ row.id }}{% endblock %}
+{% block topbar %}Audit Event Detail{% endblock %}
+{% block content %}
+<style>
+.ad-hero{background:linear-gradient(135deg,#10213b 0%,#21497d 60%,#3a6eb5 100%);border-radius:14px;padding:18px 20px;color:#fff;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.ad-hero .id{font-size:11px;opacity:.7;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ad-hero .action{font-size:22px;font-weight:900;margin-top:4px;line-height:1.1}
+.ad-hero .ts{margin-top:6px;font-size:12px;opacity:.85}
+.ad-nav a{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;text-decoration:none;font-size:12px;font-weight:700;transition:background .15s}
+.ad-nav a:hover{background:rgba(255,255,255,.25)}
+.ad-nav{display:flex;gap:8px;flex-wrap:wrap}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+.kv-row{border-bottom:1px solid #f0f4f8;padding:7px 0;display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:13px;align-items:start}
+.kv-row:last-child{border-bottom:none}
+.kv-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.kv-val{font-weight:500;color:var(--text);word-break:break-word}
+.entity-card{border:2px solid var(--accent);border-radius:10px;overflow:hidden}
+.entity-card .ec-head{background:var(--accent);color:#fff;padding:9px 12px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:6px}
+.entity-card .ec-body{padding:10px 12px}
+.rel-row{display:grid;grid-template-columns:50px 140px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f0f4f8;font-size:12px}
+.rel-row:last-child{border-bottom:none}
+.al-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.3px;white-space:nowrap}
+.al-create{background:#e8f8f0;color:#0e6640}.al-update{background:#e8f0ff;color:#3a3ab5}
+.al-delete{background:#fde8e8;color:#aa2626}.al-auth{background:#f0e8ff;color:#6b21a8}
+.al-finance{background:#fff8e1;color:#7a5900}.al-system{background:#f0f4f8;color:#36546e}.al-default{background:#f2f2f2;color:#444}
+</style>
+
+<!-- Hero -->
+{% set ac = row.action | upper %}
+{% if 'CREATE' in ac or 'ADD' in ac or 'INSERT' in ac or 'REGISTER' in ac %}{% set badge = 'al-create' %}
+{% elif 'UPDATE' in ac or 'EDIT' in ac or 'CHANGE' in ac or 'SAVE' in ac or 'APPROVE' in ac or 'REJECT' in ac or 'TOGGLE' in ac or 'PUBLISH' in ac or 'UNLOCK' in ac %}{% set badge = 'al-update' %}
+{% elif 'DELETE' in ac or 'REMOVE' in ac or 'DROP' in ac %}{% set badge = 'al-delete' %}
+{% elif 'LOGIN' in ac or 'LOGOUT' in ac or 'AUTH' in ac or 'PASSWORD' in ac or 'PW' in ac %}{% set badge = 'al-auth' %}
+{% elif 'SAVINGS' in ac or 'LOAN' in ac or 'REPAY' in ac or 'FEE' in ac or 'FINE' in ac or 'DIVIDEND' in ac or 'EXPENSE' in ac %}{% set badge = 'al-finance' %}
+{% elif 'ALERT' in ac or 'SYSTEM' in ac or 'SETTINGS' in ac %}{% set badge = 'al-system' %}
+{% else %}{% set badge = 'al-default' %}{% endif %}
+
+<div class="ad-hero">
+  <div>
+    <div class="id">Event &nbsp;#{{ row.id }}</div>
+    <div class="action">{{ row.action }}</div>
+    <div class="ts"><i class="ph ph-clock"></i> {{ row.created_at | datetimefmt }}</div>
+    {% if row.ip_address %}<div class="ts" style="margin-top:2px"><i class="ph ph-desktop"></i> {{ row.ip_address }}</div>{% endif %}
+  </div>
+  <div>
+    <div class="ad-nav">
+      {% if prev_id %}<a href="{{ url_for('admin.audit_detail', log_id=prev_id) }}"><i class="ph ph-caret-left"></i> Newer</a>{% endif %}
+      <a href="{{ url_for('admin.audit_list') }}"><i class="ph ph-list"></i> All Logs</a>
+      {% if next_id %}<a href="{{ url_for('admin.audit_detail', log_id=next_id) }}">Older <i class="ph ph-caret-right"></i></a>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6">
+    <!-- Core event details -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-info"></i> Event Details</div>
+      <div class="card-body">
+        <div class="kv-row"><span class="kv-label">Event ID</span><span class="kv-val">#{{ row.id }}</span></div>
+        <div class="kv-row"><span class="kv-label">Action</span><span class="kv-val"><span class="al-badge {{ badge }}">{{ row.action }}</span></span></div>
+        <div class="kv-row"><span class="kv-label">Timestamp</span><span class="kv-val">{{ row.created_at | datetimefmt }}</span></div>
+        <div class="kv-row"><span class="kv-label">Description</span><span class="kv-val">{{ row.description or '—' }}</span></div>
+        <div class="kv-row"><span class="kv-label">Entity Type</span><span class="kv-val">{{ row.entity_type or '—' }}</span></div>
+        <div class="kv-row"><span class="kv-label">Entity ID</span><span class="kv-val">{{ ('#' ~ row.entity_id) if row.entity_id else '—' }}</span></div>
+        <div class="kv-row"><span class="kv-label">IP Address</span><span class="kv-val">{{ row.ip_address or '—' }}</span></div>
+      </div>
+    </div>
+
+    <!-- Actor -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-user-circle"></i> Actor (Who Did This)</div>
+      <div class="card-body">
+        {% if row.username %}
+        <div class="kv-row"><span class="kv-label">Username</span><span class="kv-val"><strong>{{ row.username }}</strong></span></div>
+        <div class="kv-row"><span class="kv-label">Full Name</span><span class="kv-val">{{ row.full_name or '—' }}</span></div>
+        <div class="kv-row"><span class="kv-label">Member No</span><span class="kv-val">{{ row.member_no or '—' }}</span></div>
+        <div class="kv-row"><span class="kv-label">Role</span>
+          <span class="kv-val">{% if row.member_role %}<span class="role-badge role-{{ row.member_role|lower }}">{{ ROLES[row.member_role].name }}</span>{% else %}—{% endif %}</span>
+        </div>
+        <div class="mt-2">
+          <a href="{{ url_for('admin.users_list') }}" class="btn btn-sm btn-outline-primary"><i class="ph ph-arrow-square-out"></i> View User</a>
+        </div>
+        {% else %}
+        <div class="text-muted small">System-generated action (no user actor).</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <!-- Affected entity record -->
+    {% if entity_data %}
+    <div class="entity-card mb-3">
+      <div class="ec-head"><i class="ph ph-database"></i> Affected Record: {{ entity_label }}</div>
+      <div class="ec-body">
+        {% for key in entity_data.keys() %}
+          {% set val = entity_data[key] %}
+          {% if val is not none and val != '' and key not in ('password_hash',) %}
+          <div class="kv-row">
+            <span class="kv-label">{{ key | replace('_', ' ') }}</span>
+            <span class="kv-val">
+              {% if key in ('amount', 'principal', 'interest_part', 'penalty_part', 'principal_part', 'total_interest_pool', 'distributable_pool', 'per_member_amount') %}
+                {{ val | int | money }}
+              {% elif val | string | length > 120 %}
+                <span title="{{ val }}">{{ val | string | truncate(120) }}</span>
+              {% else %}
+                {{ val }}
+              {% endif %}
+            </span>
+          </div>
+          {% endif %}
+        {% endfor %}
+        <!-- Deep-link to the entity -->
+        {% set et = row.entity_type | lower %}
+        {% if et == 'member' %}<a href="{{ url_for('admin.member_detail', member_id=row.entity_id) }}" class="btn btn-sm btn-outline-primary mt-2"><i class="ph ph-arrow-square-out"></i> Open Member</a>
+        {% elif et == 'loan' %}<a href="{{ url_for('admin.loan_detail', loan_id=row.entity_id) }}" class="btn btn-sm btn-outline-primary mt-2"><i class="ph ph-arrow-square-out"></i> Open Loan</a>
+        {% elif et == 'dividend_run' %}<a href="{{ url_for('admin.dividends_detail', run_id=row.entity_id) }}" class="btn btn-sm btn-outline-primary mt-2"><i class="ph ph-arrow-square-out"></i> Open Dividend Run</a>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-database"></i> Affected Record</div>
+      <div class="card-body text-muted small">
+        {% if row.entity_type and row.entity_id %}
+          Record {{ row.entity_type }} #{{ row.entity_id }} — may have been deleted or is not directly viewable.
+        {% elif row.entity_type %}
+          Entity type: <strong>{{ row.entity_type }}</strong> (no specific ID recorded).
+        {% else %}
+          No specific entity record attached to this event.
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Related history for same entity -->
+    {% if related %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-clock-counter-clockwise"></i> Other Events on This Record</div>
+      <div class="card-body p-0">
+        <div style="padding:0 12px">
+          {% for r in related %}
+          {% set ac2 = r.action | upper %}
+          {% if 'CREATE' in ac2 or 'ADD' in ac2 %}{% set b2='al-create' %}
+          {% elif 'UPDATE' in ac2 or 'EDIT' in ac2 or 'APPROVE' in ac2 or 'TOGGLE' in ac2 %}{% set b2='al-update' %}
+          {% elif 'DELETE' in ac2 or 'REMOVE' in ac2 %}{% set b2='al-delete' %}
+          {% elif 'LOGIN' in ac2 or 'AUTH' in ac2 %}{% set b2='al-auth' %}
+          {% elif 'SAVINGS' in ac2 or 'LOAN' in ac2 or 'FEE' in ac2 %}{% set b2='al-finance' %}
+          {% else %}{% set b2='al-default' %}{% endif %}
+          <div class="rel-row">
+            <span class="text-muted" style="font-size:11px">#{{ r.id }}</span>
+            <span style="font-size:11px;color:var(--text-muted)">{{ r.created_at | datetimefmt }}</span>
+            <span><span class="al-badge {{ b2 }}">{{ r.action }}</span></span>
+            <a href="{{ url_for('admin.audit_detail', log_id=r.id) }}" class="btn btn-sm btn-outline-secondary" style="padding:2px 8px;font-size:11px">View</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

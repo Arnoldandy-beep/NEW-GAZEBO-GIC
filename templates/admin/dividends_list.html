@@ -2,54 +2,337 @@
 {% block title %}Dividends{% endblock %}
 {% block topbar %}Dividends &amp; Annual Distribution{% endblock %}
 {% block content %}
-<div class="page-header">
+<style>
+  .dv-root {
+    --dv-a: #0f1e35;
+    --dv-b: #1f4f8e;
+    --dv-c: #5a86c8;
+    --dv-gold-a: #c98500;
+    --dv-gold-b: #ffd064;
+    --dv-ink: #0f2842;
+    --dv-muted: #5a7089;
+    --dv-card: #ffffff;
+    --dv-line: #d9e3ef;
+  }
+  .dv-hero {
+    background: linear-gradient(140deg, var(--dv-a) 0%, var(--dv-b) 55%, var(--dv-c) 100%);
+    border-radius: 18px;
+    color: #fff;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    display: grid;
+    grid-template-columns: 1.6fr .9fr;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dv-hero::before {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -70px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.18), transparent 65%);
+    pointer-events: none;
+  }
+  .dv-hero-title {
+    font-size: 22px;
+    line-height: 1.1;
+    font-weight: 900;
+    margin: 0;
+  }
+  .dv-hero-sub {
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: .88;
+  }
+  .dv-hero-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .dv-hero-actions .btn,
+  .dv-hero-actions .btn-outline-light {
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .dv-coin-art {
+    position: relative;
+    min-height: 96px;
+  }
+  .coin-stack {
+    position: absolute;
+    right: 6px;
+    bottom: 2px;
+    width: 124px;
+    height: 86px;
+  }
+  .coin {
+    position: absolute;
+    left: 0;
+    width: 72px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #ffe79b, #ffc83a 55%, #d98f00);
+    border: 1px solid rgba(128, 88, 0, .3);
+    box-shadow: inset 0 4px 5px rgba(255,255,255,.45), 0 6px 12px rgba(0,0,0,.24);
+  }
+  .coin.c1 { left: 36px; bottom: 2px; }
+  .coin.c2 { left: 30px; bottom: 16px; }
+  .coin.c3 { left: 24px; bottom: 30px; }
+  .coin.c4 { left: 18px; bottom: 44px; }
+  .coin.c5 { left: 12px; bottom: 58px; }
+  .dv-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .dv-kpi {
+    border: 1px solid var(--dv-line);
+    border-radius: 12px;
+    background: var(--dv-card);
+    padding: 11px 12px;
+    box-shadow: 0 3px 10px rgba(10, 41, 67, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  .dv-kpi::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1f4f8e, #7ca2d6);
+  }
+  .dv-kpi.gold::before {
+    background: linear-gradient(90deg, #af6c00, #ffd064);
+  }
+  .dv-kpi.green::before {
+    background: linear-gradient(90deg, #027a53, #4dd3a9);
+  }
+  .dv-kpi.indigo::before {
+    background: linear-gradient(90deg, #4a45a8, #a39dff);
+  }
+  .dv-kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    color: #365c86;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .dv-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: linear-gradient(165deg, #eef4fb, #dce8f7);
+    color: #1f4f8e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 3px 6px rgba(8, 26, 44, .15);
+  }
+  .dv-kpi.gold .dv-icon {
+    background: linear-gradient(165deg, #fff5d6, #ffe6a2);
+    color: #8a5400;
+  }
+  .dv-kpi.green .dv-icon {
+    background: linear-gradient(165deg, #e9fbf5, #c8f5e7);
+    color: #087b5a;
+  }
+  .dv-kpi.indigo .dv-icon {
+    background: linear-gradient(165deg, #f0efff, #ddd9ff);
+    color: #5049b6;
+  }
+  .dv-kpi-value {
+    margin-top: 6px;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--dv-ink);
+    line-height: 1.15;
+  }
+  .dv-kpi-sub {
+    margin-top: 3px;
+    color: var(--dv-muted);
+    font-size: 11px;
+  }
+  .dv-grid {
+    display: grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .dv-panel {
+    border: 1px solid var(--dv-line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(10, 41, 67, 0.06);
+  }
+  .dv-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf2f8;
+    font-weight: 800;
+    color: #244b73;
+    font-size: 12px;
+    background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+  }
+  .dv-ledger .rowline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 12px;
+    border-top: 1px solid #eef2f7;
+    font-size: 12px;
+  }
+  .dv-ledger .rowline:first-child {
+    border-top: none;
+  }
+  .dv-ledger .name {
+    color: #3e556f;
+    font-weight: 600;
+  }
+  .dv-ledger .amt {
+    color: #0e2f4b;
+    font-weight: 700;
+  }
+  .dv-mini-rules {
+    padding: 8px 12px 10px;
+    margin: 0;
+    font-size: 11px;
+    color: #4e647d;
+    line-height: 1.45;
+  }
+  .dv-mini-rules li { margin-bottom: 4px; }
+  .dv-mini-rules li:last-child { margin-bottom: 0; }
+  .dv-table-card .table th,
+  .dv-table-card .table td {
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+    font-size: 12px;
+  }
+  @media (max-width: 980px) {
+    .dv-hero { grid-template-columns: 1fr; }
+    .dv-grid { grid-template-columns: 1fr; }
+    .dv-coin-art { min-height: 76px; }
+  }
+</style>
+
+<div class="dv-root">
+<div class="dv-hero">
   <div>
-    <h1>Dividends</h1>
-    <div class="subtitle">Annual distribution every 31st December &middot; {{ current_year }} smart pool tracking</div>
-  </div>
-  <a href="{{ url_for('admin.dividends_preview', year=current_year) }}" class="btn btn-primary"><i class="ph ph-eye"></i> Preview {{ current_year }}</a>
-</div>
-
-<div class="stat-grid">
-  <div class="stat-card accent">
-    <div class="label">{{ current_year }} Collected Interest</div>
-    <div class="value">{{ pool.interest_collected|money }}</div>
-    <div class="sub">Realized from repayments in {{ current_year }}</div>
-  </div>
-  <div class="stat-card warn">
-    <div class="label">Collected Penalties</div>
-    <div class="value">{{ pool.penalty_collected|money }}</div>
-    <div class="sub">Penalty recovered via repayments</div>
-  </div>
-  <div class="stat-card gold">
-    <div class="label">Projected Total Pool ({{ current_year }})</div>
-    <div class="value">{{ pool.projected_total|money }}</div>
-    <div class="sub">{{ pool.projected_interest|money }} projected interest + {{ pool.projected_penalty|money }} projected penalties</div>
-  </div>
-  <div class="stat-card info">
-    <div class="label">Projected Distributable</div>
-    <div class="value">{{ pool.distributable|money }}</div>
-    <div class="sub">After top saver award {{ pool.top_saver_award|money }}</div>
-  </div>
-</div>
-
-<div class="card mb-3">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div>
-        <strong><i class="ph ph-chart-line-up"></i> Pool Coverage Progress</strong>
-        <div class="small text-muted">How much of projected pool has been actually collected so far.</div>
-      </div>
-      <div class="h5 mb-0">{{ pool.coverage_pct }}%</div>
+    <h1 class="dv-hero-title"><i class="ph ph-seal-check"></i> Dividends Module</h1>
+    <div class="dv-hero-sub">Precision distribution engine: fixed top saver award + reconciled equal-share payout math.</div>
+    <div class="dv-hero-actions">
+      <a href="{{ url_for('admin.dividends_preview', year=current_year) }}" class="btn btn-light btn-sm"><i class="ph ph-eye"></i> Preview {{ current_year }}</a>
+      {% if session.role in ('CHAIRMAN', 'TREASURER', 'IT_ADMIN') %}
+      <a href="{{ url_for('admin.dividends_preview', year=current_year) }}" class="btn btn-outline-light btn-sm"><i class="ph ph-calculator"></i> Recompute</a>
+      {% endif %}
     </div>
-    <div class="loan-pool-progress mt-2" style="height:8px;">
-      <div class="loan-pool-progress-bar" style="width: {{ pool.coverage_pct }}%"></div>
+  </div>
+  <div class="dv-coin-art" aria-hidden="true">
+    <div class="coin-stack">
+      <span class="coin c5"></span>
+      <span class="coin c4"></span>
+      <span class="coin c3"></span>
+      <span class="coin c2"></span>
+      <span class="coin c1"></span>
     </div>
-    <div class="small text-muted mt-1">Collected {{ pool.collected_total|money }} / Projected {{ pool.projected_total|money }}</div>
   </div>
 </div>
 
-<div class="card">
+<div class="dv-compact-grid">
+  <div class="dv-kpi">
+    <div class="dv-kpi-head">
+      <span>Total Loan Income (Cash)</span>
+      <span class="dv-icon"><i class="ph ph-coins"></i></span>
+    </div>
+    <div class="dv-kpi-value">{{ pool.loan_income_cash|money }}</div>
+    <div class="dv-kpi-sub">
+      Interest collected: {{ pool.interest_collected|money }}<br>
+      Penalties collected: {{ pool.penalty_collected|money }}
+    </div>
+  </div>
+  <div class="dv-kpi gold">
+    <div class="dv-kpi-head">
+      <span>Dividend Income Pool</span>
+      <span class="dv-icon"><i class="ph ph-bank"></i></span>
+    </div>
+    <div class="dv-kpi-value">{{ pool.total_pool|money }}</div>
+    <div class="dv-kpi-sub">Interest + paid penalties, used as dividend source pool.</div>
+  </div>
+  <div class="dv-kpi green">
+    <div class="dv-kpi-head">
+      <span>Top Saver Bonus</span>
+      <span class="dv-icon"><i class="ph ph-trophy"></i></span>
+    </div>
+    <div class="dv-kpi-value">{{ pool.top_saver_award|money }}</div>
+    <div class="dv-kpi-sub">Fixed at UGX 50,000, then equal-sharing applies.</div>
+  </div>
+  <div class="dv-kpi indigo">
+    <div class="dv-kpi-head">
+      <span>Equal Share Base</span>
+      <span class="dv-icon"><i class="ph ph-users-three"></i></span>
+    </div>
+    <div class="dv-kpi-value">{{ pool.est_per_member|money }}</div>
+    <div class="dv-kpi-sub">Across {{ pool.active_member_count }} active members after bonus reserve.</div>
+  </div>
+</div>
+
+<div class="dv-grid">
+  <div class="dv-panel dv-ledger">
+    <div class="dv-panel-head"><i class="ph ph-receipt"></i> Financial Reconciliation Snapshot</div>
+    <div class="rowline">
+      <div class="name">Interest Collected (Loan Repayments)</div>
+      <div class="amt">{{ pool.interest_collected|money }}</div>
+    </div>
+    <div class="rowline">
+      <div class="name">Penalty Collected (Loan Repayments)</div>
+      <div class="amt">{{ pool.penalty_collected|money }}</div>
+    </div>
+    <div class="rowline">
+      <div class="name">Total Loan Income (Cash)</div>
+      <div class="amt">{{ pool.loan_income_cash|money }}</div>
+    </div>
+    <div class="rowline">
+      <div class="name">Dividend Pool Formula</div>
+      <div class="amt">{{ pool.total_pool|money }} = {{ pool.top_saver_award|money }} + {{ pool.distributable|money }}</div>
+    </div>
+    <div class="rowline">
+      <div class="name">Remainder Micro-Allocation</div>
+      <div class="amt">{{ pool.remainder_to_allocate|money }}</div>
+    </div>
+  </div>
+
+  <div class="dv-panel">
+    <div class="dv-panel-head"><i class="ph ph-sparkle"></i> Distribution Rules In Use</div>
+    <ol class="dv-mini-rules ps-3 mb-0">
+      <li>Cash tile mirrors Loans: Interest + Penalties collected.</li>
+      <li>Dividend pool uses interest + paid penalties collected.</li>
+      <li>Top saver gets fixed UGX 50,000 first.</li>
+      <li>Remaining pool shared equally across active members.</li>
+      <li>Remainder is distributed deterministically to balance totals exactly.</li>
+    </ol>
+  </div>
+</div>
+
+{% if pool.total_pool < pool.top_saver_award %}
+<div class="alert alert-warning mb-3"><i class="ph ph-warning"></i> Current interest pool is below UGX 50,000. Distribution can run once interest collected reaches at least the fixed top saver bonus.</div>
+{% endif %}
+
+<div class="card dv-table-card">
   <div class="card-header"><i class="ph ph-clock-counter-clockwise"></i> Past Distributions</div>
   <div class="card-body p-0 table-responsive">
     {% if runs %}
@@ -83,18 +366,6 @@
     {% endif %}
   </div>
 </div>
-
-<div class="card mt-3">
-  <div class="card-header"><i class="ph ph-info"></i> How dividends work</div>
-  <div class="card-body small">
-    <ol class="ps-3 mb-0">
-      <li>The dashboard now shows both collected pool and projected pool for the selected year.</li>
-      <li>Projected pool uses loan interest for loans in the year and year penalties.</li>
-      <li>The top saver of the year is awarded an extra <strong>{{ CONFIG.TOP_SAVER_AWARD|money }}</strong>.</li>
-      <li>The remaining amount is divided equally among all active members.</li>
-      <li>Admin and Treasurer can run or rerun yearly distribution to refresh projections.</li>
-    </ol>
-  </div>
 </div>
 {% endblock %}
 

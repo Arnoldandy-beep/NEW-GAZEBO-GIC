@@ -1,0 +1,1358 @@
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.12:5000
+Press CTRL+C to quit
+ * Restarting with stat
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 755-089-837
+127.0.0.1 - - [02/May/2026 14:10:07] "GET / HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:10:07] "GET /auth/login?next=/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:10:07] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:10:07] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:10:07] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [02/May/2026 14:10:24] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:10:24] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:10:24] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:10:44] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:10:44] "GET /member/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:10:44] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:10:44] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:10:44] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:11:12] "GET /member/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:12] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:12] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:12] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:16] "GET /member/loans HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:16] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:16] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:16] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:18] "GET /member/loan-eligibility HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:18] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:18] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:18] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:28] "GET /member/minutes HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:28] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:28] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:28] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:30] "GET /member/profile HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:30] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:30] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:30] "GET /static/uploads/nid_copies/d03934203b174b3f886ff8258137ef9c.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:30] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:52] "GET /auth/change-password HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:52] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:52] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:52] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:54] "GET /member/profile HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:54] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:54] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:54] "GET /static/uploads/nid_copies/d03934203b174b3f886ff8258137ef9c.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:54] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:55] "GET /member/minutes HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:55] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:55] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:55] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:58] "GET /member/loan-eligibility HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:58] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:58] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:11:58] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:02] "GET /member/loans HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:02] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:02] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:02] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:12] "GET /member/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:12] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:12] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:12] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:15] "GET /member/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:15] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:15] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:15] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:43] "GET /admin/users HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:12:43] "GET /auth/login?next=/admin/users HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:43] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:43] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:53] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:53] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:12:53] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:12:55] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:12:55] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:12:55] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:13:09] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:13:10] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:10] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:13:10] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:10] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:13:38] "GET /admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:38] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:38] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:38] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:13:48] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:02] "GET /admin/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:02] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:02] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:02] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:08] "GET /admin/dividends HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:08] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:08] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:08] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:48] "GET /admin/minutes HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:48] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:48] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:48] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:59] "GET /admin/fines HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:59] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:59] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:15:59] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:16:04] "GET /admin/fees HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:16:04] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:16:04] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:16:04] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:21:36] "GET /admin/expenses HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:21:36] "GET /auth/login?next=/admin/expenses HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:21:36] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:21:36] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:21:38] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:21:38] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:21:38] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:21:38] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:21:38] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:10] "GET /admin/users HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:10] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:10] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:10] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:26] "GET /admin/users/23/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:26] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:26] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:26] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:48] "POST /admin/users/23/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:48] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:48] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:48] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:52] "GET /admin/users HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:52] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:52] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:52] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:57] "GET /auth/logout HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:22:57] "GET /auth/login?next=/auth/logout HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:57] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:22:57] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:06] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:06] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:06] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:18] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:23:18] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:18] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:18] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:18] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:23] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:23] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:23] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:23] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:23] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:26] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:26] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:26] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:26] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:26] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:27] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:27] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:27] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:27] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:27] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:28] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:33] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:34] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:37] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:37] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:37] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:37] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:42] "GET /admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:42] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:42] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:42] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:44] "GET /admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:44] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:44] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:44] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:50] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:23:57] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:57] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:23:57] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:14] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:24:14] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:24:14] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:24:14] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:24:15] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:15] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:15] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:30] "GET /admin/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:30] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:30] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:30] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:35] "GET /admin/loans HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:36] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:36] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:36] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:38] "GET /admin/dividends HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:38] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:38] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:38] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:42] "GET /admin/minutes HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:42] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:42] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:42] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:44] "GET /admin/fines HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:44] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:44] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:44] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:24:46] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:26:15] "GET /admin/members/1 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:26:15] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:26:15] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:26:15] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:26:15] "GET /static/uploads/nid_copies/bdf1d1d32a724cb8be08ff98dff10e3f.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:26:15] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:27:24] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:40] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:28:40] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:40] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:40] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:42] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:28:42] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:42] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:42] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:42] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:52] "GET /admin/approvals HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:28:52] "GET /auth/login?next=/admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:52] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:52] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:54] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:28:54] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:54] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:54] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:54] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:28:59] "GET /admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:59] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:59] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:28:59] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:01] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:42] "GET /admin/members/new HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:42] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:42] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:29:42] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:21] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:23] "GET /admin/members/1 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:23] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:23] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:23] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:23] "GET /static/uploads/nid_copies/bdf1d1d32a724cb8be08ff98dff10e3f.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:30:23] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:31:30] "GET /admin/members HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:31:30] "GET /auth/login?next=/admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:31:30] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:31:30] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:31:46] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:31:46] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:31:46] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:31:46] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:31:46] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:31:55] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:31:55] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:31:55] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:31:55] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:32:19] "GET /admin/members/1 HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:32:19] "GET /auth/login?next=/admin/members/1 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:19] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:19] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:33] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:32:33] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:33] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:32:33] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:33] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:36] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:39] "GET /admin/members/1 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:39] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:39] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:39] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:39] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:39] "GET /static/uploads/nid_copies/bdf1d1d32a724cb8be08ff98dff10e3f.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:42] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:45] "GET /admin/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:45] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:45] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:45] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:48] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:48] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:48] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:48] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:49] "GET /admin/savings/bulk HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:32:49] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:49] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:49] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:49] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:53] "GET /admin/reports HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:53] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:53] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:53] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:56] "GET /admin/audit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:56] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:56] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:32:56] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:33:02] "GET /admin/users HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:33:02] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:33:02] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:33:02] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:14] "GET /admin/reports HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:14] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:14] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:14] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:19] "GET /admin/expenses HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:19] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:19] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:19] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:21] "GET /admin/reports HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:21] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:21] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:21] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:25] "GET /admin/expenses HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:25] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:25] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:25] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:30] "GET /admin/fees HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:30] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:30] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:30] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:49] "POST /admin/fees/record HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:34:49] "GET /admin/fees?year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:49] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:49] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:34:49] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:35:04] "POST /admin/fees/8/delete HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:35:04] "GET /admin/fees?year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:35:04] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:35:04] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:35:04] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:15] "GET /admin/fines HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:15] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:15] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:15] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:38] "GET /admin/minutes HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:38] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:38] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:38] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:42] "GET /admin/dividends HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:42] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:42] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:36:42] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:29] "GET /admin/loans HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:29] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:29] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:29] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:40] "GET /admin/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:40] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:40] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:40] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:43] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:49] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:37:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:37:49] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:54] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:55] "GET /admin/approvals HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\utils.py", line 640, in decorated
+    return f(*args, **kwargs)
+  File "C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\admin_routes.py", line 1077, in approvals
+    approved_loan_history=approved_loan_history,
+                          ^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'approved_loan_history' where it is not associated with a value
+127.0.0.1 - - [02/May/2026 14:38:55] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:38:55] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:38:55] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png&s=CSq9kPuyD5ITkESADPjs HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:38:55] "GET /admin/approvals?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:38:56] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:56] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:56] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:58] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:58] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:58] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:38:58] "GET /static/js/app.js HTTP/1.1" 200 -
+ * Detected change in 'C:\\Users\\Administrator\\Documents\\ProjectAI\\MasterPiece-UAT\\NEW-GAZEBO-GIC\\admin_routes.py', reloading
+ * Restarting with stat
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 755-089-837
+127.0.0.1 - - [02/May/2026 14:46:20] "GET /admin/ HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:46:20] "GET /auth/login?next=/admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:20] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:20] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:22] "GET /auth/login?next=/admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:22] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:22] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:22] "GET /auth/login?next=/admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:23] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:23] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:23] "GET /auth/login?next=/admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:23] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:23] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:25] "GET /auth/login?next=/admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:25] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:25] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:41] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:46:41] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:41] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:41] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:41] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:46:47] "GET /admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:47] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:47] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:47] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:51] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:54] "GET /admin/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:54] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:54] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:54] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:56] "GET /admin/loans HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:56] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:56] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:56] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:58] "GET /admin/dividends HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:58] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:58] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:46:58] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:01] "GET /admin/dividends/preview/2026 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:01] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:01] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:01] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:04] "GET /admin/dividends HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:04] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:04] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:04] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:05] "GET /admin/minutes HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:05] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:05] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:05] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:09] "GET /admin/fines HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:09] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:09] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:09] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:17] "GET /admin/fees HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:17] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:17] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:17] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:23] "GET /admin/expenses HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:23] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:23] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:23] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:26] "GET /admin/reports HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:26] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:26] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:26] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:28] "GET /admin/fines HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:28] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:28] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:47:28] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:13] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:13] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:13] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:13] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:27] "GET /admin/members/1 HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:48:27] "GET /auth/login?next=/admin/members/1 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:27] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:27] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:29] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:48:29] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:29] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:29] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:48:29] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:48:33] "GET /admin/audit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:33] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:33] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:33] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:41] "GET /admin/audit/465 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:41] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:41] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:48:41] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:27] "GET /admin/audit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:27] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:27] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:27] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:40] "GET /admin/audit?action=&user=kagga&entity=&date= HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:41] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:41] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:50:41] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:51:08] "GET /admin/audit/334 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:51:08] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:51:08] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:51:08] "GET /static/js/app.js HTTP/1.1" 200 -
+ * Detected change in 'C:\\Users\\Administrator\\Documents\\ProjectAI\\MasterPiece-UAT\\NEW-GAZEBO-GIC\\database.py', reloading
+ * Restarting with stat
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 755-089-837
+ * Detected change in 'C:\\Users\\Administrator\\Documents\\ProjectAI\\MasterPiece-UAT\\NEW-GAZEBO-GIC\\utils.py', reloading
+ * Restarting with stat
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 755-089-837
+ * Detected change in 'C:\\Users\\Administrator\\Documents\\ProjectAI\\MasterPiece-UAT\\NEW-GAZEBO-GIC\\auth.py', reloading
+ * Restarting with stat
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 755-089-837
+ * Detected change in 'C:\\Users\\Administrator\\Documents\\ProjectAI\\MasterPiece-UAT\\NEW-GAZEBO-GIC\\auth.py', reloading
+ * Restarting with stat
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 755-089-837
+ * Detected change in 'C:\\Users\\Administrator\\Documents\\ProjectAI\\MasterPiece-UAT\\NEW-GAZEBO-GIC\\admin_routes.py', reloading
+ * Restarting with stat
+C:\Users\Administrator\Documents\ProjectAI\MasterPiece-UAT\NEW-GAZEBO-GIC\app.py:203: UserWarning: 
+[SECURITY] SECRET_KEY is set to the insecure default value. Set the SECRET_KEY environment variable to a strong random secret before deploying.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 755-089-837
+127.0.0.1 - - [02/May/2026 14:57:41] "GET /admin/audit/334 HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:57:41] "GET /auth/login?next=/admin/audit/334 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:42] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:42] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:44] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:57:44] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:44] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:44] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:57:44] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:57:46] "GET /admin/users HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:46] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:46] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:57:46] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:03] "GET /admin/users/2/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:03] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:03] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:03] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:20] "GET /admin/approvals HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:58:20] "GET /auth/login?next=/admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:20] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:20] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:29] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:58:30] "GET /admin/ HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:30] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:30] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:58:30] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:58:41] "GET /admin/approvals HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:41] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:41] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:41] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:44] "GET /admin/reports HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:44] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:44] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:44] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:47] "GET /admin/expenses HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:47] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:47] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:47] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:49] "GET /admin/fees HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:49] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:49] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:49] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:51] "GET /admin/fines HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:51] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:51] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:51] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:57] "GET /admin/minutes HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:57] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:57] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:57] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:58] "GET /admin/dividends HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:58] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:58] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:58] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:59] "GET /admin/loans HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:59] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:59] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:58:59] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:03] "GET /admin/savings HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:03] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:03] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:03] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:08] "GET /admin/fees HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:08] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:08] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:08] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:16] "GET /admin/fines HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:16] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:16] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:16] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:19] "GET /auth/logout HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 14:59:19] "GET /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:19] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:19] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:24] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:24] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:24] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:31] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:31] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:31] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:37] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:37] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:37] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:42] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:42] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:42] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:50] "POST /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 14:59:51] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 14:59:51] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/May/2026 15:00:00] "GET /admin/users/2/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:00] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:00] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:00] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:03] "GET /admin/users HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:03] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:03] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:03] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:10] "GET /admin/users/23 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:10] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:10] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:10] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:23] "GET /admin/audit/474 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:23] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:23] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:23] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:38] "GET /admin/audit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:38] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:38] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:38] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:42] "GET /admin/audit/474 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:42] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:42] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:42] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:51] "GET /admin/users HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:51] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:51] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:51] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:55] "GET /admin/users/23/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:55] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:55] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:00:55] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:13] "GET /admin/users/23/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:13] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:13] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:13] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /admin/users/23/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /admin/users/23/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:14] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:15] "GET /admin/users/23/edit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:15] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:15] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:15] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:23] "GET /admin/members HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/b420c417d7eb40a0bf44d695a3179856.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/70d3468ac8bb4e47b3c73d87f4a41fb5.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/3456b402bf9c43ad809c020f637eb3a3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/acc5951297304c88a09a725e3d3f2d9d.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/1299031d3221463e97c6cf30e5f6e4bc.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/8d40096dff9845118cf0d7f17eed1c6e.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/0038247cecfc45848612dd9752954087.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/22082cbe957a4d99b99801d4fda2f6f2.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/1d70014ad06f46778480e37a5030c61d.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/efc50f14d782493a88414ea2dd838a80.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:24] "GET /static/uploads/photos/5613b77141454045b9c41c0d5e1c319f.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:29] "GET /admin/members/20 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:29] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:29] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:29] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:29] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:29] "GET /static/uploads/nid_copies/625e477f7a8b4fa58ae8663bf916cbb3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:56] "POST /admin/users/23/clear-lockout HTTP/1.1" 302 -
+127.0.0.1 - - [02/May/2026 15:01:56] "GET /admin/members/20 HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:57] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:57] "GET /static/uploads/photos/74ad15359fb342eda34512ac7abeadac.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:57] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:57] "GET /static/uploads/nid_copies/625e477f7a8b4fa58ae8663bf916cbb3.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:01:57] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:02:01] "GET /admin/audit HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:02:01] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:02:01] "GET /static/uploads/photos/4499f7c6d8024b499da106b230fca486.png HTTP/1.1" 200 -
+127.0.0.1 - - [02/May/2026 15:02:01] "GET /static/js/app.js HTTP/1.1" 200 -

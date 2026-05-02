@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+{% block title %}My Approvals{% endblock %}
+{% block topbar %}My Approvals{% endblock %}
+{% block content %}
+
+<style>
+/* ---- Root ---- */
+.ap-root { font-family: 'Manrope', sans-serif; }
+
+/* ---- Hero ---- */
+.ap-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1d4ed8 100%);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.ap-hero::after {
+  content: '';
+  position: absolute;
+  top: -50px; right: -50px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+  pointer-events: none;
+}
+.ap-hero h1 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
+.ap-hero .sub { margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,.6); }
+.ap-hero .badge-cnt {
+  background: #dc2626;
+  color: #fff;
+  font-size: 13px; font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.ap-hero .badge-cnt.green { background: #059669; }
+
+/* ---- Section ---- */
+.ap-section {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.ap-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.ap-section-head.blue   { color: #1d4ed8; border-bottom-color: #bfdbfe; background: #eff6ff; }
+.ap-section-head.amber  { color: #b45309; border-bottom-color: #fde68a; background: #fffbeb; }
+.ap-section-head.purple { color: #7c3aed; border-bottom-color: #ddd6fe; background: #f5f3ff; }
+.ap-section-head.slate  { color: #475569; border-bottom-color: #e2e8f0; }
+
+/* ---- Table ---- */
+.ap-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ap-tbl thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+.ap-tbl tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.ap-tbl tbody tr:last-child td { border-bottom: none; }
+.ap-tbl tbody tr:hover { background: #fafafa; }
+.ap-tbl td.money { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: #0f172a; }
+
+/* ---- Chip ---- */
+.ap-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+}
+.ap-chip.pending  { background: #fef3c7; color: #92400e; }
+.ap-chip.approved { background: #dcfce7; color: #166534; }
+.ap-chip.done     { background: #f1f5f9; color: #64748b; }
+
+/* ---- Action btn ---- */
+.ap-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: opacity .15s; }
+.ap-action:hover { opacity: .85; text-decoration: none; }
+.ap-action.approve { background: #059669; color: #fff; }
+.ap-action.view    { background: #1d4ed8; color: #fff; }
+.ap-action.done    { background: #e2e8f0; color: #64748b; cursor: default; }
+
+/* ---- Notification list ---- */
+.ap-notif {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ap-notif:last-child { border-bottom: none; }
+.ap-notif.unread { background: #eff6ff; }
+.ap-notif .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #3b82f6; flex-shrink: 0; margin-top: 5px;
+}
+.ap-notif .dot.read { background: #cbd5e1; }
+.ap-notif .notif-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+.ap-notif .notif-msg { font-size: 12px; color: #475569; margin: 2px 0 0; }
+.ap-notif .notif-time { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.ap-notif .notif-link { font-size: 11px; color: #3b82f6; margin-top: 4px; display: inline-block; }
+
+/* Empty state */
+.ap-empty { text-align: center; padding: 36px 20px; color: #94a3b8; }
+.ap-empty i { font-size: 36px; opacity: .4; display: block; margin-bottom: 8px; }
+</style>
+
+<div class="ap-root">
+
+<!-- HERO -->
+<div class="ap-hero">
+  <div>
+    <h1><i class="ph ph-check-square" style="margin-right:8px"></i>My Approvals</h1>
+    <div class="sub">Pending actions within your jurisdiction &mdash; {{ session.role|replace('_',' ')|title }}</div>
+  </div>
+  {% if total_pending > 0 %}
+  <div class="badge-cnt">{{ total_pending }} pending</div>
+  {% else %}
+  <div class="badge-cnt green"><i class="ph ph-check-circle"></i> All clear</div>
+  {% endif %}
+</div>
+
+<!-- ================================================================
+     1. PENDING LOAN AMENDMENTS
+     ================================================================ -->
+{% if session.role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN') %}
+<div class="ap-section">
+  <div class="ap-section-head blue">
+    <i class="ph ph-note-pencil"></i> Loan Amendments Pending Approval
+    {% if pending_amendments %}<span class="ms-auto ap-chip pending">{{ pending_amendments|length }}</span>{% endif %}
+  </div>
+  {% if pending_amendments %}
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Loan #</th>
+          <th>Borrower</th>
+          <th>Requested By</th>
+          <th>Reason</th>
+          <th>Date</th>
+          <th>Approvals</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in pending_amendments %}
+        <tr>
+          <td><strong>{{ a.loan_no }}</strong></td>
+          <td>{{ a.borrower_name }}<br><span class="text-muted" style="font-size:11px">{{ a.member_no }}</span></td>
+          <td>{{ a.requested_by_name }}</td>
+          <td>{{ (a.reason or '—')|truncate(60) }}</td>
+          <td>{{ a.created_at|datetimefmt }}</td>
+          <td>
+            <span class="ap-chip {% if a.approval_count >= (a.approvals_required or 2) %}approved{% else %}pending{% endif %}">
+              {{ a.approval_count }}/{{ a.approvals_required or 2 }}
+            </span>
+          </td>
+          <td>
+            {% if a.already_approved %}
+            <span class="ap-action done"><i class="ph ph-check"></i> Approved</span>
+            {% else %}
+            <form method="post" action="{{ url_for('admin.loan_amendment_approve', loan_id=a.loan_id, amendment_id=a.id) }}" style="display:inline">
+              <button type="submit" class="ap-action approve"
+                      onclick="return confirm('Approve this loan amendment?')">
+                <i class="ph ph-check-circle"></i> Approve
+              </button>
+            </form>
+            {% endif %}
+            <a href="{{ url_for('admin.loan_detail', loan_id=a.loan_id) }}" class="ap-action view ms-1">
+              <i class="ph ph-eye"></i> View
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="ap-empty">
+    <i class="ph ph-note-pencil"></i>
+    No pending loan amendments.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ================================================================
+     2. PENDING EXPENSE REQUESTS
+     ================================================================ -->
+{% if session.role in ('CHAIRMAN', 'IT_ADMIN') %}
+<div class="ap-section">
+  <div class="ap-section-head amber">
+    <i class="ph ph-wallet"></i> Expense Requests Pending Approval
+    {% if pending_expenses %}<span class="ms-auto ap-chip pending">{{ pending_expenses|length }}</span>{% endif %}
+  </div>
+  {% if pending_expenses %}
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Ref #</th>
+          <th>Purpose</th>
+          <th>Requested By</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th class="text-end">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in pending_expenses %}
+        <tr>
+          <td><strong>{{ e.expense_no }}</strong></td>
+          <td>{{ e.purpose }}</td>
+          <td>{{ e.req_name }}</td>
+          <td><span class="ap-chip done">{{ e.category }}</span></td>
+          <td>{{ e.expense_date|datefmt }}</td>
+          <td class="money">{{ e.amount|money }}</td>
+          <td>
+            <a href="{{ url_for('admin.expenses_list', tab='pending') }}" class="ap-action view">
+              <i class="ph ph-eye"></i> Review
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="ap-empty">
+    <i class="ph ph-wallet"></i>
+    No pending expense requests.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ================================================================
+     3. PENDING LOAN APPLICATIONS
+     ================================================================ -->
+{% if session.role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN') %}
+<div class="ap-section">
+  <div class="ap-section-head purple">
+    <i class="ph ph-hand-coins"></i> Loan Applications Pending Approval
+    {% if pending_loans %}<span class="ms-auto ap-chip pending">{{ pending_loans|length }}</span>{% endif %}
+  </div>
+  {% if pending_loans %}
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Loan #</th>
+          <th>Member</th>
+          <th>Principal</th>
+          <th>Term</th>
+          <th>Purpose</th>
+          <th>Approvals</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in pending_loans %}
+        <tr>
+          <td><strong>{{ l.loan_no }}</strong></td>
+          <td>{{ l.borrower_name }}<br><span class="text-muted" style="font-size:11px">{{ l.member_no }}</span></td>
+          <td class="money">{{ l.principal|money }}</td>
+          <td>{{ l.term_months }}m</td>
+          <td>{{ (l.purpose or '—')|truncate(50) }}</td>
+          <td>
+            <span class="ap-chip {% if l.already_approved %}approved{% else %}pending{% endif %}">
+              {{ l.approval_count }}/3
+              {% if l.already_approved %}<i class="ph ph-check"></i>{% endif %}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('admin.loan_detail', loan_id=l.id) }}" class="ap-action view">
+              <i class="ph ph-eye"></i> Review
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="ap-empty">
+    <i class="ph ph-hand-coins"></i>
+    No pending loan applications.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ================================================================
+     4. PENDING MEMBER PROFILE CHANGES
+     ================================================================ -->
+{% if session.role in ('TREASURER', 'IT_ADMIN') %}
+<div class="ap-section">
+  <div class="ap-section-head blue">
+    <i class="ph ph-identification-card"></i> Member Next of Kin Change Requests
+    {% if pending_profile_changes %}<span class="ms-auto ap-chip pending">{{ pending_profile_changes|length }}</span>{% endif %}
+  </div>
+  {% if pending_profile_changes %}
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Current Details</th>
+          <th>Requested Details</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in pending_profile_changes %}
+        <tr>
+          <td>
+            <strong>{{ r.full_name }}</strong><br>
+            <span class="text-muted" style="font-size:11px">{{ r.member_no }}</span>
+          </td>
+          <td>
+            <div>NOK: {{ r.current_next_of_kin or '-' }}</div>
+            <div class="text-muted" style="font-size:11px">Relation: {{ r.current_nok_relationship or '-' }}</div>
+            <div class="text-muted" style="font-size:11px">Phone: {{ r.current_nok_phone or '-' }}</div>
+            <div class="text-muted" style="font-size:11px">Address: {{ r.current_nok_address or '-' }}</div>
+          </td>
+          <td>
+            <div>NOK: {{ r.request_next_of_kin or '-' }}</div>
+            <div class="text-muted" style="font-size:11px">Relation: {{ r.request_nok_relationship or '-' }}</div>
+            <div class="text-muted" style="font-size:11px">Phone: {{ r.request_nok_phone or '-' }}</div>
+            <div class="text-muted" style="font-size:11px">Address: {{ r.request_nok_address or '-' }}</div>
+          </td>
+          <td>{{ r.created_at|datetimefmt }}</td>
+          <td>
+            <form method="post" action="{{ url_for('admin.approve_member_profile_change', request_id=r.id) }}" style="display:inline">
+              <button type="submit" class="ap-action approve" onclick="return confirm('Approve and save these Next of Kin details?')">
+                <i class="ph ph-check-circle"></i> Approve
+              </button>
+            </form>
+            <a href="{{ url_for('admin.member_detail', member_id=r.member_id) }}" class="ap-action view ms-1">
+              <i class="ph ph-eye"></i> View Member
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="ap-empty">
+    <i class="ph ph-identification-card"></i>
+    No pending member profile change requests.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ================================================================
+     5. APPROVAL HISTORY
+     ================================================================ -->
+{% if approved_loan_history %}
+<div class="ap-section">
+  <div class="ap-section-head slate">
+    <i class="ph ph-clock-counter-clockwise"></i> Approved Loan History
+  </div>
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Loan #</th>
+          <th>Member</th>
+          <th>Status</th>
+          <th>Approved By</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in approved_loan_history %}
+        <tr>
+          <td><strong>{{ l.loan_no }}</strong></td>
+          <td>{{ l.borrower_name }}<br><span class="text-muted" style="font-size:11px">{{ l.member_no }}</span></td>
+          <td><span class="ap-chip approved">{{ l.status }}</span></td>
+          <td>{{ l.approver_names|join(', ') if l.approver_names else '-' }}</td>
+          <td>{{ (l.approved_date or l.updated_at)|datetimefmt }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if approved_amendment_history %}
+<div class="ap-section">
+  <div class="ap-section-head slate">
+    <i class="ph ph-clock-counter-clockwise"></i> Approved Amendment History
+  </div>
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Loan #</th>
+          <th>Member</th>
+          <th>Approvals</th>
+          <th>Approved By</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in approved_amendment_history %}
+        <tr>
+          <td><strong>{{ a.loan_no }}</strong></td>
+          <td>{{ a.borrower_name }}<br><span class="text-muted" style="font-size:11px">{{ a.member_no }}</span></td>
+          <td><span class="ap-chip approved">{{ a.approval_count }}/{{ a.approvals_required or 2 }}</span></td>
+          <td>{{ a.approver_names|join(', ') if a.approver_names else '-' }}</td>
+          <td>{{ (a.approved_at or a.updated_at)|datetimefmt }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if approved_expense_history %}
+<div class="ap-section">
+  <div class="ap-section-head slate">
+    <i class="ph ph-clock-counter-clockwise"></i> Approved Expense History
+  </div>
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Ref #</th>
+          <th>Purpose</th>
+          <th>Requested By</th>
+          <th>Approved By</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in approved_expense_history %}
+        <tr>
+          <td><strong>{{ e.expense_no }}</strong></td>
+          <td>{{ e.purpose }}</td>
+          <td>{{ e.requester_name or '-' }}</td>
+          <td>{{ e.approver_name or '-' }}</td>
+          <td>{{ e.approved_at|datetimefmt if e.approved_at else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if approved_profile_history %}
+<div class="ap-section">
+  <div class="ap-section-head slate">
+    <i class="ph ph-clock-counter-clockwise"></i> Approved Member Change History
+  </div>
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Request</th>
+          <th>Approved By</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in approved_profile_history %}
+        <tr>
+          <td><strong>{{ r.full_name }}</strong><br><span class="text-muted" style="font-size:11px">{{ r.member_no }}</span></td>
+          <td>{{ r.request_type|replace('_', ' ')|title }}</td>
+          <td>{{ r.approver_name or '-' }}</td>
+          <td>{{ r.approved_at|datetimefmt if r.approved_at else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================================================================
+     4. RECENT NOTIFICATIONS
+     ================================================================ -->
+<div class="ap-section">
+  <div class="ap-section-head slate">
+    <i class="ph ph-bell"></i> Recent Notifications
+    <span class="ms-auto text-muted" style="font-size:11px;font-weight:400">Last 30 &mdash; all marked read on page load</span>
+  </div>
+  {% if notifications %}
+    {% for n in notifications %}
+    <div class="ap-notif {% if not n.is_read %}unread{% endif %}">
+      <div class="dot {% if n.is_read %}read{% endif %}"></div>
+      <div>
+        <div class="notif-title">{{ n.title }}</div>
+        <div class="notif-msg">{{ n.message }}</div>
+        {% if n.link %}
+        <a href="{{ n.link }}" class="notif-link"><i class="ph ph-arrow-square-out"></i> Go to item</a>
+        {% endif %}
+        <div class="notif-time">{{ n.created_at|datetimefmt }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="ap-empty">
+    <i class="ph ph-bell-slash"></i>
+    No notifications yet.
+  </div>
+  {% endif %}
+</div>
+
+</div>{# ap-root #}
+{% endblock %}

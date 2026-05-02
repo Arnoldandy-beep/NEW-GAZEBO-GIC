@@ -380,9 +380,13 @@
           <td><div class="date-paid-col">{{ r.paid_date|datefmt if r.paid_date else '-' }}</div></td>
           <td>
             <div class="actions-col">
+              {% if session.role in ('IT_ADMIN', 'SECRETARY', 'TREASURER', 'CHAIRMAN') %}
               <form method="post" action="{{ url_for('admin.fees_delete', fee_id=r.id) }}" style="display:inline;" onsubmit="return confirm('Delete this payment record? This cannot be undone.');">
                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete payment record"><i class="ph ph-trash"></i></button>
               </form>
+              {% else %}
+              <span class="text-muted small fst-italic">Read only</span>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -409,12 +413,16 @@
           <td><div class="date-paid-col">—</div></td>
           <td>
             <div class="actions-col">
+              {% if session.role in ('IT_ADMIN', 'SECRETARY', 'TREASURER', 'CHAIRMAN') %}
               <form method="post" action="{{ url_for('admin.fees_record') }}" style="margin: 0;">
                 <input type="hidden" name="member_id" value="{{ m.id }}">
                 <input type="hidden" name="year" value="{{ year }}">
                 <input type="hidden" name="amount" value="{{ fee_amount }}">
                 <button type="submit" class="btn btn-sm btn-success" title="Mark this member as paid"><i class="ph ph-check-circle"></i> Mark Paid</button>
               </form>
+              {% else %}
+              <span class="text-muted small fst-italic">Read only</span>
+              {% endif %}
             </div>
           </td>
         </tr>

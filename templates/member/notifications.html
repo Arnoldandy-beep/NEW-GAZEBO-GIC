@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block topbar %}Notifications{% endblock %}
+{% block content %}
+<style>
+.notif-hero{background:linear-gradient(140deg,#10213b 0%,#21497d 60%,#3a6eb5 100%);border-radius:14px;color:#fff;padding:14px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.notif-hero h1{margin:0;font-size:20px;font-weight:900}
+.notif-hero .sub{font-size:11px;opacity:.85;margin-top:3px}
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid #eef2f8;text-decoration:none;color:inherit;transition:background .12s}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:#f5f9ff}
+.notif-item.unread{background:#eff6ff}
+.notif-item.unread:hover{background:#e0edff}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
+.notif-dot.read{background:#d1d9e4}
+.notif-title{font-size:13px;font-weight:700;color:#1a334f}
+.notif-msg{font-size:12px;color:#61788f;margin-top:2px}
+.notif-time{font-size:10px;color:#8fa0b0;margin-top:3px;white-space:nowrap}
+.notif-group-label{font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;background:#f8fbff;border-bottom:1px solid #eef2f8}
+</style>
+
+<!-- Hero -->
+<div class="notif-hero">
+  <div>
+    <h1><i class="ph ph-bell"></i> Notifications</h1>
+    <div class="sub">
+      {% if unread_count > 0 %}
+        <strong style="color:#ffd580">{{ unread_count }} unread</strong> &middot; {{ notifications | length }} total
+      {% else %}
+        All caught up &middot; {{ notifications | length }} total
+      {% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    {% if unread_count > 0 %}
+    <form method="post" action="{{ url_for('member.notifications_mark_all_read') }}">
+      <button type="submit" class="btn btn-light btn-sm"><i class="ph ph-checks"></i> Mark All Read</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('member.dashboard') }}" class="btn btn-outline-light btn-sm"><i class="ph ph-house"></i> Dashboard</a>
+  </div>
+</div>
+
+<div class="card">
+  {% if notifications %}
+    {% set unread_notifs = notifications | selectattr('is_read', 'eq', 0) | list %}
+    {% set read_notifs   = notifications | selectattr('is_read', 'ne', 0) | list %}
+
+    {% if unread_notifs %}
+    <div class="notif-group-label"><i class="ph ph-bell-ringing"></i> Unread ({{ unread_notifs | length }})</div>
+    {% for n in unread_notifs %}
+    <a class="notif-item unread"
+       href="{{ url_for('member.notification_open', notification_id=n.id) }}">
+      <span class="notif-dot"></span>
+      <div style="flex:1;min-width:0">
+        <div class="notif-title">{{ n.title }}</div>
+        <div class="notif-msg">{{ n.message }}</div>
+        <div class="notif-time">{{ n.created_at | datetimefmt }}</div>
+      </div>
+      <i class="ph ph-caret-right" style="color:#aec6df;font-size:14px;margin-top:3px"></i>
+    </a>
+    {% endfor %}
+    {% endif %}
+
+    {% if read_notifs %}
+    <div class="notif-group-label"><i class="ph ph-check"></i> Read ({{ read_notifs | length }})</div>
+    {% for n in read_notifs %}
+    <a class="notif-item"
+       href="{{ url_for('member.notification_open', notification_id=n.id) }}">
+      <span class="notif-dot read"></span>
+      <div style="flex:1;min-width:0">
+        <div class="notif-title" style="font-weight:500;color:#3a5570">{{ n.title }}</div>
+        <div class="notif-msg">{{ n.message }}</div>
+        <div class="notif-time">{{ n.created_at | datetimefmt }}</div>
+      </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+
+  {% else %}
+  <div class="empty-state"><i class="ph ph-bell-slash"></i><div>No notifications yet.</div></div>
+  {% endif %}
+</div>
+{% endblock %}

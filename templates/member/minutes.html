@@ -5,100 +5,16 @@
 {% set signed_count = minutes|selectattr('signed_file')|list|length %}
 
 <style>
-.member-minutes-hero {
-  margin-bottom: 22px;
-  padding: 22px 20px;
-  border-radius: 16px;
-  border: 1px solid #d9e6f4;
-  background: linear-gradient(135deg, #fbfdff 0%, #f2f8ff 55%, #f8fcff 100%);
-  box-shadow: 0 10px 24px rgba(41,74,144,.07);
-}
-.member-minutes-hero h1 {
-  margin: 0;
-  font-size: 32px;
-  font-weight: 900;
-  letter-spacing: -.5px;
-  background: linear-gradient(135deg, #244f8e, #1565c0 60%, #0f7d94);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.member-minutes-subtitle {
-  margin-top: 8px;
-  color: #607286;
-  font-size: 14px;
-  line-height: 1.7;
-}
-.member-minutes-stats {
-  margin-top: 16px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-}
-.member-minutes-stat {
-  background: #ffffffcc;
-  border: 1px solid #d8e4f2;
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-.member-minutes-stat .k { font-size: 10px; text-transform: uppercase; letter-spacing: .7px; font-weight: 700; color: #708195; }
-.member-minutes-stat .v { margin-top: 5px; font-size: 22px; font-weight: 800; color: #234b68; }
-.member-minutes-stat .s { margin-top: 2px; font-size: 12px; color: #708195; }
-.member-minutes-shell {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(44,33,20,.05);
-}
-.member-minutes-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.member-minutes-table thead th {
-  background: #ece5d9;
-  color: var(--text-muted);
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  padding: 11px 12px;
-  border-bottom: 1px solid var(--border);
-}
-.member-minutes-table tbody td {
-  padding: 13px 12px;
-  border-bottom: 1px solid #ebe3d8;
-}
-.member-minutes-table tbody tr:hover {
-  background: #f8fbff;
-  box-shadow: inset 2px 0 0 #1565c0;
-}
-.signed-copy-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  background: #e9f7ef;
-  border: 1px solid #cbe9d6;
-  color: #17653f;
-}
+.mm-root{--a:#10213b;--b:#21497d;--c:#6090d3;--line:#d9e4ef;--ink:#18324b;--muted:#61788f}.mm-hero{background:linear-gradient(140deg,var(--a) 0%,var(--b) 60%,var(--c) 100%);border-radius:18px;color:#fff;padding:18px;display:grid;grid-template-columns:1.35fr .85fr;gap:10px;position:relative;overflow:hidden;margin-bottom:12px}.mm-hero:before{content:"";position:absolute;right:-70px;top:-70px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 66%)}.mm-id{display:flex;align-items:center;gap:14px}.mm-avatar{width:64px;height:64px;border-radius:18px;overflow:hidden;border:3px solid rgba(255,255,255,.34);background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px}.mm-avatar img{width:100%;height:100%;object-fit:cover}.mm-hero h1{margin:0;font-size:24px;font-weight:900}.mm-sub{margin-top:4px;font-size:12px;opacity:.9}.mm-chip{display:inline-flex;gap:6px;align-items:center;margin-top:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:800;text-transform:uppercase}.mm-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}.mm-kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 3px 10px rgba(17,40,64,.06);position:relative}.mm-kpi:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#224a7e,#78a8df)}.mm-kpi .k{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.mm-kpi .v{margin-top:4px;font-size:22px;font-weight:900;color:var(--ink)}.mm-kpi .s{margin-top:3px;font-size:11px;color:var(--muted)}.mm-panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 3px 10px rgba(17,40,64,.06);overflow:hidden}.mm-table{width:100%;border-collapse:collapse;font-size:12px}.mm-table th,.mm-table td{padding:9px 10px;border-top:1px solid #eef2f8}.mm-table th{border-top:none;background:#f8fbff;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6a8197;font-weight:800}.mm-signed{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:#e9f7ef;border:1px solid #cbe9d6;color:#17653f}@media (max-width:900px){.mm-hero{grid-template-columns:1fr}}@media (max-width:700px){.mm-kpis{grid-template-columns:1fr}}
 </style>
 
-<div class="member-minutes-hero">
-  <h1><i class="ph ph-notepad"></i> Meeting Minutes</h1>
-  <div class="member-minutes-subtitle">Read published quarterly meeting records, resolutions, and signed copies directly from your member portal.</div>
-  <div class="member-minutes-stats">
-    <div class="member-minutes-stat"><div class="k">Published Records</div><div class="v">{{ minutes|length }}</div><div class="s">Available to members</div></div>
-    <div class="member-minutes-stat"><div class="k">Signed Copies</div><div class="v">{{ signed_count }}</div><div class="s">Readable in-app</div></div>
-  </div>
-</div>
-
-<div class="member-minutes-shell">
+<div class="mm-root">
+<div class="mm-hero"><div class="mm-id"><div class="mm-avatar">{% if member.photo_url %}<img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}">{% else %}{{ (member.full_name or 'U')[0]|upper }}{% endif %}</div><div><h1><i class="ph ph-notepad"></i> Meeting Minutes</h1><div class="mm-sub">Read published records, resolutions, attendance context, and signed copies directly inside your member portal.</div><div class="mm-chip"><i class="ph ph-identification-card"></i> {{ member.member_no }}</div></div></div><div></div></div>
+<div class="mm-kpis"><div class="mm-kpi"><div class="k">Published Records</div><div class="v">{{ minutes|length }}</div><div class="s">Available to members</div></div><div class="mm-kpi"><div class="k">Signed Copies</div><div class="v">{{ signed_count }}</div><div class="s">Readable in-app</div></div><div class="mm-kpi"><div class="k">Readiness</div><div class="v">Portal</div><div class="s">Meeting information in one place</div></div></div>
+<div class="mm-panel">
   <div class="card-body p-0 table-responsive">
     {% if minutes %}
-    <table class="member-minutes-table">
+    <table class="mm-table">
       <thead><tr><th>Date</th><th>Title</th><th>Chair</th><th>Venue</th><th>Signed Copy</th><th></th></tr></thead>
       <tbody>
         {% for m in minutes %}
@@ -107,7 +23,7 @@
           <td><strong>{{ m.title }}</strong></td>
           <td>{{ m.chair_name or '-' }}</td>
           <td>{{ m.venue or '-' }}</td>
-          <td>{% if m.signed_file %}<span class="signed-copy-chip"><i class="ph ph-file-pdf"></i> Available</span>{% else %}<span class="text-muted small">No file</span>{% endif %}</td>
+          <td>{% if m.signed_file %}<span class="mm-signed"><i class="ph ph-file-pdf"></i> Available</span>{% else %}<span class="text-muted small">No file</span>{% endif %}</td>
           <td><a href="{{ url_for('member.minutes_detail', minutes_id=m.id) }}" class="btn btn-sm btn-outline-primary">Read</a></td>
         </tr>
         {% endfor %}
@@ -117,6 +33,7 @@
     <div class="empty-state"><i class="ph ph-notebook"></i><div>No published minutes yet.</div></div>
     {% endif %}
   </div>
+</div>
 </div>
 {% endblock %}
 

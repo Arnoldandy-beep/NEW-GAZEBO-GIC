@@ -1,76 +1,85 @@
-﻿{% extends "base.html" %}
-{% block title %}Edit User{% endblock %}
+{% extends "base.html" %}
+{% block title %}Edit User: {{ user.username }}{% endblock %}
 {% block topbar %}Edit User{% endblock %}
 {% block content %}
 <div class="page-header">
-  <div><h1>Edit User: {{ user.username }}</h1><div class="subtitle">Update user account settings</div></div>
-  <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary"><i class="ph ph-caret-left"></i> Back</a>
+  <div>
+    <h1>Edit User: <code>{{ user.username }}</code></h1>
+    <div class="subtitle">Reset password, toggle access, or manage credentials</div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if session.role == 'IT_ADMIN' %}
+    <a href="{{ url_for('admin.users_detail', user_id=user.id) }}" class="btn btn-outline-secondary"><i class="ph ph-clock-counter-clockwise"></i> Activity</a>
+    {% endif %}
+    <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary"><i class="ph ph-caret-left"></i> Back</a>
+  </div>
 </div>
 
 <div class="row">
   <div class="col-lg-8">
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title mb-4">Account Information</h5>
-        
-        <div class="alert alert-info">
-          <strong>Username:</strong> <code>{{ user.username }}</code><br>
-          {% if user.member_id %}
-          <strong>Linked Member:</strong> <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}">{{ user.member_no }} - {{ user.member_name }}</a>
-          {% else %}
-          <strong>Linked Member:</strong> <em class="text-muted">Not linked</em>
-          {% endif %}<br>
-          <strong>Last Login:</strong> {{ user.last_login|datetimefmt if user.last_login else 'Never' }}
+    <!-- Account info banner -->
+    <div class="card mb-3" style="border-left:4px solid var(--accent)">
+      <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+        <div><div class="small text-muted" style="font-size:10px;text-transform:uppercase;font-weight:700">Username</div><strong>{{ user.username }}</strong></div>
+        <div><div class="small text-muted" style="font-size:10px;text-transform:uppercase;font-weight:700">Linked Member</div>
+          {% if user.member_id %}<a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}">{{ user.member_no }} — {{ user.member_name }}</a>{% else %}<em class="text-muted">Not linked</em>{% endif %}
         </div>
-        
+        <div><div class="small text-muted" style="font-size:10px;text-transform:uppercase;font-weight:700">Status</div>
+          {% if user.is_active %}<span class="badge-pill badge-active">Active</span>{% else %}<span class="badge-pill badge-defaulted">Inactive</span>{% endif %}
+        </div>
+        <div><div class="small text-muted" style="font-size:10px;text-transform:uppercase;font-weight:700">Last Login</div><small>{{ user.last_login | datetimefmt if user.last_login else 'Never' }}</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="ph ph-sliders"></i> Account Settings</div>
+      <div class="card-body">
         <form method="post">
           <div class="mb-3">
-            <label for="new_password" class="form-label">Reset Password</label>
+            <label for="new_password" class="form-label">Reset Password <span class="text-muted" style="font-size:11px">(leave blank to keep current)</span></label>
             <div class="input-group">
-              <input type="text" class="form-control" id="new_password" name="new_password" 
-                     placeholder="Leave blank to keep current password">
-              <span class="input-group-text">
-                <i class="ph ph-info" title="User will be required to change on next login"></i>
-              </span>
+              <input type="text" class="form-control" id="new_password" name="new_password"
+                     placeholder="Enter new password or leave blank">
+              <button type="button" class="btn btn-outline-secondary"
+                      onclick="document.getElementById('new_password').value='gazebo123'">Default</button>
             </div>
-            <small class="form-text text-muted">If you set a new password, the user will be required to change it on next login.</small>
+            <small class="form-text text-muted">User will be forced to change it on next login.</small>
           </div>
 
           <div class="mb-3">
             <label for="reset_reason" class="form-label">Reason for Reset</label>
-            <input type="text" class="form-control" id="reset_reason" name="reset_reason" placeholder="e.g. Forgotten password">
-            <small class="form-text text-muted">Included in WhatsApp credentials message after reset.</small>
+            <input type="text" class="form-control" id="reset_reason" name="reset_reason"
+                   placeholder="e.g. Forgotten password, compromised account">
+            <small class="form-text text-muted">Included in the WhatsApp credentials message.</small>
           </div>
 
           {% if session.role not in ('IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER') %}
-          <div class="alert alert-warning small">
-            Password reset is restricted to IT Admin, Chairman, Secretary, and Treasurer.
+          <div class="alert alert-warning small mb-3">
+            <i class="ph ph-lock"></i> Password resets are restricted to IT Admin, Chairman, Secretary, and Treasurer.
           </div>
           {% endif %}
-          
-          <div class="mb-3">
+
+          <hr class="my-3">
+
+          <div class="mb-2">
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
+              <input type="checkbox" class="form-check-input" id="is_active" name="is_active"
                      {% if user.is_active %}checked{% endif %} value="on">
-              <label class="form-check-label" for="is_active">
-                Account is Active
-              </label>
+              <label class="form-check-label" for="is_active"><strong>Account is Active</strong></label>
             </div>
-            <small class="form-text text-muted">Inactive accounts cannot log in. Toggle here without deleting the account.</small>
+            <small class="form-text text-muted ms-4">Inactive accounts cannot log in at all.</small>
           </div>
-          
+
           <div class="mb-3">
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="must_change_pw" name="must_change_pw" 
+              <input type="checkbox" class="form-check-input" id="must_change_pw" name="must_change_pw"
                      {% if user.must_change_pw %}checked{% endif %} value="on">
-              <label class="form-check-label" for="must_change_pw">
-                Force Password Change on Next Login
-              </label>
+              <label class="form-check-label" for="must_change_pw"><strong>Force Password Change on Next Login</strong></label>
             </div>
-            <small class="form-text text-muted">Check this to force the user to change their password before accessing the system.</small>
+            <small class="form-text text-muted ms-4">User must set a new password before accessing the system.</small>
           </div>
-          
-          <div class="form-group">
+
+          <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary"><i class="ph ph-check-circle"></i> Save Changes</button>
             <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary">Cancel</a>
           </div>
@@ -78,34 +87,58 @@
       </div>
     </div>
   </div>
-  
+
   <div class="col-lg-4">
-    <div class="card alert-warning">
-      <div class="card-header bg-warning text-dark">
-        <strong>Quick Actions</strong>
-      </div>
-      <div class="card-body">
-        <p><a href="{{ url_for('admin.users_list') }}" class="btn btn-sm btn-outline-secondary w-100 mb-2">
-          <i class="ph ph-list"></i> Back to User List
-        </a></p>
-        
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-lightning"></i> Quick Actions</div>
+      <div class="card-body d-grid gap-2">
+        {% if session.role == 'IT_ADMIN' %}
+        <a href="{{ url_for('admin.users_detail', user_id=user.id) }}" class="btn btn-outline-secondary btn-sm">
+          <i class="ph ph-clock-counter-clockwise"></i> View Activity Log
+        </a>
+
+        {% if user.must_change_pw %}
+        <form method="post" action="{{ url_for('admin.users_unlock', user_id=user.id) }}"
+              onsubmit="return confirm('Clear the force-change-pw flag for {{ user.username }}?')">
+          <button type="submit" class="btn btn-outline-warning btn-sm w-100">
+            <i class="ph ph-lock-open"></i> Clear Force-PW-Change Flag
+          </button>
+        </form>
+        {% endif %}
+        {% endif %}
+
         {% if user.id != session.user_id %}
-        <p class="text-muted small my-3">Or delete this account:</p>
+        <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}"
+              onsubmit="return confirm('Toggle status for {{ user.username }}?')">
+          <button type="submit" class="btn btn-outline-warning btn-sm w-100">
+            {% if user.is_active %}<i class="ph ph-lock"></i> Suspend Account{% else %}<i class="ph ph-lock-open"></i> Activate Account{% endif %}
+          </button>
+        </form>
+
         <form method="post" action="{{ url_for('admin.users_delete', user_id=user.id) }}"
-              onsubmit="return confirm('Permanently delete user {{ user.username }}? This cannot be undone.');">
-          <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-            <i class="ph ph-trash"></i> Delete User
+              onsubmit="return confirm('Delete login {{ user.username }}? The member record is not affected.')">
+          <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+            <i class="ph ph-trash"></i> Delete Login Account
           </button>
         </form>
         {% else %}
-        <p class="alert alert-sm alert-info mb-0">
-          <small><i class="ph ph-info"></i> This is your account. You cannot delete it here.</small>
-        </p>
+        <div class="alert alert-info mb-0 small">
+          <i class="ph ph-info"></i> This is your own account — some actions are restricted.
+        </div>
         {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="ph ph-info"></i> Notes</div>
+      <div class="card-body small text-muted">
+        <ul class="ps-3 mb-0">
+          <li>Deleting the login removes system access only — the member record is unaffected.</li>
+          <li>Suspending (toggle inactive) is reversible; the account data is kept.</li>
+          <li>The WhatsApp credentials message is sent after a password reset and includes the new password.</li>
+        </ul>
       </div>
     </div>
   </div>
 </div>
 {% endblock %}
-
-

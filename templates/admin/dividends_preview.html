@@ -8,24 +8,24 @@
 </div>
 
 {% if existing %}
-<div class="alert alert-warning"><i class="ph ph-warning"></i> Dividends for {{ year }} were already distributed on {{ existing.distribution_date|datefmt }}. You can rerun to refresh using current projected figures.</div>
+<div class="alert alert-warning"><i class="ph ph-warning"></i> Dividends for {{ year }} were already distributed on {{ existing.distribution_date|datefmt }}. You can rerun to refresh using current collected-interest figures.</div>
 {% endif %}
 
 <div class="stat-grid">
   <div class="stat-card accent">
-    <div class="label">Projected Total Pool</div>
+    <div class="label">Dividend Income Pool (All Loans To Date)</div>
     <div class="value">{{ pool.total_pool|money }}</div>
-    <div class="sub">{{ pool.projected_interest|money }} projected interest + {{ pool.projected_penalty|money }} projected penalty</div>
+    <div class="sub">Actual collected loan income: interest + paid penalties</div>
   </div>
   <div class="stat-card gold">
     <div class="label">Top Saver Award</div>
     <div class="value">{{ pool.top_saver_award|money }}</div>
-    <div class="sub">Reserved bonus</div>
+    <div class="sub">Fixed policy bonus</div>
   </div>
   <div class="stat-card info">
     <div class="label">Per-Member Share</div>
     <div class="value">{{ per_member|money }}</div>
-    <div class="sub">Projected after top saver award</div>
+    <div class="sub">Equal share from {{ pool.distributable|money }} pool remainder</div>
   </div>
   <div class="stat-card warn">
     <div class="label">Top Saver</div>
@@ -37,10 +37,10 @@
 <div class="card mb-3">
   <div class="card-body py-2">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div class="small"><strong>Collected so far:</strong> {{ pool.collected_total|money }} ({{ pool.interest_collected|money }} interest + {{ pool.penalty_collected|money }} penalty)</div>
-      <div class="small"><strong>Coverage:</strong> {{ pool.coverage_pct }}%</div>
+      <div class="small"><strong>Penalties included in pool:</strong> {{ pool.penalty_collected|money }}</div>
+      <div class="small"><strong>Remainder handling:</strong> {{ pool.remainder_to_allocate|money }} allocated as UGX 1 adjustments</div>
+      <div class="small"><strong>Balance check:</strong> {{ pool.balance_check|money }}</div>
     </div>
-    <div class="loan-pool-progress mt-2" style="height:6px;"><div class="loan-pool-progress-bar" style="width: {{ pool.coverage_pct }}%"></div></div>
   </div>
 </div>
 
@@ -63,12 +63,14 @@
   </div>
 </div>
 
-{% if pool.total_pool > 0 %}
+{% if pool.total_pool >= pool.top_saver_award %}
 <form method="post" action="{{ url_for('admin.dividends_run') }}" data-confirm="Run the dividend distribution for {{ year }}? This will refresh current payouts." class="mt-3">
   <input type="hidden" name="year" value="{{ year }}">
   <input type="hidden" name="distribution_date" value="{{ year }}-12-31">
   <button type="submit" class="btn btn-primary"><i class="ph ph-check-circle"></i> {% if existing %}Recalculate / Rerun{% else %}Run Distribution{% endif %}</button>
 </form>
+{% elif pool.total_pool > 0 %}
+<div class="alert alert-warning mt-3"><i class="ph ph-warning"></i> Pool is below UGX 50,000 top saver bonus. Distribution run is disabled until more loan income is collected.</div>
 {% endif %}
 {% endblock %}
 

@@ -1,252 +1,617 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Reports{% endblock %}
 {% block topbar %}Reports{% endblock %}
 {% block content %}
 <style>
-.reports-hero {
-  border: 1px solid #d7e0ef;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 55%, #f6fbf9 100%);
+.rp-root {
+  --rp-a: #0f1e35;
+  --rp-b: #1b3f6f;
+  --rp-c: #2f6db5;
+  --rp-gold-a: #a76600;
+  --rp-gold-b: #e3bf67;
+  --rp-ok: #0f8c62;
+  --rp-danger: #b73434;
+  --rp-bg: #f5f8fc;
+  --rp-card: #ffffff;
+  --rp-ink: #18324b;
+  --rp-muted: #60778f;
+  --rp-line: #d8e3ef;
+}
+
+.rp-hero {
+  background: linear-gradient(138deg, var(--rp-a) 0%, var(--rp-b) 58%, var(--rp-c) 100%);
+  border-radius: 18px;
+  color: #fff;
   padding: 16px 18px;
-  margin-bottom: 16px;
-}
-
-.reports-hero h1 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -.4px;
-  background: linear-gradient(135deg, #244f8e, #1565c0 62%, #0f7d94);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.reports-top-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.reports-top-stat {
-  border: 1px solid #d9e3f2;
-  border-radius: 12px;
-  padding: 12px;
-  background: #fff;
-}
-
-.reports-top-stat .k {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .75px;
-  color: #6a7b8f;
-  font-weight: 700;
-}
-
-.reports-top-stat .v {
-  margin-top: 4px;
-  font-size: 21px;
-  font-weight: 800;
-  color: #23374c;
-  font-variant-numeric: tabular-nums;
-}
-
-.reports-group-label {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: #5879a0;
-  padding: 18px 4px 6px;
-  border-bottom: 2px solid #e2eaf4;
-  margin-bottom: 10px;
-}
-
-.reports-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 6px;
-}
-
-.report-tile {
   position: relative;
-  border-radius: 14px;
-  border: 1px solid #d3deed;
-  background: #fff;
-  padding: 14px;
-  box-shadow: 0 8px 18px rgba(30,42,58,.07);
-  min-height: 170px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   overflow: hidden;
-}
-
-.report-tile::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #2f6fa8, #66a7e5);
-}
-
-.report-tile.tone-accent::before { background: linear-gradient(90deg, #1f8f68, #36b38a); }
-.report-tile.tone-gold::before { background: linear-gradient(90deg, #c58d22, #e1b451); }
-.report-tile.tone-warn::before { background: linear-gradient(90deg, #b46d1f, #de9d4c); }
-.report-tile.tone-danger::before { background: linear-gradient(90deg, #ac3838, #dc6767); }
-.report-tile.tone-ok::before { background: linear-gradient(90deg, #1d8a5b, #42bf84); }
-.report-tile.tone-info::before { background: linear-gradient(90deg, #356d9e, #5ca0dc); }
-
-.report-tile:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 26px rgba(30,42,58,.12);
-}
-
-.report-tile-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
   gap: 10px;
 }
 
-.report-tile-title {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  font-weight: 800;
-  color: #5f7185;
+.rp-hero::before {
+  content: "";
+  position: absolute;
+  right: -84px;
+  top: -84px;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.16), transparent 66%);
 }
 
-.report-tile-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: linear-gradient(135deg, #edf3fb 0%, #dce8f8 100%);
-  color: #2f6fa8;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-
-.report-tile-value {
-  margin-top: 8px;
-  font-size: 28px;
+.rp-hero h1 {
+  margin: 0;
+  font-size: 24px;
   font-weight: 900;
-  color: #223649;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.05;
+  line-height: 1.08;
 }
 
-.report-tile-sub {
-  margin-top: 6px;
+.rp-hero-sub {
+  margin-top: 4px;
   font-size: 12px;
-  color: #667889;
-  min-height: 34px;
+  opacity: .88;
 }
 
-.report-tile-actions {
-  margin-top: 12px;
+.rp-hero-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.rp-hero-actions {
+  margin-top: 10px;
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.report-tile-actions .btn {
+.rp-hero-actions .btn {
   font-size: 12px;
   font-weight: 700;
-  border-radius: 9px;
+  border-radius: 8px;
 }
 
-.reports-chart-card {
-  margin-top: 16px;
+.rp-art {
+  min-height: 96px;
+  position: relative;
 }
 
-@media (max-width: 1090px) {
-  .reports-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .reports-top-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rp-orb {
+  position: absolute;
+  right: 8px;
+  top: 10px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6d8 0%, #ffd266 45%, #c98400 92%);
+  box-shadow: inset -8px -8px 12px rgba(134, 79, 0, .35), 0 10px 16px rgba(0,0,0,.24);
 }
 
-@media (max-width: 680px) {
-  .reports-grid { grid-template-columns: 1fr; }
-  .reports-top-strip { grid-template-columns: 1fr; }
+.rp-bars3d {
+  position: absolute;
+  right: 12px;
+  bottom: 6px;
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.rp-bar {
+  width: 22px;
+  border-radius: 6px 6px 4px 4px;
+  background: linear-gradient(180deg, #d9ecff 0%, #8dbbf4 70%, #5f91ca 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 8px 10px rgba(0,0,0,.2);
+}
+
+.rp-bar.b1 { height: 38px; }
+.rp-bar.b2 { height: 56px; }
+.rp-bar.b3 { height: 74px; }
+
+.rp-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rp-kpi {
+  background: var(--rp-card);
+  border: 1px solid var(--rp-line);
+  border-radius: 12px;
+  padding: 10px 11px;
+  box-shadow: 0 3px 10px rgba(17, 40, 64, .07);
+  position: relative;
+  overflow: hidden;
+}
+
+.rp-kpi::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1f4f8f, #6ea4df);
+}
+
+.rp-kpi.warn::before { background: linear-gradient(90deg, #ae5d08, #e2b75d); }
+.rp-kpi.ok::before { background: linear-gradient(90deg, #117a58, #4ec49a); }
+.rp-kpi.bad::before { background: linear-gradient(90deg, #b43030, #e16b6b); }
+
+.rp-kpi .k {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--rp-muted);
+  font-weight: 800;
+}
+
+.rp-kpi .v {
+  margin-top: 4px;
+  font-size: 22px;
+  line-height: 1.06;
+  font-weight: 900;
+  color: var(--rp-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-kpi .s {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--rp-muted);
+}
+
+.rp-grid {
+  display: grid;
+  grid-template-columns: 1.25fr .75fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rp-panel {
+  background: #fff;
+  border: 1px solid var(--rp-line);
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(17, 40, 64, .06);
+  overflow: hidden;
+}
+
+.rp-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid #edf2f8;
+  font-size: 12px;
+  font-weight: 800;
+  color: #2b527c;
+  background: linear-gradient(180deg, #f7fbff, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.rp-head .sub {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a7f96;
+}
+
+.rp-trend {
+  padding: 10px 12px;
+  max-height: 380px;
+  overflow: auto;
+}
+
+.rp-row {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px dashed #edf2f8;
+}
+
+.rp-row:first-child { border-top: none; }
+
+.rp-month {
+  font-size: 11px;
+  color: #5e748b;
+  font-weight: 700;
+}
+
+.rp-bars {
+  display: grid;
+  gap: 4px;
+}
+
+.rp-meter {
+  height: 8px;
+  border-radius: 99px;
+  background: #edf2f8;
+  position: relative;
+  overflow: hidden;
+}
+
+.rp-meter .fill {
+  height: 100%;
+  border-radius: 99px;
+}
+
+.rp-meter.inflow .fill { background: linear-gradient(90deg, #2f6db5, #7caee4); }
+.rp-meter.outflow .fill { background: linear-gradient(90deg, #b4681a, #e5b767); }
+.rp-meter.netpos .fill { background: linear-gradient(90deg, #0f8c62, #62ca9f); }
+.rp-meter.netneg .fill { background: linear-gradient(90deg, #b73434, #e57d7d); }
+.rp-meter.defaults .fill { background: linear-gradient(90deg, #8b3db0, #b98ad0); }
+
+.rp-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: #5f778f;
+  margin-top: 8px;
+}
+
+.rp-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.rp-mini-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.rp-mini {
+  border: 1px solid #e4ecf6;
+  border-radius: 10px;
+  padding: 8px;
+  background: #fbfdff;
+}
+
+.rp-mini .k { font-size: 10px; color: #6a7f96; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.rp-mini .v { margin-top: 2px; font-size: 17px; font-weight: 900; color: #223e59; }
+.rp-mini .s { margin-top: 2px; font-size: 11px; color: #6a7f96; }
+
+.rp-table-wrap {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.rp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.rp-table th,
+.rp-table td {
+  padding: 8px 10px;
+  border-top: 1px solid #eef2f8;
+  vertical-align: top;
+}
+
+.rp-table th {
+  font-size: 10px;
+  color: #69829a;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 800;
+  background: #f8fbff;
+  border-top: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.rp-money {
+  text-align: right;
+  font-weight: 800;
+  color: #20384f;
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-badge {
+  font-size: 10px;
+  border-radius: 20px;
+  padding: 3px 8px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.rp-badge.bad { background: #fde8e8; color: #a33232; }
+.rp-badge.warn { background: #fff3dd; color: #9b5f11; }
+.rp-badge.ok { background: #e6f9f1; color: #0f8c62; }
+
+.rp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.rp-actions .btn {
+  font-size: 12px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+@media (max-width: 1280px) {
+  .rp-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 980px) {
+  .rp-hero { grid-template-columns: 1fr; }
+  .rp-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .rp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+  .rp-kpis { grid-template-columns: 1fr; }
 }
 </style>
 
-<div class="page-header">
-  <div><h1>Reports</h1><div class="subtitle">Financial position &amp; trends</div></div>
-</div>
-
-<div class="reports-hero">
-  <div class="reports-top-strip">
-    <div class="reports-top-stat">
-      <div class="k">Total Assets</div>
-      <div class="v">{{ total_assets|money }}</div>
-    </div>
-    <div class="reports-top-stat">
-      <div class="k">Operating Income</div>
-      <div class="v">{{ operating_income|money }}</div>
-    </div>
-    <div class="reports-top-stat">
-      <div class="k">Total Savings Equity</div>
-      <div class="v">{{ total_savings|money }}</div>
-    </div>
-    <div class="reports-top-stat">
-      <div class="k">Loan Book Records</div>
-      <div class="v">{{ loan_total_count }}</div>
-    </div>
-  </div>
-</div>
-
-{% set ns = namespace(last_group='') %}
-{% for tile in report_tiles %}
-  {% if tile.group != ns.last_group %}
-    {% if not loop.first %}</div>{% endif %}
-    <div class="reports-group-label"><i class="bi bi-grid-3x3-gap-fill me-1"></i>{{ tile.group }}</div>
-    <div class="reports-grid">
-    {% set ns.last_group = tile.group %}
-  {% endif %}
-  <div class="report-tile tone-{{ tile.tone }}">
+<div class="rp-root">
+  <div class="rp-hero">
     <div>
-      <div class="report-tile-head">
-        <div class="report-tile-title">{{ tile.title }}</div>
-        <div class="report-tile-icon"><i class="{{ tile.icon }}"></i></div>
+      <h1><i class="ph ph-chart-line-up"></i> Club Strategic Reports</h1>
+      <div class="rp-hero-sub">AGM and monthly meeting command center: finance, defaulters, portfolio performance, and governance controls.</div>
+      <div class="rp-hero-meta">
+        <span><strong>Reporting Period:</strong> {{ current_period }}</span>
+        <span><strong>Active Members:</strong> {{ active_members }}</span>
+        <span><strong>Loan Book:</strong> {{ loan_total_count }} records</span>
       </div>
-      <div class="report-tile-value">{{ tile.value }}</div>
-      <div class="report-tile-sub">{{ tile.sub }}</div>
+      <div class="rp-hero-actions">
+        <a href="{{ url_for('admin.reports_export', report_key='position') }}" class="btn btn-light btn-sm"><i class="ph ph-download-simple"></i> Export Financial Position</a>
+        <a href="{{ url_for('admin.reports_export', report_key='savings-trend') }}" class="btn btn-outline-light btn-sm"><i class="ph ph-trend-up"></i> Export Savings Trend</a>
+      </div>
     </div>
-    <div class="report-tile-actions">
-      <a href="{{ tile.href }}" class="btn btn-sm btn-primary">Open</a>
-      <a href="{{ url_for('admin.reports_export', report_key=tile.key) }}" class="btn btn-sm btn-outline-primary">Export CSV</a>
+    <div class="rp-art" aria-hidden="true">
+      <span class="rp-orb"></span>
+      <div class="rp-bars3d">
+        <span class="rp-bar b1"></span>
+        <span class="rp-bar b2"></span>
+        <span class="rp-bar b3"></span>
+      </div>
     </div>
   </div>
-{% endfor %}
-{% if report_tiles %}</div>{% endif %}
 
-<div class="card reports-chart-card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-bar-chart-line"></i> 6-Month Savings Collection Trend</span>
-    <a href="{{ url_for('admin.reports_export', report_key='savings-trend') }}" class="btn btn-sm btn-outline-primary">Export Trend</a>
-  </div>
-  <div class="card-body">
-    {% set max_total = (trend|map(attribute='total')|max) or 1 %}
-    <div class="bar-chart">
-      {% for t in trend %}
-      <div class="bar" style="height: {{ ((t.total / max_total) * 100)|int if t.total else 6 }}%">
-        <div class="bar-value">
-          {% if t.total >= 1000000 %}{{ '%.1f'|format(t.total / 1000000) }}M
-          {% elif t.total >= 1000 %}{{ (t.total / 1000)|round(0)|int }}K
-          {% else %}{{ t.total }}{% endif %}
-        </div>
-        <div class="bar-label">{{ t.label }}</div>
-      </div>
-      {% endfor %}
+  <div class="rp-kpis">
+    <div class="rp-kpi">
+      <div class="k">Cash Estimate</div>
+      <div class="v">{{ cash_estimate|money }}</div>
+      <div class="s">Practical liquidity after loans disbursed and expenses.</div>
     </div>
-    <div class="text-center mt-4 small text-muted">Monthly savings collections with contributor volume in the period detail export.</div>
+    <div class="rp-kpi">
+      <div class="k">Savings Equity</div>
+      <div class="v">{{ total_savings|money }}</div>
+      <div class="s">Total active-member savings balance.</div>
+    </div>
+    <div class="rp-kpi ok">
+      <div class="k">Loan Income (Cash)</div>
+      <div class="v">{{ loan_income_cash|money }}</div>
+      <div class="s">Interest {{ loan_interest_collected|money }} + penalties {{ loan_penalty_collected|money }}.</div>
+    </div>
+    <div class="rp-kpi warn">
+      <div class="k">Overdue Loans</div>
+      <div class="v">{{ overdue_loans_count }}</div>
+      <div class="s">Total owed {{ overdue_loans_total_owed|money }}.</div>
+    </div>
+    <div class="rp-kpi bad">
+      <div class="k">Savings Arrears</div>
+      <div class="v">{{ arrears_members_count }}</div>
+      <div class="s">Arrears value {{ arrears_amount_total|money }}.</div>
+    </div>
+    <div class="rp-kpi {{ 'ok' if operating_income >= 0 else 'bad' }}">
+      <div class="k">Operating Net</div>
+      <div class="v">{{ operating_income|money }}</div>
+      <div class="s">Fees + fines minus approved expenses.</div>
+    </div>
+  </div>
+
+  <div class="rp-grid">
+    <div class="rp-panel">
+      <div class="rp-head">
+        <span><i class="ph ph-chart-bar"></i> Month-on-Month Financial Movement (12 Months)</span>
+        <span class="sub">Inflow, Outflow, Net, Savings Defaulters</span>
+      </div>
+      <div class="rp-trend">
+        {% for r in monthly_rows %}
+        <div class="rp-row">
+          <div class="rp-month">{{ r.label }}</div>
+          <div class="rp-bars">
+            <div class="rp-meter inflow"><div class="fill" style="width: {{ r.inflow_pct }}%"></div></div>
+            <div class="rp-meter outflow"><div class="fill" style="width: {{ r.outflow_pct }}%"></div></div>
+            <div class="rp-meter {{ 'netpos' if r.net_positive else 'netneg' }}"><div class="fill" style="width: {{ r.net_pct }}%"></div></div>
+            <div class="rp-meter defaults"><div class="fill" style="width: {{ r.savings_defaulters_pct }}%"></div></div>
+          </div>
+        </div>
+        {% endfor %}
+        <div class="rp-legend">
+          <span><span class="rp-dot" style="background:#2f6db5"></span>Inflow</span>
+          <span><span class="rp-dot" style="background:#b4681a"></span>Outflow</span>
+          <span><span class="rp-dot" style="background:#0f8c62"></span>Net (+/-)</span>
+          <span><span class="rp-dot" style="background:#8b3db0"></span>Savings Defaulters</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rp-panel">
+      <div class="rp-head"><span><i class="ph ph-circles-three-plus"></i> Portfolio Meeting Snapshot</span></div>
+      <div class="rp-mini-grid">
+        <div class="rp-mini">
+          <div class="k">Treasury YTD Inflow</div>
+          <div class="v">{{ ytd_inflow|money }}</div>
+          <div class="s">Cash in this year</div>
+        </div>
+        <div class="rp-mini">
+          <div class="k">Treasury YTD Outflow</div>
+          <div class="v">{{ ytd_outflow|money }}</div>
+          <div class="s">Loans disbursed + expenses</div>
+        </div>
+        <div class="rp-mini">
+          <div class="k">Secretary Governance</div>
+          <div class="v">{{ minutes_published }}/{{ minutes_total }}</div>
+          <div class="s">Published minutes coverage</div>
+        </div>
+        <div class="rp-mini">
+          <div class="k">IT Control Pulse</div>
+          <div class="v">{{ audit_30d }}</div>
+          <div class="s">Audit actions in last 30 days</div>
+        </div>
+        <div class="rp-mini">
+          <div class="k">Chairman Risk View</div>
+          <div class="v">{{ overdue_loans_total_owed|money }}</div>
+          <div class="s">Overdue loan exposure</div>
+        </div>
+        <div class="rp-mini">
+          <div class="k">Pending Expense Queue</div>
+          <div class="v">{{ pending_expenses_count }}</div>
+          <div class="s">Awaiting approval</div>
+        </div>
+      </div>
+      <div class="rp-actions">
+        <a href="{{ url_for('admin.expenses_list') }}" class="btn btn-sm btn-outline-primary">Expenses</a>
+        <a href="{{ url_for('admin.minutes_list') }}" class="btn btn-sm btn-outline-primary">Minutes</a>
+        <a href="{{ url_for('admin.audit_list') }}" class="btn btn-sm btn-outline-primary">Audit Log</a>
+        <a href="{{ url_for('admin.loans_list', sort='overdue', dir='desc') }}" class="btn btn-sm btn-outline-danger">Overdue Loans</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="rp-grid">
+    <div class="rp-panel">
+      <div class="rp-head">
+        <span><i class="ph ph-warning-octagon"></i> Loan Defaulters (Top Exposure)</span>
+        <span class="sub">Current overdue loans</span>
+      </div>
+      <div class="rp-table-wrap">
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th>Loan</th>
+              <th>Borrower</th>
+              <th>Overdue</th>
+              <th class="rp-money">Outstanding</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if top_loan_defaulters %}
+              {% for r in top_loan_defaulters %}
+              <tr>
+                <td><strong>{{ r.loan_no }}</strong><br><span class="text-muted">{{ r.member_no }}</span></td>
+                <td>{{ r.borrower_name }}</td>
+                <td>
+                  <span class="rp-badge bad">{{ r.days_overdue }} days</span>
+                  <br><span class="text-muted">{{ r.months_overdue }} month(s)</span>
+                </td>
+                <td class="rp-money">{{ r.outstanding|money }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="4" class="text-center text-muted py-3">No overdue loans right now.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rp-panel">
+      <div class="rp-head">
+        <span><i class="ph ph-user-list"></i> Savings Defaulters (Top Arrears)</span>
+        <span class="sub">Current unpaid members</span>
+      </div>
+      <div class="rp-table-wrap">
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Status</th>
+              <th class="rp-money">Arrears</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if top_savings_defaulters %}
+              {% for r in top_savings_defaulters %}
+              <tr>
+                <td><strong>{{ r.member_no }}</strong><br>{{ r.full_name }}</td>
+                <td>
+                  {% if r.current_unpaid %}
+                    <span class="rp-badge warn">Current month unpaid</span>
+                  {% else %}
+                    <span class="rp-badge ok">Current month paid</span>
+                  {% endif %}
+                  <br><span class="text-muted">{{ r.arrears_count }} overdue period(s)</span>
+                </td>
+                <td class="rp-money">{{ r.arrears_amount|money }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" class="text-center text-muted py-3">No savings defaulters right now.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="rp-panel">
+    <div class="rp-head"><span><i class="ph ph-table"></i> 12-Month Finance Detail (Meeting Drill-Down)</span></div>
+    <div class="rp-table-wrap" style="max-height: 360px;">
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th class="rp-money">Savings</th>
+            <th class="rp-money">Loan Repayments</th>
+            <th class="rp-money">Interest</th>
+            <th class="rp-money">Penalties</th>
+            <th class="rp-money">Fees</th>
+            <th class="rp-money">Fines</th>
+            <th class="rp-money">Expenses</th>
+            <th class="rp-money">Disbursed</th>
+            <th class="rp-money">Net</th>
+            <th class="rp-money">Defaulters</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in monthly_rows %}
+          <tr>
+            <td><strong>{{ r.label }}</strong></td>
+            <td class="rp-money">{{ r.savings|money }}</td>
+            <td class="rp-money">{{ r.loan_repayments|money }}</td>
+            <td class="rp-money">{{ r.interest|money }}</td>
+            <td class="rp-money">{{ r.penalty|money }}</td>
+            <td class="rp-money">{{ r.fees|money }}</td>
+            <td class="rp-money">{{ r.fines|money }}</td>
+            <td class="rp-money">{{ r.expenses|money }}</td>
+            <td class="rp-money">{{ r.disbursed|money }}</td>
+            <td class="rp-money" style="color: {{ '#0f8c62' if r.net >= 0 else '#b73434' }};">{{ r.net|money }}</td>
+            <td class="rp-money">{{ r.savings_defaulters }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="rp-actions">
+      <a href="{{ url_for('admin.reports_export', report_key='loans') }}" class="btn btn-sm btn-outline-primary">Export Loans Portfolio</a>
+      <a href="{{ url_for('admin.reports_export', report_key='fees') }}" class="btn btn-sm btn-outline-primary">Export Fees</a>
+      <a href="{{ url_for('admin.reports_export', report_key='fines') }}" class="btn btn-sm btn-outline-primary">Export Fines</a>
+      <a href="{{ url_for('admin.reports_export', report_key='expenses') }}" class="btn btn-sm btn-outline-primary">Export Expenses</a>
+      <a href="{{ url_for('admin.reports_export', report_key='audit') }}" class="btn btn-sm btn-outline-primary">Export Audit</a>
+    </div>
   </div>
 </div>
 {% endblock %}
-

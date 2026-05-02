@@ -7,6 +7,7 @@ import uuid
 import json
 import csv
 import io
+import struct
 from urllib.parse import quote
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
@@ -30,6 +31,34 @@ from config import Config
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
+# Magic-byte signatures for allowed file types
+_IMAGE_MAGIC = {
+    b'\xff\xd8\xff':           'jpg',   # JPEG
+    b'\x89PNG\r\n\x1a\n':     'png',   # PNG
+    b'GIF87a':                 'gif',   # GIF87
+    b'GIF89a':                 'gif',   # GIF89
+    b'RIFF':                   'webp',  # WEBP (RIFF....WEBP)
+}
+_PDF_MAGIC = b'%PDF'
+
+
+def _file_magic_ok(file_obj, allowed_exts):
+    """Read first 12 bytes and verify against known signatures. Rewinds stream afterwards."""
+    header = file_obj.read(12)
+    file_obj.seek(0)
+    ext_set = set(allowed_exts)
+
+    if 'pdf' in ext_set and header[:4] == _PDF_MAGIC:
+        return True
+    for sig, ftype in _IMAGE_MAGIC.items():
+        if ftype in ext_set and header[:len(sig)] == sig:
+            return True
+        # WEBP special: bytes 0-3 are RIFF, bytes 8-11 are WEBP
+        if ftype == 'webp' and 'webp' in ext_set:
+            if header[:4] == b'RIFF' and header[8:12] == b'WEBP':
+                return True
+    return False
+
 
 def _save_upload(file_field_name, subfolder=''):
     """Save an uploaded image. Returns relative path like 'uploads/photos/abc.jpg' or None."""
@@ -38,6 +67,8 @@ def _save_upload(file_field_name, subfolder=''):
         return None
     ext = f.filename.rsplit('.', 1)[-1].lower()
     if ext not in Config.ALLOWED_IMAGE_EXTENSIONS:
+        return None
+    if not _file_magic_ok(f, Config.ALLOWED_IMAGE_EXTENSIONS):
         return None
     filename = f"{uuid.uuid4().hex}.{ext}"
     dest_dir = os.path.join(Config.UPLOAD_FOLDER, subfolder)
@@ -55,6 +86,8 @@ def _save_expense_receipt(file_field_name='receipt_file'):
         return None
     ext = f.filename.rsplit('.', 1)[-1].lower()
     if ext not in ALLOWED:
+        return None
+    if not _file_magic_ok(f, ALLOWED):
         return None
     filename = f"{uuid.uuid4().hex}.{ext}"
     dest_dir = os.path.join(Config.UPLOAD_FOLDER, 'expense-receipts')
@@ -119,6 +152,8 @@ def _save_loan_application(file_field_name='application_file'):
     allowed = {'pdf', 'jpg', 'jpeg', 'png', 'webp'}
     if ext not in allowed:
         return None
+    if not _file_magic_ok(f, allowed):
+        return None
     filename = f"{uuid.uuid4().hex}.{ext}"
     dest_dir = os.path.join(Config.UPLOAD_FOLDER, 'loan-applications')
     os.makedirs(dest_dir, exist_ok=True)
@@ -135,11 +170,31 @@ def _save_signed_minutes(file_field_name='signed_file'):
     allowed = {'pdf', 'jpg', 'jpeg', 'png', 'webp'}
     if ext not in allowed:
         return None
+    if not _file_magic_ok(f, allowed):
+        return None
     filename = f"{uuid.uuid4().hex}.{ext}"
     dest_dir = os.path.join(Config.UPLOAD_FOLDER, 'minutes')
     os.makedirs(dest_dir, exist_ok=True)
     f.save(os.path.join(dest_dir, filename))
     return f"uploads/minutes/{filename}"
+
+
+def _save_membership_form(file_field_name='membership_form_file'):
+    """Save signed membership registration form (image or PDF)."""
+    f = request.files.get(file_field_name)
+    if not f or not f.filename:
+        return None
+    ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else ''
+    allowed = {'pdf', 'jpg', 'jpeg', 'png', 'webp'}
+    if ext not in allowed:
+        return None
+    if not _file_magic_ok(f, allowed):
+        return None
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    dest_dir = os.path.join(Config.UPLOAD_FOLDER, 'membership-forms')
+    os.makedirs(dest_dir, exist_ok=True)
+    f.save(os.path.join(dest_dir, filename))
+    return f"uploads/membership-forms/{filename}"
 
 
 def _notify_roles(db, roles, title, message, link=None, exclude_user_id=None):
@@ -252,10 +307,18 @@ def _normalize_legacy_archived_status(db):
     db.execute("UPDATE members SET status = 'Exited' WHERE status = 'Archived'")
 
 
+_DOC_NO_QUERIES = {
+    ('operational_incomes', 'income_no'):  "SELECT income_no  AS no FROM operational_incomes ORDER BY id DESC LIMIT 1",
+    ('expenses',            'expense_no'): "SELECT expense_no AS no FROM expenses           ORDER BY id DESC LIMIT 1",
+}
+
+
 def _next_doc_no(db, table_name, column_name, prefix):
-    row = db.execute(
-        f"SELECT {column_name} AS no FROM {table_name} ORDER BY id DESC LIMIT 1"
-    ).fetchone()
+    key = (table_name, column_name)
+    sql = _DOC_NO_QUERIES.get(key)
+    if sql is None:
+        raise ValueError(f"_next_doc_no: unknown table/column pair ({table_name!r}, {column_name!r})")
+    row = db.execute(sql).fetchone()
     seq = 1
     if row and row['no']:
         try:
@@ -342,9 +405,11 @@ def _operational_fund_snapshot(db):
 
 
 def _loan_interest_snapshot(db):
-    collected = db.execute(
-        "SELECT COALESCE(SUM(interest_part),0) s FROM loan_repayments"
-    ).fetchone()['s']
+    row = db.execute(
+        "SELECT COALESCE(SUM(interest_part),0) i, COALESCE(SUM(penalty_part),0) p FROM loan_repayments"
+    ).fetchone()
+    collected     = int(row['i'] or 0)
+    pen_collected = int(row['p'] or 0)
 
     projected_interest = 0
     projected_penalty = 0
@@ -360,13 +425,15 @@ def _loan_interest_snapshot(db):
         ).fetchall()
         pos = calculate_loan_position(loan, repays, pens)
         projected_interest += int(pos['outstanding_interest'] or 0)
-        projected_penalty += int(pos['outstanding_penalty'] or 0)
+        projected_penalty  += int(pos['outstanding_penalty'] or 0)
 
     return {
-        'collected': int(collected or 0),
-        'projected_open': projected_interest + projected_penalty,
+        'collected':          collected,
+        'penalty_collected':  pen_collected,
+        'total_income':       collected + pen_collected,
+        'projected_open':     projected_interest + projected_penalty,
         'projected_interest': projected_interest,
-        'projected_penalty': projected_penalty,
+        'projected_penalty':  projected_penalty,
     }
 
 
@@ -418,7 +485,7 @@ def dashboard():
         "SELECT COUNT(*) c FROM members WHERE status='Active'"
     ).fetchone()['c']
 
-    # Total savings
+    # Total savings collected from active members
     total_savings = db.execute(
         """SELECT COALESCE(SUM(s.amount), 0) s
              FROM savings s
@@ -426,12 +493,23 @@ def dashboard():
             WHERE m.status = 'Active'"""
     ).fetchone()['s']
 
-    # Loan stats
+    # Loan stats — grouped by status
     loan_stats = db.execute(
         """SELECT status, COUNT(*) c, COALESCE(SUM(principal),0) p
              FROM loans GROUP BY status"""
     ).fetchall()
     loan_summary = {row['status']: dict(row) for row in loan_stats}
+
+    # Extended loan metrics
+    loans_total_count = sum(v.get('c', 0) for v in loan_summary.values())
+    loans_all_disbursed_amount = db.execute(
+        "SELECT COALESCE(SUM(principal),0) s FROM loans WHERE disbursed_date IS NOT NULL"
+    ).fetchone()['s']
+    loans_cleared_count  = loan_summary.get('Cleared',  {}).get('c', 0)
+    loans_cleared_amount = loan_summary.get('Cleared',  {}).get('p', 0)
+    loans_active_count   = loan_summary.get('Active',   {}).get('c', 0)
+    loans_active_amount  = loan_summary.get('Active',   {}).get('p', 0)
+    loans_pending_count  = loan_summary.get('Pending',  {}).get('c', 0)
 
     # Outstanding from active/pending loans
     active_loans = db.execute(
@@ -442,8 +520,8 @@ def dashboard():
     ).fetchall()
 
     outstanding_principal = 0
-    outstanding_interest = 0
-    outstanding_penalty = 0
+    outstanding_interest  = 0
+    outstanding_penalty   = 0
     overdue_count = 0
     overdue_loans = []
     for loan in active_loans:
@@ -455,35 +533,41 @@ def dashboard():
         ).fetchall()
         pos = calculate_loan_position(loan, repays, pens)
         outstanding_principal += pos['outstanding_principal']
-        outstanding_interest += pos['outstanding_interest']
-        outstanding_penalty += pos['outstanding_penalty']
+        outstanding_interest  += pos['outstanding_interest']
+        outstanding_penalty   += pos['outstanding_penalty']
         if pos['is_overdue']:
             overdue_count += 1
             wa_msg = (
-                f"Hello {loan['full_name']}, this is a reminder from {Config.CLUB_SHORT_NAME}. "
-                f"Your loan {loan['loan_no']} is overdue by {pos['overdue_months']} month(s) "
-                f"with amount owed {fmt_money(pos['total_outstanding'])}. "
-                "Please contact club administration immediately."
+                f"FORMAL REPAYMENT NOTICE\n"
+                f"Borrower: {loan['full_name']}\n"
+                f"Loan Ref: {loan['loan_no']}\n"
+                f"Outstanding Balance: {fmt_money(pos['total_outstanding'])}\n"
+                f"Overdue: {pos['overdue_months']} month(s) / {pos['days_overdue']} day(s)\n"
+                f"Penalty Accrued: {fmt_money(pos['outstanding_penalty'])}\n\n"
+                f"This is a formal demand for repayment under the lending terms of "
+                f"{Config.CLUB_SHORT_NAME}. Please settle your outstanding balance immediately."
             )
             overdue_loans.append({
-                'id': loan['id'],
-                'loan_no': loan['loan_no'],
-                'member_no': loan['member_no'],
-                'full_name': loan['full_name'],
-                'phone': loan['phone'],
-                'amount_owed': pos['total_outstanding'],
-                'overdue_months': pos['overdue_months'],
-                'days_overdue': pos['days_overdue'],
-                'penalty': pos['outstanding_penalty'],
+                'id':            loan['id'],
+                'loan_no':       loan['loan_no'],
+                'member_no':     loan['member_no'],
+                'full_name':     loan['full_name'],
+                'phone':         loan['phone'],
+                'amount_owed':   pos['total_outstanding'],
+                'overdue_months':pos['overdue_months'],
+                'days_overdue':  pos['days_overdue'],
+                'penalty':       pos['outstanding_penalty'],
                 'wa_notice_url': build_whatsapp_link(loan['phone'], wa_msg),
             })
 
-    # Savings defaulters this month
+    loans_overdue_total_owed = sum(l['amount_owed'] for l in overdue_loans)
+
+    # Date context
     today = date.today()
-    cur_period = period_str(today)
+    cur_period   = period_str(today)
     current_year = today.year
 
-    # Current month savings total and defaulters
+    # Current month savings total
     month_savings_total = db.execute(
         """SELECT COALESCE(SUM(s.amount), 0) s
              FROM savings s
@@ -492,22 +576,24 @@ def dashboard():
         (cur_period,),
     ).fetchone()['s']
 
+    # Build paid-periods map
     active_members_rows = db.execute(
         "SELECT id, member_no, full_name, phone, join_date FROM members WHERE status='Active' ORDER BY member_no"
     ).fetchall()
-    all_paid_rows = db.execute(
-        "SELECT member_id, period FROM savings"
-    ).fetchall()
+    all_paid_rows = db.execute("SELECT member_id, period FROM savings").fetchall()
     paid_map = {}
     for r in all_paid_rows:
         paid_map.setdefault(r['member_id'], set()).add(r['period'])
 
-    current_month_defaulters = []
     periods_to_date = all_savings_periods(today)
+
+    # Single pass: current-month defaulters + total arrears across all members
+    current_month_defaulters  = []
+    total_arrears_members_count = 0
+    total_arrears_amount_all    = 0
+
     for m in active_members_rows:
         paid_periods = paid_map.get(m['id'], set())
-        if cur_period in paid_periods:
-            continue
         join_date = m['join_date']
         if isinstance(join_date, str):
             join_d = datetime.strptime(join_date, '%Y-%m-%d').date()
@@ -515,21 +601,52 @@ def dashboard():
             join_d = join_date
         join_period = period_str(join_d)
         expected = [p for p in periods_to_date if p >= join_period]
-        missing = [p for p in expected if p not in paid_periods]
-        arrears_amount = len(missing) * Config.MONTHLY_SAVINGS_AMOUNT
-        wa_msg = (
-            f"Hello {m['full_name']}, this is a reminder from {Config.CLUB_SHORT_NAME}. "
-            f"Your monthly savings for {period_label(cur_period)} is still outstanding. "
-            f"Total arrears currently {fmt_money(arrears_amount)}. Please make payment soon."
-        )
-        current_month_defaulters.append({
-            'id': m['id'],
-            'member_no': m['member_no'],
-            'full_name': m['full_name'],
-            'phone': m['phone'],
-            'arrears_amount': arrears_amount,
-            'wa_notice_url': build_whatsapp_link(m['phone'], wa_msg),
-        })
+
+        # Overdue = past months only (strictly < current month).
+        # Current month is a reminder — not yet in arrears until the month closes.
+        overdue_missing  = [p for p in expected if p < cur_period and p not in paid_periods]
+        cur_month_unpaid = cur_period in expected and cur_period not in paid_periods
+        arrears_amount   = len(overdue_missing) * Config.MONTHLY_SAVINGS_AMOUNT
+
+        if overdue_missing:
+            total_arrears_members_count += 1
+            total_arrears_amount_all    += arrears_amount
+
+        # Show in current-month defaulters table if current month is unpaid
+        if cur_month_unpaid:
+            if overdue_missing:
+                overdue_labels = ', '.join(period_label(p) for p in overdue_missing[:5])
+                if len(overdue_missing) > 5:
+                    overdue_labels += f' + {len(overdue_missing) - 5} more'
+                total_outstanding = arrears_amount + Config.MONTHLY_SAVINGS_AMOUNT
+                wa_msg = (
+                    f"Hello {m['full_name']}, this is a savings reminder from "
+                    f"{Config.CLUB_SHORT_NAME}.\n\n"
+                    f"OVERDUE ({len(overdue_missing)} month{'s' if len(overdue_missing) != 1 else ''}):\n"
+                    f"{overdue_labels}\n"
+                    f"Overdue arrears: {fmt_money(arrears_amount)}\n\n"
+                    f"CURRENT MONTH ({period_label(cur_period)}): "
+                    f"{fmt_money(Config.MONTHLY_SAVINGS_AMOUNT)}\n\n"
+                    f"Total outstanding: {fmt_money(total_outstanding)}\n\n"
+                    "Please urgently settle your outstanding balance. Thank you."
+                )
+            else:
+                wa_msg = (
+                    f"Hello {m['full_name']}, this is a savings reminder from "
+                    f"{Config.CLUB_SHORT_NAME}.\n\n"
+                    f"Your savings for {period_label(cur_period)} "
+                    f"({fmt_money(Config.MONTHLY_SAVINGS_AMOUNT)}) have not yet been received.\n\n"
+                    "Kindly make your deposit at the earliest. Thank you."
+                )
+            current_month_defaulters.append({
+                'id':            m['id'],
+                'member_no':     m['member_no'],
+                'full_name':     m['full_name'],
+                'phone':         m['phone'],
+                'arrears_amount':arrears_amount,
+                'missing_count': len(overdue_missing),
+                'wa_notice_url': build_whatsapp_link(m['phone'], wa_msg),
+            })
 
     # Current month savings coverage
     month_paid_members = db.execute(
@@ -540,7 +657,7 @@ def dashboard():
         (cur_period,),
     ).fetchone()['c']
     month_outstanding_members = max(0, total_members - month_paid_members)
-    month_outstanding_amount = month_outstanding_members * Config.MONTHLY_SAVINGS_AMOUNT
+    month_outstanding_amount  = month_outstanding_members * Config.MONTHLY_SAVINGS_AMOUNT
 
     # Annual fees summary (current year)
     fees_paid_members = db.execute(
@@ -605,8 +722,27 @@ def dashboard():
 
     # Loan interest performance
     loan_interest = _loan_interest_snapshot(db)
-    loan_interest_collected = loan_interest['collected']
-    loan_interest_projected = loan_interest['projected_open']
+    loan_interest_collected          = loan_interest['collected']
+    loan_penalty_collected           = loan_interest['penalty_collected']
+    loan_income_total                = loan_interest['total_income']
+    loan_interest_projected          = loan_interest['projected_open']
+    loan_interest_projected_interest = loan_interest['projected_interest']
+    loan_interest_projected_penalty  = loan_interest['projected_penalty']
+
+    # Bank account balance estimate:
+    #   IN  = savings + fees + fines + loan repayments received
+    #   OUT = loans disbursed + approved expenses
+    total_repayments_in = db.execute(
+        "SELECT COALESCE(SUM(amount),0) s FROM loan_repayments"
+    ).fetchone()['s']
+    bank_balance_estimate = (
+        int(total_savings)
+        + int(ops['fees_collected'])
+        + int(ops['fines_collected'])
+        + int(total_repayments_in)
+        - int(loans_all_disbursed_amount)
+        - int(ops['approved_expenses'])
+    )
 
     # Recent activity
     recent_audit = db.execute(
@@ -623,15 +759,11 @@ def dashboard():
         (session['user_id'],),
     ).fetchall()
 
-    # Available cash = total savings - outstanding principal of active loans
-    cash_available = total_savings - outstanding_principal
+    # Loan pool = savings not yet lent out (available to lend)
+    cash_available   = total_savings - outstanding_principal
+    pool_utilization = round((outstanding_principal / total_savings) * 100, 1) if total_savings > 0 else 0
 
-    # Pool utilization
-    pool_utilization = 0
-    if total_savings > 0:
-        pool_utilization = round((outstanding_principal / total_savings) * 100, 1)
-
-    # Savings trend - last 6 months
+    # Savings trend — last 6 months
     periods = all_savings_periods()[-6:]
     trend = []
     for p in periods:
@@ -642,14 +774,9 @@ def dashboard():
                 WHERE s.period=? AND m.status='Active'""",
             (p,),
         ).fetchone()
-        trend.append({
-            'period': p,
-            'label': period_label(p),
-            'total': row['s'] or 0,
-            'count': row['c'] or 0,
-        })
+        trend.append({'period': p, 'label': period_label(p), 'total': row['s'] or 0, 'count': row['c'] or 0})
 
-    # Savings trend - last 5 years (year totals)
+    # Savings trend — last 5 years
     start_year = int(Config.SAVINGS_START_PERIOD.split('-')[0])
     years = list(range(max(start_year, current_year - 4), current_year + 1))
     yearly_trend = []
@@ -661,10 +788,7 @@ def dashboard():
                 WHERE s.period LIKE ? AND m.status='Active'""",
             (f"{y}-%",),
         ).fetchone()
-        yearly_trend.append({
-            'year': y,
-            'total': row['s'] or 0,
-        })
+        yearly_trend.append({'year': y, 'total': row['s'] or 0})
 
     return render_template(
         'admin/dashboard.html',
@@ -677,6 +801,18 @@ def dashboard():
         pool_utilization=pool_utilization,
         loan_summary=loan_summary,
         overdue_count=overdue_count,
+        overdue_loans=overdue_loans,
+        loans_overdue_total_owed=loans_overdue_total_owed,
+        loans_total_count=loans_total_count,
+        loans_all_disbursed_amount=loans_all_disbursed_amount,
+        loans_cleared_count=loans_cleared_count,
+        loans_cleared_amount=loans_cleared_amount,
+        loans_active_count=loans_active_count,
+        loans_active_amount=loans_active_amount,
+        loans_pending_count=loans_pending_count,
+        bank_balance_estimate=bank_balance_estimate,
+        total_arrears_members_count=total_arrears_members_count,
+        total_arrears_amount_all=total_arrears_amount_all,
         recent_audit=recent_audit,
         unread_notifications=unread_notifications,
         trend=trend,
@@ -687,7 +823,6 @@ def dashboard():
         month_outstanding_amount=month_outstanding_amount,
         month_savings_total=month_savings_total,
         current_month_defaulters=current_month_defaulters,
-        overdue_loans=overdue_loans,
         fees_pool=fees_pool,
         fees_paid_members=fees_paid_members,
         fees_outstanding_members=fees_outstanding_members,
@@ -707,7 +842,11 @@ def dashboard():
         expenses_pending=expenses_pending,
         expenses_spent_count=expenses_spent_count,
         loan_interest_collected=loan_interest_collected,
+        loan_penalty_collected=loan_penalty_collected,
+        loan_income_total=loan_income_total,
         loan_interest_projected=loan_interest_projected,
+        loan_interest_projected_interest=loan_interest_projected_interest,
+        loan_interest_projected_penalty=loan_interest_projected_penalty,
         pending_rows=pending_expenses_rows,
         yearly_trend=yearly_trend,
     )
@@ -730,6 +869,288 @@ def notification_open(notification_id):
     if n['link']:
         return redirect(n['link'])
     return redirect(url_for('admin.dashboard'))
+
+
+# ===========================================================================
+# APPROVALS
+# ===========================================================================
+@bp.route('/approvals')
+@admin_required
+def approvals():
+    db = get_db()
+    role = session.get('role')
+    user_id = session.get('user_id')
+
+    def _approval_names(loan_id, stage, amendment_id=None):
+        if amendment_id is None:
+            rows = db.execute(
+                """SELECT COALESCE(m.full_name, u.username) AS approver_name
+                     FROM loan_approvals la
+                     JOIN users u ON u.id = la.user_id
+                     LEFT JOIN members m ON m.id = u.member_id
+                    WHERE la.loan_id=? AND la.stage=? AND la.decision='APPROVE'
+                    ORDER BY la.created_at ASC""",
+                (loan_id, stage),
+            ).fetchall()
+        else:
+            rows = db.execute(
+                """SELECT COALESCE(m.full_name, u.username) AS approver_name
+                     FROM loan_approvals la
+                     JOIN users u ON u.id = la.user_id
+                     LEFT JOIN members m ON m.id = u.member_id
+                    WHERE la.loan_id=? AND la.amendment_id=? AND la.stage=? AND la.decision='APPROVE'
+                    ORDER BY la.created_at ASC""",
+                (loan_id, amendment_id, stage),
+            ).fetchall()
+        return [r['approver_name'] for r in rows]
+
+    # Pending loan amendments this user can approve (not their own)
+    pending_amendments = []
+    if role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN'):
+        pending_amendments = db.execute(
+            """SELECT la.*, l.loan_no, mbr.full_name AS borrower_name, mbr.member_no,
+                      rmb.full_name AS requested_by_name,
+                      (SELECT COUNT(DISTINCT user_id) FROM loan_approvals lap
+                        WHERE lap.loan_id=la.loan_id AND lap.amendment_id=la.id
+                          AND lap.stage='AMENDMENT' AND lap.decision='APPROVE') AS approval_count,
+                      EXISTS(SELECT 1 FROM loan_approvals lax
+                              WHERE lax.loan_id=la.loan_id AND lax.amendment_id=la.id
+                                AND lax.stage='AMENDMENT' AND lax.user_id=?) AS already_approved
+               FROM loan_amendments la
+               JOIN loans l ON l.id = la.loan_id
+               JOIN members mbr ON mbr.id = l.member_id
+               JOIN users ru ON ru.id = la.requested_by
+               JOIN members rmb ON rmb.id = ru.member_id
+              WHERE la.status = 'Pending' AND la.requested_by != ?
+              ORDER BY la.created_at DESC""",
+            (user_id, user_id),
+        ).fetchall()
+
+    # Pending expense requests (Chairman and IT_ADMIN approve)
+    pending_expenses = []
+    if role in ('CHAIRMAN', 'IT_ADMIN'):
+        pending_expenses = db.execute(
+            """SELECT e.*, rm.full_name AS req_name
+               FROM expenses e
+               JOIN users ru ON ru.id = e.requested_by
+               JOIN members rm ON rm.id = ru.member_id
+              WHERE e.status = 'Pending'
+              ORDER BY e.created_at DESC""",
+        ).fetchall()
+
+    # Pending new loan applications any admin can approve
+    pending_loans = []
+    if role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN'):
+        pending_loans = db.execute(
+            """SELECT l.*, m.full_name AS borrower_name, m.member_no,
+                      (SELECT COUNT(DISTINCT user_id) FROM loan_approvals la
+                        WHERE la.loan_id=l.id AND la.stage='NEW' AND la.decision='APPROVE') AS approval_count,
+                      EXISTS(SELECT 1 FROM loan_approvals la
+                              WHERE la.loan_id=l.id AND la.stage='NEW' AND la.user_id=?) AS already_approved
+               FROM loans l
+               JOIN members m ON m.id = l.member_id
+              WHERE l.status = 'Pending'
+              ORDER BY l.created_at DESC""",
+            (user_id,),
+        ).fetchall()
+
+    # Pending member Next of Kin change requests (Treasurer approves)
+    pending_profile_changes = []
+    if role in ('TREASURER', 'IT_ADMIN'):
+        rows = db.execute(
+            """SELECT r.*, m.full_name, m.member_no, m.next_of_kin AS current_next_of_kin,
+                      m.nok_relationship AS current_nok_relationship,
+                      m.nok_phone AS current_nok_phone,
+                      m.nok_address AS current_nok_address,
+                      u.username AS requester_username
+                 FROM member_profile_change_requests r
+                 JOIN members m ON m.id = r.member_id
+                 JOIN users u ON u.id = r.requested_by_user_id
+                WHERE r.status='Pending' AND r.request_type='NEXT_OF_KIN'
+                ORDER BY r.created_at DESC"""
+        ).fetchall()
+        for row in rows:
+            d = dict(row)
+            try:
+                payload = json.loads(d.get('payload_json') or '{}')
+            except (TypeError, ValueError):
+                payload = {}
+            d['request_next_of_kin'] = (payload.get('next_of_kin') or '').strip()
+            d['request_nok_relationship'] = (payload.get('nok_relationship') or '').strip()
+            d['request_nok_phone'] = (payload.get('nok_phone') or '').strip()
+            d['request_nok_address'] = (payload.get('nok_address') or '').strip()
+            pending_profile_changes.append(d)
+
+    approved_loan_history = []
+    if role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN'):
+        rows = db.execute(
+            """SELECT l.id, l.loan_no, l.status, l.approved_date, l.updated_at,
+                      m.full_name AS borrower_name, m.member_no,
+                      (SELECT COUNT(DISTINCT user_id) FROM loan_approvals la
+                        WHERE la.loan_id=l.id AND la.stage='NEW' AND la.decision='APPROVE') AS approval_count
+                 FROM loans l
+                 JOIN members m ON m.id = l.member_id
+                WHERE l.status != 'Pending'
+                  AND EXISTS (SELECT 1 FROM loan_approvals la WHERE la.loan_id=l.id AND la.stage='NEW')
+                ORDER BY COALESCE(l.approved_date, l.updated_at) DESC
+                LIMIT 10"""
+        ).fetchall()
+        for row in rows:
+            item = dict(row)
+            item['approver_names'] = _approval_names(row['id'], 'NEW')
+            approved_loan_history.append(item)
+
+    approved_amendment_history = []
+    if role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN'):
+        rows = db.execute(
+            """SELECT la.id, la.loan_id, la.status, la.approved_at, la.updated_at,
+                      l.loan_no, m.full_name AS borrower_name, m.member_no,
+                      (SELECT COUNT(DISTINCT user_id) FROM loan_approvals lap
+                        WHERE lap.loan_id=la.loan_id AND lap.amendment_id=la.id
+                          AND lap.stage='AMENDMENT' AND lap.decision='APPROVE') AS approval_count,
+                      la.approvals_required
+                 FROM loan_amendments la
+                 JOIN loans l ON l.id = la.loan_id
+                 JOIN members m ON m.id = l.member_id
+                WHERE la.status='Approved'
+                ORDER BY COALESCE(la.approved_at, la.updated_at) DESC
+                LIMIT 10"""
+        ).fetchall()
+        for row in rows:
+            item = dict(row)
+            item['approver_names'] = _approval_names(row['loan_id'], 'AMENDMENT', row['id'])
+            approved_amendment_history.append(item)
+
+    approved_expense_history = []
+    if role in ('CHAIRMAN', 'IT_ADMIN', 'TREASURER'):
+        approved_expense_history = db.execute(
+            """SELECT e.id, e.expense_no, e.amount, e.purpose, e.approved_at,
+                      COALESCE(am.full_name, au.username) AS approver_name,
+                      COALESCE(rm.full_name, ru.username) AS requester_name
+                 FROM expenses e
+                 LEFT JOIN users au ON au.id = e.approved_by
+                 LEFT JOIN members am ON am.id = au.member_id
+                 LEFT JOIN users ru ON ru.id = e.requested_by
+                 LEFT JOIN members rm ON rm.id = ru.member_id
+                WHERE e.status='Approved'
+                ORDER BY e.approved_at DESC
+                LIMIT 10"""
+        ).fetchall()
+
+    approved_profile_history = []
+    if role in ('TREASURER', 'IT_ADMIN', 'SECRETARY'):
+        approved_profile_history = db.execute(
+            """SELECT r.id, r.request_type, r.approved_at, m.full_name, m.member_no,
+                      COALESCE(am.full_name, au.username) AS approver_name
+                 FROM member_profile_change_requests r
+                 JOIN members m ON m.id = r.member_id
+                 LEFT JOIN users au ON au.id = r.approved_by_user_id
+                 LEFT JOIN members am ON am.id = au.member_id
+                WHERE r.status='Approved'
+                ORDER BY r.approved_at DESC
+                LIMIT 10"""
+        ).fetchall()
+
+    # Recent notifications (last 30, including already-read)
+    notifications = db.execute(
+        """SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 30""",
+        (user_id,),
+    ).fetchall()
+
+    # Mark unread notifications as read
+    db.execute("UPDATE notifications SET is_read=1 WHERE user_id=? AND is_read=0", (user_id,))
+    db.commit()
+
+    total_pending = (
+        sum(1 for a in pending_amendments if not a['already_approved']) +
+        len(pending_expenses) +
+        sum(1 for l in pending_loans if not l['already_approved']) +
+        len(pending_profile_changes)
+    )
+
+    return render_template(
+        'admin/approvals.html',
+        pending_amendments=pending_amendments,
+        pending_expenses=pending_expenses,
+        pending_loans=pending_loans,
+        pending_profile_changes=pending_profile_changes,
+        approved_loan_history=approved_loan_history,
+        approved_amendment_history=approved_amendment_history,
+        approved_expense_history=approved_expense_history,
+        approved_profile_history=approved_profile_history,
+        notifications=notifications,
+        total_pending=total_pending,
+    )
+
+
+@bp.route('/approvals/profile-requests/<int:request_id>/approve', methods=['POST'])
+@role_required('TREASURER', 'IT_ADMIN')
+def approve_member_profile_change(request_id):
+    db = get_db()
+    req = db.execute(
+        """SELECT * FROM member_profile_change_requests
+             WHERE id=? AND status='Pending'""",
+        (request_id,),
+    ).fetchone()
+    if not req:
+        flash('Request not found or already processed.', 'warning')
+        return redirect(url_for('admin.approvals'))
+
+    if req['request_type'] != 'NEXT_OF_KIN':
+        flash('Unsupported profile request type.', 'danger')
+        return redirect(url_for('admin.approvals'))
+
+    try:
+        payload = json.loads(req['payload_json'] or '{}')
+    except (TypeError, ValueError):
+        payload = {}
+
+    next_of_kin = (payload.get('next_of_kin') or '').strip()
+    nok_relationship = (payload.get('nok_relationship') or '').strip()
+    nok_phone = (payload.get('nok_phone') or '').strip()
+    nok_address = (payload.get('nok_address') or '').strip()
+    if not next_of_kin or not nok_relationship or not nok_phone:
+        flash('Submitted request data is incomplete.', 'danger')
+        return redirect(url_for('admin.approvals'))
+
+    member = db.execute(
+        "SELECT id, full_name, member_no FROM members WHERE id=?",
+        (req['member_id'],),
+    ).fetchone()
+    if not member:
+        flash('Member record not found.', 'danger')
+        return redirect(url_for('admin.approvals'))
+
+    db.execute(
+        """UPDATE members
+              SET next_of_kin=?, nok_relationship=?, nok_phone=?, nok_address=?, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+        (next_of_kin, nok_relationship, nok_phone, nok_address, req['member_id']),
+    )
+    db.execute(
+        """UPDATE member_profile_change_requests
+              SET status='Approved', approved_by_user_id=?, approved_at=CURRENT_TIMESTAMP,
+                  updated_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+        (session['user_id'], request_id),
+    )
+
+    _notify_member(
+        db,
+        req['member_id'],
+        'Next of Kin details approved',
+        'Your Next of Kin details were approved and saved successfully.',
+        url_for('member.profile'),
+    )
+    db.commit()
+    log_action(
+        'APPROVE_MEMBER_PROFILE_CHANGE',
+        'member',
+        req['member_id'],
+        f"Approved Next of Kin update request #{request_id} for {member['member_no']}",
+    )
+    flash('Request approved and member details updated.', 'success')
+    return redirect(url_for('admin.approvals'))
 
 
 # ===========================================================================
@@ -987,13 +1408,38 @@ def member_detail(member_id):
                 'payment_date': s['payment_date'] if s else None,
             })
 
+    # Activity log: admin actions on this member + this member's own login/password events
+    activity_log = []
+    if not is_exited_member:
+        if user_row:
+            activity_log = db.execute(
+                """SELECT al.*, COALESCE(m.full_name, u.username, 'System') AS actor_name
+                   FROM audit_log al
+                   LEFT JOIN users u ON u.id = al.user_id
+                   LEFT JOIN members m ON m.id = u.member_id
+                  WHERE (al.entity_type = 'member' AND al.entity_id = ?)
+                     OR (al.entity_type = 'user' AND al.entity_id = ?)
+                  ORDER BY al.created_at DESC LIMIT 15""",
+                (member_id, user_row['id']),
+            ).fetchall()
+        else:
+            activity_log = db.execute(
+                """SELECT al.*, COALESCE(m.full_name, u.username, 'System') AS actor_name
+                   FROM audit_log al
+                   LEFT JOIN users u ON u.id = al.user_id
+                   LEFT JOIN members m ON m.id = u.member_id
+                  WHERE al.entity_type = 'member' AND al.entity_id = ?
+                  ORDER BY al.created_at DESC LIMIT 15""",
+                (member_id,),
+            ).fetchall()
+
     return render_template(
         'admin/member_detail.html',
         member=member, savings=savings, loans=loans,
         fines=fines, fees=fees, user_row=user_row,
         total_savings=total_savings, locked=locked, available=available,
         is_exited_member=is_exited_member,
-        history=history,
+        history=history, activity_log=activity_log,
     )
 
 
@@ -1115,6 +1561,126 @@ def member_edit(member_id):
                            roles=Config.ROLES, today=date.today())
 
 
+@bp.route('/members/<int:member_id>/national-id/approve', methods=['POST'])
+@role_required('IT_ADMIN', 'SECRETARY')
+def member_approve_national_id_copy(member_id):
+    db = get_db()
+    member = db.execute(
+        "SELECT id, full_name, member_no, nid_copy_url, nid_copy_approved FROM members WHERE id=?",
+        (member_id,),
+    ).fetchone()
+    if not member:
+        flash('Member not found.', 'danger')
+        return redirect(url_for('admin.members_list'))
+    if not member['nid_copy_url']:
+        flash('No National ID copy has been uploaded for this member.', 'warning')
+        return redirect(url_for('admin.member_detail', member_id=member_id))
+    if int(member['nid_copy_approved'] or 0) == 1:
+        flash('National ID copy is already approved.', 'info')
+        return redirect(url_for('admin.member_detail', member_id=member_id))
+
+    db.execute(
+        "UPDATE members SET nid_copy_approved=1, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+        (member_id,),
+    )
+    _notify_member(
+        db,
+        member_id,
+        'National ID copy approved',
+        'Your National ID copy has been approved. Upload changes are now locked.',
+        url_for('member.profile'),
+    )
+    db.commit()
+    log_action(
+        'APPROVE_MEMBER_NID_COPY',
+        'member',
+        member_id,
+        f"Approved National ID copy for {member['member_no']}",
+    )
+    flash('National ID copy approved. Member upload is now locked.', 'success')
+    return redirect(url_for('admin.member_detail', member_id=member_id))
+
+
+@bp.route('/members/<int:member_id>/national-id', methods=['POST'])
+@role_required('IT_ADMIN', 'SECRETARY')
+def member_upload_national_id_copy(member_id):
+    db = get_db()
+    member = db.execute(
+        "SELECT id, full_name, member_no FROM members WHERE id=?",
+        (member_id,),
+    ).fetchone()
+    if not member:
+        flash('Member not found.', 'danger')
+        return redirect(url_for('admin.members_list'))
+
+    nid_copy_url = _save_upload('nid_copy', 'nid_copies')
+    if not nid_copy_url:
+        flash('Upload a valid National ID image (JPG, PNG, GIF, or WEBP).', 'warning')
+        return redirect(url_for('admin.member_detail', member_id=member_id))
+
+    db.execute(
+        """UPDATE members
+              SET nid_copy_url=?, nid_copy_approved=1, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+        (nid_copy_url, member_id),
+    )
+    _notify_member(
+        db,
+        member_id,
+        'National ID copy updated',
+        'Your National ID copy was updated by administration.',
+        url_for('member.profile'),
+    )
+    db.commit()
+    log_action(
+        'UPLOAD_MEMBER_NID_COPY',
+        'member',
+        member_id,
+        f"Uploaded National ID copy for {member['member_no']}",
+    )
+    flash('National ID copy uploaded successfully.', 'success')
+    return redirect(url_for('admin.member_detail', member_id=member_id))
+
+
+@bp.route('/members/<int:member_id>/membership-form', methods=['POST'])
+@role_required('IT_ADMIN', 'SECRETARY')
+def member_upload_membership_form(member_id):
+    db = get_db()
+    member = db.execute(
+        "SELECT id, full_name, member_no FROM members WHERE id=?",
+        (member_id,),
+    ).fetchone()
+    if not member:
+        flash('Member not found.', 'danger')
+        return redirect(url_for('admin.members_list'))
+
+    membership_form_url = _save_membership_form('membership_form_file')
+    if not membership_form_url:
+        flash('Upload a valid registration form file (PDF, JPG, JPEG, PNG, or WEBP).', 'warning')
+        return redirect(url_for('admin.member_detail', member_id=member_id))
+
+    db.execute(
+        "UPDATE members SET membership_form_url=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+        (membership_form_url, member_id),
+    )
+    _notify_member(
+        db,
+        member_id,
+        'Registration form uploaded',
+        'Your signed membership registration form hard copy was uploaded by administration.',
+        url_for('member.profile'),
+    )
+    db.commit()
+    log_action(
+        'UPLOAD_MEMBER_REGISTRATION_FORM',
+        'member',
+        member_id,
+        f"Uploaded registration form hard copy for {member['member_no']}",
+    )
+    flash('Membership registration hard copy uploaded successfully.', 'success')
+    return redirect(url_for('admin.member_detail', member_id=member_id))
+
+
 @bp.route('/members/<int:member_id>/delete', methods=['POST'])
 @admin_required
 def member_delete(member_id):
@@ -1180,7 +1746,7 @@ def member_create_login(member_id):
 
 
 @bp.route('/members/<int:member_id>/reset-password', methods=['POST'])
-@role_required('IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER')
+@role_required('IT_ADMIN', 'SECRETARY')
 def member_reset_password(member_id):
     db = get_db()
     user = db.execute(
@@ -1397,6 +1963,34 @@ def savings_list():
         "SELECT COUNT(*) c FROM members WHERE status != 'Active' AND status != 'Exited' AND status != 'Archived'"
     ).fetchone()['c']
 
+    # Loan interest snapshot for savings page interest tiles
+    loan_snap = _loan_interest_snapshot(db)
+
+    # Arrears computation for savings overview
+    all_paid_rows_sav = db.execute("SELECT member_id, period FROM savings").fetchall()
+    paid_map_sav = {}
+    for r in all_paid_rows_sav:
+        paid_map_sav.setdefault(r['member_id'], set()).add(r['period'])
+
+    sav_arrears_members = 0
+    sav_arrears_amount  = 0
+    sav_cur_defaulters  = 0
+    for m in active_members:
+        join_date = m['join_date']
+        if isinstance(join_date, str):
+            join_d = datetime.strptime(join_date, '%Y-%m-%d').date()
+        else:
+            join_d = join_date
+        jp = period_str(join_d)
+        exp = [p for p in periods_to_date if p >= jp]
+        paid = paid_map_sav.get(m['id'], set())
+        overdue = [p for p in exp if p < cur_period and p not in paid]
+        if overdue:
+            sav_arrears_members += 1
+            sav_arrears_amount  += len(overdue) * Config.MONTHLY_SAVINGS_AMOUNT
+        if cur_period in exp and cur_period not in paid:
+            sav_cur_defaulters += 1
+
     return render_template(
         'admin/savings_list.html',
         view=view,
@@ -1419,6 +2013,16 @@ def savings_list():
         month_periods=month_periods,
         calendar_rows=calendar_rows,
         amendments_rows=amendments_rows,
+        # Interest tiles
+        loan_interest_collected=loan_snap['collected'],
+        loan_penalty_collected=loan_snap['penalty_collected'],
+        loan_income_total=loan_snap['total_income'],
+        loan_interest_projected=loan_snap['projected_interest'],
+        loan_penalty_projected=loan_snap['projected_penalty'],
+        # Arrears summary
+        sav_arrears_members=sav_arrears_members,
+        sav_arrears_amount=sav_arrears_amount,
+        sav_cur_defaulters=sav_cur_defaulters,
     )
 
 
@@ -1735,6 +2339,8 @@ def loans_list():
     available_to_deploy = max(0, total_savings - deployed_active)
     pool_utilization = round((deployed_active / total_savings) * 100, 1) if total_savings else 0
 
+    loan_snap = _loan_interest_snapshot(db)
+
     return render_template(
         'admin/loans_list.html',
         loans=enriched,
@@ -1759,6 +2365,11 @@ def loans_list():
             'pool_utilization': pool_utilization,
             'total_savings': total_savings,
         },
+        loan_interest_collected=loan_snap['collected'],
+        loan_penalty_collected=loan_snap['penalty_collected'],
+        loan_income_total=loan_snap['total_income'],
+        loan_interest_projected=loan_snap['projected_interest'],
+        loan_penalty_projected=loan_snap['projected_penalty'],
     )
 
 
@@ -2300,10 +2911,10 @@ def loan_edit(loan_id):
         amendment_id = db.execute("SELECT last_insert_rowid() AS i").fetchone()['i']
         _notify_roles(
             db,
-            ['CHAIRMAN', 'SECRETARY', 'COMMITTEE'],
+            ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
             'Loan amendment approval required',
             f"Amendment request on {loan['loan_no']} needs 2 checker approvals.",
-            url_for('admin.loan_detail', loan_id=loan_id),
+            url_for('admin.approvals'),
             exclude_user_id=session['user_id'],
         )
         db.commit()
@@ -2323,7 +2934,7 @@ def loan_edit(loan_id):
 
 
 @bp.route('/loans/<int:loan_id>/amendments/<int:amendment_id>/approve', methods=['POST'])
-@role_required('CHAIRMAN', 'SECRETARY', 'COMMITTEE')
+@role_required('IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE')
 def loan_amendment_approve(loan_id, amendment_id):
     db = get_db()
     amend = db.execute(
@@ -2384,12 +2995,12 @@ def loan_amendment_approve(loan_id, amendment_id):
                 WHERE id=?""",
             (amendment_id,),
         )
-        _notify_roles(
+        _notify_member(
             db,
-            ['IT_ADMIN', 'TREASURER'],
+            loan['member_id'],
             'Loan amendment approved',
-            f"Amendment for {loan['loan_no']} is fully approved and applied.",
-            url_for('admin.loan_detail', loan_id=loan_id),
+            f"Amendment for {loan['loan_no']} was fully approved and applied.",
+            url_for('member.loans'),
         )
         flash('Amendment fully approved and applied.', 'success')
     else:
@@ -2441,12 +3052,12 @@ def loan_approve(loan_id):
                   updated_at=CURRENT_TIMESTAMP WHERE id=?""",
             (date.today().isoformat(), session['user_id'], loan_id),
         )
-        _notify_roles(
+        _notify_member(
             db,
-            ['IT_ADMIN', 'TREASURER'],
+            loan['member_id'],
             'Loan fully approved',
-            f"{loan['loan_no']} reached 3 approvals and is now Active.",
-            url_for('admin.loan_detail', loan_id=loan_id),
+            f"{loan['loan_no']} reached the required approvals and is now Active.",
+            url_for('member.loans'),
         )
         flash('Loan reached 3 approvals and is now active.', 'success')
     else:
@@ -2655,61 +3266,94 @@ def dividends_list():
 
 
 def compute_interest_pool(db, year):
-    """Compute collected + projected interest pool metrics for a calendar year."""
+    """Compute the distributable interest pool for a calendar year.
+
+    The pool is CASH-ONLY: all loan income actually received so far
+    (interest + paid penalties).
+    """
     # Keep penalties current before computing pool metrics.
     active_ids = db.execute("SELECT id FROM loans WHERE status='Active'").fetchall()
     for r in active_ids:
         _auto_apply_penalties(db, r['id'])
 
-    # Collected (cash-realized) values in the selected year.
+    # Collected (cash-realized) values on all loans so far.
     rows = db.execute(
         """SELECT COALESCE(SUM(interest_part),0) i,
                   COALESCE(SUM(penalty_part),0) p
-             FROM loan_repayments
-            WHERE strftime('%Y', payment_date) = ?""",
-        (str(year),),
+             FROM loan_repayments"""
     ).fetchone()
 
     interest_collected = int(rows['i'] or 0)
     penalty_collected = int(rows['p'] or 0)
-    collected_total = interest_collected + penalty_collected
+    loan_income_cash = interest_collected + penalty_collected
 
-    # Projected/accrued values based on loans disbursed/issued in this year.
-    loans_in_year = db.execute(
-        """SELECT * FROM loans
-            WHERE strftime('%Y', COALESCE(disbursed_date, issued_date)) = ?""",
-        (str(year),),
-    ).fetchall()
-    projected_interest = 0
-    for l in loans_in_year:
-        projected_interest += int(l['principal']) * float(l['interest_rate'] or Config.LOAN_INTEREST_RATE_MONTHLY) * int(l['term_months'] or 1)
-    projected_interest = int(projected_interest)
+    # Dividends pool uses realized loan income (interest + penalties).
+    total_pool = loan_income_cash
 
-    projected_penalty_row = db.execute(
-        """SELECT COALESCE(SUM(penalty_amount),0) p
-             FROM loan_penalties
-            WHERE substr(period, 1, 4) = ?""",
-        (str(year),),
-    ).fetchone()
-    projected_penalty = int(projected_penalty_row['p'] or 0)
+    # Fixed policy bonus to top saver.
+    top_saver_award = 50000
+    distributable = max(0, total_pool - top_saver_award)
 
-    projected_total = projected_interest + projected_penalty
-    coverage_pct = round((collected_total / projected_total) * 100, 1) if projected_total > 0 else 0
+    active_member_count = db.execute(
+        "SELECT COUNT(*) c FROM members WHERE status='Active'"
+    ).fetchone()['c']
+    est_per_member = (distributable // active_member_count) if active_member_count > 0 else 0
+    remainder_to_allocate = (distributable % active_member_count) if active_member_count > 0 else 0
 
     return {
         'year': year,
+        # --- actual cash collected (all-time) ---
         'interest_collected': interest_collected,
         'penalty_collected': penalty_collected,
-        'collected_total': collected_total,
-        'projected_interest': projected_interest,
-        'projected_penalty': projected_penalty,
-        'projected_total': projected_total,
-        'coverage_pct': coverage_pct,
-        'total_pool': projected_total,
-        'top_saver_award': Config.TOP_SAVER_AWARD,
-        'distributable': max(0, projected_total - Config.TOP_SAVER_AWARD),
-        'distributable_collected': max(0, collected_total - Config.TOP_SAVER_AWARD),
+        'loan_income_cash': loan_income_cash,
+        # --- distribution basis ---
+        'total_pool': total_pool,
+        'top_saver_award': top_saver_award,
+        'distributable': distributable,
+        'active_member_count': active_member_count,
+        'est_per_member': est_per_member,
+        'remainder_to_allocate': remainder_to_allocate,
     }
+
+
+def _rank_members_for_dividends(members):
+    """Deterministic ranking: highest savings first, then member number."""
+    return sorted(
+        members,
+        key=lambda m: (
+            -(m['year_savings'] or 0),
+            str(m['member_no'] or ''),
+            int(m['id']),
+        ),
+    )
+
+
+def _build_dividend_payouts(members, distributable_pool, top_saver_id, top_saver_award):
+    """Build payouts that fully reconcile to: distributable + top_saver_award."""
+    ranked_members = _rank_members_for_dividends(members)
+    count = len(ranked_members)
+    if count == 0:
+        return [], 0, 0
+
+    base_share = (distributable_pool // count) if distributable_pool > 0 else 0
+    remainder = (distributable_pool % count) if distributable_pool > 0 else 0
+    remainder_ids = {m['id'] for m in ranked_members[:remainder]}
+
+    payouts = []
+    for m in ranked_members:
+        share = base_share + (1 if m['id'] in remainder_ids else 0)
+        is_top = m['id'] == top_saver_id
+        amount = share + (top_saver_award if is_top else 0)
+        payouts.append({
+            'member_id': m['id'],
+            'member_no': m['member_no'],
+            'full_name': m['full_name'],
+            'year_savings': m['year_savings'] or 0,
+            'amount': amount,
+            'is_top_saver': is_top,
+        })
+
+    return payouts, base_share, remainder
 
 
 @bp.route('/dividends/preview/<int:year>')
@@ -2735,23 +3379,16 @@ def dividends_preview(year):
         flash('No active members to distribute to.', 'warning')
         return redirect(url_for('admin.dividends_list'))
 
-    top_saver = max(members, key=lambda m: m['year_savings'] or 0)
-    per_member = pool['distributable'] // len(members) if pool['distributable'] > 0 else 0
-
-    payouts = []
-    for m in members:
-        amt = per_member
-        is_top = (m['id'] == top_saver['id']) and (top_saver['year_savings'] or 0) > 0
-        if is_top:
-            amt += pool['top_saver_award']
-        payouts.append({
-            'member_id': m['id'],
-            'member_no': m['member_no'],
-            'full_name': m['full_name'],
-            'year_savings': m['year_savings'] or 0,
-            'amount': amt,
-            'is_top_saver': is_top,
-        })
+    ranked_members = _rank_members_for_dividends(members)
+    top_saver = ranked_members[0]
+    payouts, per_member, remainder = _build_dividend_payouts(
+        ranked_members,
+        pool['distributable'],
+        top_saver['id'],
+        pool['top_saver_award'],
+    )
+    pool['remainder_to_allocate'] = remainder
+    pool['balance_check'] = pool['total_pool'] - sum(p['amount'] for p in payouts)
 
     existing = db.execute(
         "SELECT * FROM dividend_runs WHERE year=?", (year,)
@@ -2778,7 +3415,10 @@ def dividends_run():
 
     pool = compute_interest_pool(db, year)
     if pool['total_pool'] <= 0:
-        flash(f'No interest collected in {year}. Cannot distribute.', 'warning')
+        flash(f'No loan income collected in {year}. Cannot distribute.', 'warning')
+        return redirect(url_for('admin.dividends_list'))
+    if pool['total_pool'] < pool['top_saver_award']:
+        flash('Interest pool is below UGX 50,000 top saver bonus. Collect more interest before distribution.', 'warning')
         return redirect(url_for('admin.dividends_list'))
 
     members = db.execute(
@@ -2798,8 +3438,17 @@ def dividends_run():
         flash('No active members.', 'warning')
         return redirect(url_for('admin.dividends_list'))
 
-    top_saver = max(members, key=lambda m: m['year_savings'] or 0)
-    per_member = pool['distributable'] // len(members)
+    ranked_members = _rank_members_for_dividends(members)
+    top_saver = ranked_members[0]
+    payouts, per_member, _remainder = _build_dividend_payouts(
+        ranked_members,
+        pool['distributable'],
+        top_saver['id'],
+        pool['top_saver_award'],
+    )
+    if sum(p['amount'] for p in payouts) != pool['total_pool']:
+        flash('Dividend math validation failed. No distribution posted.', 'danger')
+        return redirect(url_for('admin.dividends_list'))
 
     # Before year-end, keep manual runs hidden from members until explicitly published.
     year_end_reached = date.today() >= date(year, 12, 31)
@@ -2813,7 +3462,7 @@ def dividends_run():
                   member_count=?, per_member_amount=?, top_saver_id=?, top_saver_total=?,
                   distribution_date=?, status=?, processed_by=?
                 WHERE id=?""",
-            (pool['total_pool'], Config.TOP_SAVER_AWARD, pool['distributable'],
+                        (pool['total_pool'], pool['top_saver_award'], pool['distributable'],
              len(members), per_member, top_saver['id'], top_saver['year_savings'] or 0,
              distribution_date, run_status, session['user_id'], run_id),
         )
@@ -2825,23 +3474,19 @@ def dividends_run():
                 member_count, per_member_amount, top_saver_id, top_saver_total,
                 distribution_date, status, processed_by)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (year, pool['total_pool'], Config.TOP_SAVER_AWARD, pool['distributable'],
+            (year, pool['total_pool'], pool['top_saver_award'], pool['distributable'],
              len(members), per_member, top_saver['id'],
              top_saver['year_savings'] or 0,
              distribution_date, run_status, session['user_id']),
         )
         run_id = cur.lastrowid
 
-    for m in members:
-        amt = per_member
-        is_top = (m['id'] == top_saver['id']) and (top_saver['year_savings'] or 0) > 0
-        if is_top:
-            amt += Config.TOP_SAVER_AWARD
+    for p in payouts:
         db.execute(
             """INSERT INTO dividend_payouts
                (dividend_run_id, member_id, amount, is_top_saver)
                VALUES (?, ?, ?, ?)""",
-            (run_id, m['id'], amt, 1 if is_top else 0),
+            (run_id, p['member_id'], p['amount'], 1 if p['is_top_saver'] else 0),
         )
 
     db.commit()
@@ -3594,10 +4239,10 @@ def expenses_request():
 
     _notify_roles(
         db,
-        ['CHAIRMAN'],
+        ['IT_ADMIN', 'CHAIRMAN'],
         'Expense approval required',
         f"{expense_no} for {fmt_money(amount)} is waiting your decision.",
-        url_for('admin.expenses_list', tab='pending'),
+        url_for('admin.approvals'),
         exclude_user_id=None,
     )
     db.commit()
@@ -3639,9 +4284,9 @@ def expenses_approve(expense_id):
         (session['user_id'], decision_notes, expense_id),
     )
     db.commit()
-    # Notify the requesting treasurer (and all treasurers)
-    _notify_roles(
-        db, ['TREASURER'],
+    _notify_user(
+        db,
+        row['requested_by'],
         f"Expense {row['expense_no']} Approved",
         f"{row['expense_no']} for {fmt_money(row['amount'])} was approved by the Chairman." +
         (f" Notes: {decision_notes}" if decision_notes else ''),
@@ -4060,6 +4705,83 @@ def users_toggle_active(user_id):
     return redirect(url_for('admin.users_list'))
 
 
+@bp.route('/users/<int:user_id>')
+@role_required('IT_ADMIN')
+def users_detail(user_id):
+    db = get_db()
+    user = db.execute(
+        """SELECT u.*, m.member_no, m.full_name, m.phone, m.email,
+                  m.role AS member_role, m.status AS member_status
+             FROM users u
+             LEFT JOIN members m ON m.id = u.member_id
+            WHERE u.id = ?""",
+        (user_id,),
+    ).fetchone()
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin.users_list'))
+
+    activity = db.execute(
+        "SELECT * FROM audit_log WHERE user_id=? ORDER BY id DESC LIMIT 30",
+        (user_id,),
+    ).fetchall()
+
+    today_str = date.today().isoformat()
+    stats = db.execute(
+        """SELECT COUNT(*) total_actions,
+                  SUM(CASE WHEN date(created_at)=? THEN 1 ELSE 0 END) today_actions,
+                  MIN(created_at) first_action,
+                  MAX(created_at) last_action
+             FROM audit_log WHERE user_id=?""",
+        (today_str, user_id),
+    ).fetchone()
+
+    return render_template('admin/users_detail.html', user=user, activity=activity, stats=stats)
+
+
+@bp.route('/users/<int:user_id>/unlock', methods=['POST'])
+@role_required('IT_ADMIN')
+def users_unlock(user_id):
+    """Clear the force-change-password flag without resetting the password."""
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin.users_list'))
+    db.execute("UPDATE users SET must_change_pw=0 WHERE id=?", (user_id,))
+    db.commit()
+    log_action('UNLOCK_USER', 'user', user_id,
+               f"Cleared force-password-change for {user['username']}")
+    flash(f'Force-password-change cleared for {user["username"]}.', 'success')
+    return redirect(url_for('admin.users_detail', user_id=user_id))
+
+
+@bp.route('/users/<int:user_id>/clear-lockout', methods=['POST'])
+@role_required('IT_ADMIN')
+def users_clear_lockout(user_id):
+    """Unlock an account that was locked due to repeated failed login attempts."""
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin.users_list'))
+    db.execute(
+        "UPDATE users SET failed_login_count=0, locked_until=NULL WHERE id=?",
+        (user_id,),
+    )
+    db.commit()
+    log_action('CLEAR_ACCOUNT_LOCKOUT', 'user', user_id,
+               f"Account lockout cleared by IT Admin for user: {user['username']}")
+    flash(f'Account unlocked for {user["username"]}. They can now log in normally.', 'success')
+    # Redirect back to the referring page (member detail or users list)
+    referrer = request.referrer
+    if referrer:
+        return redirect(referrer)
+    if user['member_id']:
+        return redirect(url_for('admin.member_detail', member_id=user['member_id']))
+    return redirect(url_for('admin.users_list'))
+
+
 # ===========================================================================
 # AUDIT LOG
 # ===========================================================================
@@ -4067,14 +4789,152 @@ def users_toggle_active(user_id):
 @admin_required
 def audit_list():
     db = get_db()
+    f_action  = (request.args.get('action')  or '').strip()
+    f_user    = (request.args.get('user')    or '').strip()
+    f_entity  = (request.args.get('entity')  or '').strip()
+    f_date    = (request.args.get('date')    or '').strip()
+    page      = max(1, int(request.args.get('page', 1) or 1))
+    per_page  = 100
+    offset    = (page - 1) * per_page
+
+    where, params = [], []
+    if f_action:
+        where.append("al.action LIKE ?")
+        params.append(f'%{f_action}%')
+    if f_user:
+        where.append("(u.username LIKE ? OR m.full_name LIKE ?)")
+        params.extend([f'%{f_user}%', f'%{f_user}%'])
+    if f_entity:
+        where.append("al.entity_type = ?")
+        params.append(f_entity)
+    if f_date:
+        where.append("date(al.created_at) = ?")
+        params.append(f_date)
+    where_sql = ('WHERE ' + ' AND '.join(where)) if where else ''
+
+    total = db.execute(
+        f"""SELECT COUNT(*) c FROM audit_log al
+             LEFT JOIN users u ON u.id = al.user_id
+             LEFT JOIN members m ON m.id = u.member_id
+             {where_sql}""",
+        params,
+    ).fetchone()['c']
+
     rows = db.execute(
-        """SELECT al.*, u.username, m.full_name
+        f"""SELECT al.*, u.username, m.full_name
              FROM audit_log al
              LEFT JOIN users u ON u.id = al.user_id
              LEFT JOIN members m ON m.id = u.member_id
-            ORDER BY al.id DESC LIMIT 200"""
+             {where_sql}
+            ORDER BY al.id DESC LIMIT ? OFFSET ?""",
+        params + [per_page, offset],
     ).fetchall()
-    return render_template('admin/audit_list.html', rows=rows)
+
+    today_str = date.today().isoformat()
+    stats = db.execute(
+        """SELECT COUNT(*) total,
+                  SUM(CASE WHEN date(created_at)=? THEN 1 ELSE 0 END) today_count,
+                  COUNT(DISTINCT user_id) unique_users
+             FROM audit_log""",
+        (today_str,),
+    ).fetchone()
+
+    action_types = [r['action'] for r in db.execute(
+        "SELECT DISTINCT action FROM audit_log ORDER BY action"
+    ).fetchall()]
+    entity_types = [r['entity_type'] for r in db.execute(
+        "SELECT DISTINCT entity_type FROM audit_log WHERE entity_type IS NOT NULL ORDER BY entity_type"
+    ).fetchall()]
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
+
+    return render_template(
+        'admin/audit_list.html',
+        rows=rows, stats=stats,
+        action_types=action_types, entity_types=entity_types,
+        f_action=f_action, f_user=f_user, f_entity=f_entity, f_date=f_date,
+        page=page, total_pages=total_pages, total=total, per_page=per_page,
+    )
+
+
+@bp.route('/audit/<int:log_id>')
+@admin_required
+def audit_detail(log_id):
+    db = get_db()
+    row = db.execute(
+        """SELECT al.*, u.username, m.full_name, m.member_no, m.role AS member_role
+             FROM audit_log al
+             LEFT JOIN users u ON u.id = al.user_id
+             LEFT JOIN members m ON m.id = u.member_id
+            WHERE al.id = ?""",
+        (log_id,),
+    ).fetchone()
+    if not row:
+        flash('Log entry not found.', 'danger')
+        return redirect(url_for('admin.audit_list'))
+
+    et  = (row['entity_type'] or '').lower()
+    eid = row['entity_id']
+    entity_data, entity_label = None, None
+    if eid:
+        if et == 'member':
+            entity_data  = db.execute("SELECT * FROM members WHERE id=?", (eid,)).fetchone()
+            entity_label = 'Member'
+        elif et == 'user':
+            entity_data  = db.execute(
+                "SELECT u.*, m.full_name, m.member_no FROM users u LEFT JOIN members m ON m.id=u.member_id WHERE u.id=?",
+                (eid,)).fetchone()
+            entity_label = 'System User'
+        elif et == 'loan':
+            entity_data  = db.execute(
+                "SELECT l.*, m.full_name, m.member_no FROM loans l LEFT JOIN members m ON m.id=l.member_id WHERE l.id=?",
+                (eid,)).fetchone()
+            entity_label = 'Loan'
+        elif et == 'savings':
+            entity_data  = db.execute(
+                "SELECT s.*, m.full_name, m.member_no FROM savings s LEFT JOIN members m ON m.id=s.member_id WHERE s.id=?",
+                (eid,)).fetchone()
+            entity_label = 'Savings Record'
+        elif et == 'dividend_run':
+            entity_data  = db.execute("SELECT * FROM dividend_runs WHERE id=?", (eid,)).fetchone()
+            entity_label = 'Dividend Run'
+        elif et == 'expense':
+            entity_data  = db.execute("SELECT * FROM expenses WHERE id=?", (eid,)).fetchone()
+            entity_label = 'Expense'
+        elif et == 'fine':
+            entity_data  = db.execute(
+                "SELECT f.*, m.full_name, m.member_no FROM fines f LEFT JOIN members m ON m.id=f.member_id WHERE f.id=?",
+                (eid,)).fetchone()
+            entity_label = 'Fine'
+        elif et == 'annual_fee':
+            entity_data  = db.execute(
+                "SELECT af.*, m.full_name, m.member_no FROM annual_fees af LEFT JOIN members m ON m.id=af.member_id WHERE af.id=?",
+                (eid,)).fetchone()
+            entity_label = 'Annual Fee'
+        elif et == 'minutes':
+            entity_data  = db.execute("SELECT * FROM minutes WHERE id=?", (eid,)).fetchone()
+            entity_label = 'Meeting Minutes'
+
+    prev_row = db.execute("SELECT id FROM audit_log WHERE id < ? ORDER BY id DESC LIMIT 1", (log_id,)).fetchone()
+    next_row = db.execute("SELECT id FROM audit_log WHERE id > ? ORDER BY id ASC  LIMIT 1", (log_id,)).fetchone()
+
+    related = []
+    if et and eid:
+        related = db.execute(
+            """SELECT al.*, u.username FROM audit_log al
+               LEFT JOIN users u ON u.id = al.user_id
+               WHERE al.entity_type=? AND al.entity_id=? AND al.id!=?
+               ORDER BY al.id DESC LIMIT 15""",
+            (row['entity_type'], eid, log_id),
+        ).fetchall()
+
+    return render_template(
+        'admin/audit_detail.html',
+        row=row, entity_data=entity_data, entity_label=entity_label,
+        related=related,
+        prev_id=prev_row['id'] if prev_row else None,
+        next_id=next_row['id'] if next_row else None,
+    )
 
 
 # ===========================================================================
@@ -4101,10 +4961,73 @@ def reports():
     db = get_db()
     _normalize_legacy_archived_status(db)
     db.commit()
+
     today = date.today()
     current_year = today.year
+    cur_period = period_str(today)
+    periods_to_date = all_savings_periods(today)
+    periods_12 = periods_to_date[-12:] if len(periods_to_date) >= 12 else periods_to_date
 
-    # Balance Sheet snapshot
+    # Core members snapshot
+    active_members_rows = db.execute(
+        """SELECT id, member_no, full_name, phone, join_date
+             FROM members
+            WHERE status='Active'
+            ORDER BY member_no"""
+    ).fetchall()
+    total_members = len(active_members_rows)
+
+    all_paid_rows = db.execute("SELECT member_id, period FROM savings").fetchall()
+    paid_map = {}
+    for r in all_paid_rows:
+        paid_map.setdefault(r['member_id'], set()).add(r['period'])
+
+    # Savings arrears / defaulters (current snapshot)
+    savings_defaulters = []
+    arrears_members_count = 0
+    arrears_amount_total = 0
+    current_month_unpaid_count = 0
+    for m in active_members_rows:
+        join_date = m['join_date']
+        if isinstance(join_date, str):
+            join_d = datetime.strptime(join_date, '%Y-%m-%d').date()
+        else:
+            join_d = join_date
+        join_period = period_str(join_d)
+        expected_periods = [p for p in periods_to_date if p >= join_period]
+        member_paid = paid_map.get(m['id'], set())
+
+        overdue_missing = [p for p in expected_periods if p < cur_period and p not in member_paid]
+        current_unpaid = cur_period in expected_periods and cur_period not in member_paid
+        arrears_amount = len(overdue_missing) * Config.MONTHLY_SAVINGS_AMOUNT
+
+        if overdue_missing:
+            arrears_members_count += 1
+            arrears_amount_total += arrears_amount
+        if current_unpaid:
+            current_month_unpaid_count += 1
+
+        if overdue_missing or current_unpaid:
+            savings_defaulters.append({
+                'member_no': m['member_no'],
+                'full_name': m['full_name'],
+                'phone': m['phone'],
+                'arrears_count': len(overdue_missing),
+                'arrears_amount': arrears_amount,
+                'current_unpaid': current_unpaid,
+            })
+
+    savings_defaulters.sort(
+        key=lambda x: (
+            0 if x['current_unpaid'] else 1,
+            -x['arrears_amount'],
+            -x['arrears_count'],
+            x['member_no'],
+        )
+    )
+    top_savings_defaulters = savings_defaulters[:10]
+
+    # Financial balance snapshot
     total_savings = db.execute(
         """SELECT COALESCE(SUM(s.amount),0) s
              FROM savings s
@@ -4113,11 +5036,18 @@ def reports():
     ).fetchone()['s']
 
     active_loans = db.execute(
-        "SELECT * FROM loans WHERE status IN ('Active','Pending')"
+        """SELECT l.*, m.member_no, m.full_name AS borrower_name, m.phone
+             FROM loans l
+             LEFT JOIN members m ON m.id = l.member_id
+            WHERE l.status='Active'"""
     ).fetchall()
+
     out_principal = 0
     out_interest = 0
     out_penalty = 0
+    overdue_loans_total_owed = 0
+    overdue_loans_count = 0
+    loan_defaulters = []
     for loan in active_loans:
         repays = db.execute(
             "SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)
@@ -4129,6 +5059,31 @@ def reports():
         out_principal += pos['outstanding_principal']
         out_interest += pos['outstanding_interest']
         out_penalty += pos['outstanding_penalty']
+        if pos['is_overdue'] and int(pos['total_outstanding'] or 0) > 0:
+            overdue_loans_count += 1
+            overdue_loans_total_owed += int(pos['total_outstanding'] or 0)
+            loan_defaulters.append({
+                'loan_no': loan['loan_no'],
+                'member_no': loan['member_no'],
+                'borrower_name': loan['borrower_name'],
+                'days_overdue': int(pos['days_overdue'] or 0),
+                'months_overdue': int(pos['overdue_months'] or 0),
+                'outstanding': int(pos['total_outstanding'] or 0),
+                'penalty': int(pos['outstanding_penalty'] or 0),
+            })
+
+    loan_defaulters.sort(key=lambda x: (-x['outstanding'], -x['days_overdue'], x['loan_no']))
+    top_loan_defaulters = loan_defaulters[:10]
+
+    loan_totals = db.execute(
+        "SELECT COUNT(*) c, COALESCE(SUM(principal),0) s FROM loans"
+    ).fetchone()
+    loan_total_count = int(loan_totals['c'] or 0)
+    loan_book_total = int(loan_totals['s'] or 0)
+
+    pending_loans_count = db.execute(
+        "SELECT COUNT(*) c FROM loans WHERE status='Pending'"
+    ).fetchone()['c']
 
     fines_receivable = db.execute(
         "SELECT COALESCE(SUM(amount),0) s FROM fines WHERE status='Unpaid'"
@@ -4137,24 +5092,57 @@ def reports():
         """SELECT COALESCE(SUM(amount),0) s FROM annual_fees
            WHERE status='Unpaid'"""
     ).fetchone()['s']
-    # Income (operating)
+    # Income and operating performance
     income_fees = db.execute(
         "SELECT COALESCE(SUM(amount),0) s FROM annual_fees WHERE status='Paid'"
     ).fetchone()['s']
     income_fines = db.execute(
         "SELECT COALESCE(SUM(amount),0) s FROM fines WHERE status='Paid'"
     ).fetchone()['s']
-    interest_collected = db.execute(
-        "SELECT COALESCE(SUM(interest_part),0) s FROM loan_repayments"
-    ).fetchone()['s']
+    _int_row = db.execute(
+        "SELECT COALESCE(SUM(interest_part),0) i, COALESCE(SUM(penalty_part),0) p FROM loan_repayments"
+    ).fetchone()
+    loan_interest_collected = int(_int_row['i'] or 0)
+    loan_penalty_collected = int(_int_row['p'] or 0)
+    loan_income_cash = loan_interest_collected + loan_penalty_collected
 
     ops = _operational_fund_snapshot(db)
-    loan_interest = _loan_interest_snapshot(db)
     expenses_spent = ops['approved_expenses']
     expenses_pending = ops['pending_expenses']
     expenses_count = db.execute(
         "SELECT COUNT(*) c FROM expenses WHERE status='Approved'"
     ).fetchone()['c']
+
+    # Governance / control signals
+    minutes_stats = db.execute(
+        """SELECT
+                 COUNT(*) total,
+                 COALESCE(SUM(CASE WHEN is_published=1 THEN 1 ELSE 0 END),0) published
+              FROM minutes"""
+    ).fetchone()
+    audit_30d = db.execute(
+        "SELECT COUNT(*) c FROM audit_log WHERE created_at >= datetime('now','-30 day')"
+    ).fetchone()['c']
+    pending_expenses_count = db.execute(
+        "SELECT COUNT(*) c FROM expenses WHERE status='Pending'"
+    ).fetchone()['c']
+
+    # Cash estimate mirrors dashboard logic
+    loans_all_disbursed_amount = db.execute(
+        "SELECT COALESCE(SUM(principal),0) s FROM loans WHERE disbursed_date IS NOT NULL"
+    ).fetchone()['s']
+    total_repayments_in = db.execute(
+        "SELECT COALESCE(SUM(amount),0) s FROM loan_repayments"
+    ).fetchone()['s']
+
+    cash_estimate = (
+        int(total_savings)
+        + int(income_fees or 0)
+        + int(income_fines or 0)
+        + int(total_repayments_in or 0)
+        - int(loans_all_disbursed_amount or 0)
+        - int(expenses_spent or 0)
+    )
 
     cash_available = total_savings - out_principal
     total_assets = (
@@ -4163,52 +5151,11 @@ def reports():
     )
     operating_income = int(income_fees or 0) + int(income_fines or 0) - int(expenses_spent or 0)
 
-    # Savings trends (last 6 months for dashboard tile/chart)
-    periods = all_savings_periods()[-6:]
-    trend = []
-    for p in periods:
-        row = db.execute(
-            """SELECT COALESCE(SUM(s.amount),0) s, COUNT(*) c
-                 FROM savings s
-                 JOIN members m ON m.id = s.member_id
-                WHERE s.period=? AND m.status='Active'""",
-            (p,),
-        ).fetchone()
-        trend.append({
-            'period': p, 'label': period_label(p),
-            'total': row['s'] or 0, 'count': row['c'] or 0,
-        })
-
-    # Member stats
-    active_members = db.execute(
-        "SELECT COUNT(*) c FROM members WHERE status='Active'"
-    ).fetchone()['c']
+    # Membership stats
+    active_members = total_members
     exited_members = db.execute(
         "SELECT COUNT(*) c FROM members WHERE status='Exited'"
     ).fetchone()['c']
-
-    # Loan stats
-    loan_totals = db.execute(
-        "SELECT COUNT(*) c, COALESCE(SUM(principal),0) s FROM loans"
-    ).fetchone()
-    pending_loans = db.execute(
-        "SELECT COUNT(*) c FROM loans WHERE status='Pending'"
-    ).fetchone()['c']
-    active_loan_count = db.execute(
-        "SELECT COUNT(*) c FROM loans WHERE status='Active'"
-    ).fetchone()['c']
-
-    overdue_loans_count = 0
-    for loan in active_loans:
-        repays = db.execute(
-            "SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)
-        ).fetchall()
-        pens = db.execute(
-            "SELECT * FROM loan_penalties WHERE loan_id=?", (loan['id'],)
-        ).fetchall()
-        pos = calculate_loan_position(loan, repays, pens)
-        if pos['is_overdue']:
-            overdue_loans_count += 1
 
     # Fees/Fines stats (current year)
     fees_year = db.execute(
@@ -4232,145 +5179,128 @@ def reports():
         (str(current_year),),
     ).fetchone()
 
-    # Minutes & dividends stats
-    minutes_stats = db.execute(
-        """SELECT
-                 COUNT(*) total,
-                 COALESCE(SUM(CASE WHEN is_published=1 THEN 1 ELSE 0 END),0) published
-              FROM minutes"""
-    ).fetchone()
-    dividend_stats = db.execute(
-        """SELECT
-                 COUNT(*) total,
-                 COALESCE(SUM(CASE WHEN status IN ('Published','Distributed') THEN 1 ELSE 0 END),0) published,
-                 COALESCE(SUM(total_interest_pool),0) total_pool
-              FROM dividend_runs"""
-    ).fetchone()
+    # Monthly trend pack for AGM reporting (12 months)
+    monthly_rows = []
+    for p in periods_12:
+        savings_row = db.execute(
+            """SELECT COALESCE(SUM(s.amount),0) s
+                 FROM savings s
+                 JOIN members m ON m.id = s.member_id
+                WHERE s.period=? AND m.status='Active'""",
+            (p,),
+        ).fetchone()
 
-    audit_recent = db.execute(
-        "SELECT COUNT(*) c FROM audit_log WHERE created_at >= datetime('now','-30 day')"
-    ).fetchone()['c']
+        repay_row = db.execute(
+            """SELECT COALESCE(SUM(amount),0) total,
+                      COALESCE(SUM(interest_part),0) i,
+                      COALESCE(SUM(penalty_part),0) p
+                 FROM loan_repayments
+                WHERE strftime('%Y-%m', payment_date)=?""",
+            (p,),
+        ).fetchone()
 
-    report_tiles = [
-        # ── Financial Overview ────────────────────────────────────────
-        {
-            'key': 'position', 'group': 'Financial Overview',
-            'title': 'Financial Position',
-            'icon': 'bi bi-bank2',
-            'value': fmt_money(total_assets),
-            'sub': f"Cash {fmt_money(cash_available)} | Equity {fmt_money(total_savings)}",
-            'href': url_for('admin.reports'),
-            'tone': 'info',
-        },
-        {
-            'key': 'members', 'group': 'Financial Overview',
-            'title': 'Members Register',
-            'icon': 'bi bi-people-fill',
-            'value': str(active_members),
-            'sub': f"Active members | Exited: {exited_members}",
-            'href': url_for('admin.members_list'),
-            'tone': 'gold',
-        },
-        # ── Savings ───────────────────────────────────────────────────
-        {
-            'key': 'savings-trend', 'group': 'Savings',
-            'title': 'Savings Trend',
-            'icon': 'bi bi-graph-up-arrow',
-            'value': fmt_money(sum(t['total'] for t in trend)),
-            'sub': 'Last 6 months collection performance',
-            'href': url_for('admin.savings_list'),
-            'tone': 'accent',
-        },
-        # ── Loans ─────────────────────────────────────────────────────
-        {
-            'key': 'loans', 'group': 'Loans',
-            'title': 'Loans Portfolio',
-            'icon': 'bi bi-cash-stack',
-            'value': fmt_money(loan_totals['s'] or 0),
-            'sub': f"Active: {active_loan_count} | Pending: {pending_loans} | Overdue: {overdue_loans_count}",
-            'href': url_for('admin.loans_list'),
-            'tone': 'warn',
-        },
-        {
-            'key': 'loan-interest-collected', 'group': 'Loans',
-            'title': 'Loan Interest Collected',
-            'icon': 'bi bi-cash-coin',
-            'value': fmt_money(loan_interest['collected']),
-            'sub': f"Cash-realized interest to date | Projection open: {fmt_money(loan_interest['projected_open'])}",
-            'href': url_for('admin.loans_list'),
-            'tone': 'ok',
-        },
-        {
-            'key': 'loan-interest-projection', 'group': 'Loans',
-            'title': 'Loan Interest Projection',
-            'icon': 'bi bi-graph-up-arrow',
-            'value': fmt_money(loan_interest['projected_open']),
-            'sub': f"Outstanding interest {fmt_money(loan_interest['projected_interest'])} + penalties {fmt_money(loan_interest['projected_penalty'])} | Collected: {fmt_money(loan_interest['collected'])}",
-            'href': url_for('admin.loans_list'),
-            'tone': 'accent',
-        },
-        # ── Fees & Fines ──────────────────────────────────────────────
-        {
-            'key': 'fees', 'group': 'Fees & Fines',
-            'title': f'Annual Fees {current_year}',
-            'icon': 'bi bi-patch-check-fill',
-            'value': fmt_money(fees_year['paid_amount'] or 0),
-            'sub': f"Paid records: {fees_year['paid_count']} | Unpaid records: {fees_year['unpaid_count']}",
-            'href': url_for('admin.fees_list'),
-            'tone': 'ok',
-        },
-        {
-            'key': 'fines', 'group': 'Fees & Fines',
-            'title': f'Fines {current_year}',
-            'icon': 'bi bi-exclamation-octagon-fill',
-            'value': fmt_money(fines_year['paid_amount'] or 0),
-            'sub': f"Collected: {fines_year['paid_count']} | Outstanding: {fines_year['unpaid_count']}",
-            'href': url_for('admin.fines_list'),
-            'tone': 'danger',
-        },
-        # ── Operations ────────────────────────────────────────────────
-        {
-            'key': 'expenses', 'group': 'Operations',
-            'title': 'Expenses (Approved)',
-            'icon': 'bi bi-wallet2',
-            'value': fmt_money(expenses_spent),
-            'sub': f"{expenses_count} approved | Pending requests: {fmt_money(expenses_pending)}",
-            'href': url_for('admin.expenses_list'),
-            'tone': 'warn',
-        },
-        # ── Governance ────────────────────────────────────────────────
-        {
-            'key': 'minutes', 'group': 'Governance',
-            'title': 'Minutes & Governance',
-            'icon': 'bi bi-journal-richtext',
-            'value': str(minutes_stats['published'] or 0),
-            'sub': f"Published minutes | Total records: {minutes_stats['total']}",
-            'href': url_for('admin.minutes_list'),
-            'tone': 'info',
-        },
-        {
-            'key': 'dividends', 'group': 'Governance',
-            'title': 'Dividends Runs',
-            'icon': 'bi bi-award-fill',
-            'value': str(dividend_stats['published'] or 0),
-            'sub': f"Published runs | Total pool: {fmt_money(dividend_stats['total_pool'] or 0)}",
-            'href': url_for('admin.dividends_list'),
-            'tone': 'gold',
-        },
-        {
-            'key': 'audit', 'group': 'Governance',
-            'title': 'Audit & Controls',
-            'icon': 'bi bi-shield-check',
-            'value': str(audit_recent),
-            'sub': 'Audit entries in last 30 days',
-            'href': url_for('admin.audit_list'),
-            'tone': 'accent',
-        },
-    ]
+        fees_row = db.execute(
+            """SELECT COALESCE(SUM(amount),0) s
+                 FROM annual_fees
+                WHERE status='Paid' AND paid_date IS NOT NULL
+                  AND strftime('%Y-%m', paid_date)=?""",
+            (p,),
+        ).fetchone()
+
+        fines_row = db.execute(
+            """SELECT COALESCE(SUM(amount),0) s
+                 FROM fines
+                WHERE status='Paid' AND strftime('%Y-%m', fine_date)=?""",
+            (p,),
+        ).fetchone()
+
+        expenses_row = db.execute(
+            """SELECT COALESCE(SUM(amount),0) s
+                 FROM expenses
+                WHERE status='Approved' AND strftime('%Y-%m', expense_date)=?""",
+            (p,),
+        ).fetchone()
+
+        disbursed_row = db.execute(
+            """SELECT COALESCE(SUM(principal),0) s
+                 FROM loans
+                WHERE disbursed_date IS NOT NULL
+                  AND strftime('%Y-%m', disbursed_date)=?""",
+            (p,),
+        ).fetchone()
+
+        savings_m = int(savings_row['s'] or 0)
+        repay_total_m = int(repay_row['total'] or 0)
+        interest_m = int(repay_row['i'] or 0)
+        penalty_m = int(repay_row['p'] or 0)
+        fees_m = int(fees_row['s'] or 0)
+        fines_m = int(fines_row['s'] or 0)
+        expenses_m = int(expenses_row['s'] or 0)
+        disbursed_m = int(disbursed_row['s'] or 0)
+
+        inflow_m = savings_m + repay_total_m + fees_m + fines_m
+        outflow_m = expenses_m + disbursed_m
+        net_m = inflow_m - outflow_m
+
+        savings_default_count = 0
+        for m in active_members_rows:
+            join_date = m['join_date']
+            if isinstance(join_date, str):
+                join_d = datetime.strptime(join_date, '%Y-%m-%d').date()
+            else:
+                join_d = join_date
+            if period_str(join_d) > p:
+                continue
+            if p not in paid_map.get(m['id'], set()):
+                savings_default_count += 1
+
+        monthly_rows.append({
+            'period': p,
+            'label': period_label(p),
+            'savings': savings_m,
+            'loan_repayments': repay_total_m,
+            'interest': interest_m,
+            'penalty': penalty_m,
+            'fees': fees_m,
+            'fines': fines_m,
+            'expenses': expenses_m,
+            'disbursed': disbursed_m,
+            'inflow': inflow_m,
+            'outflow': outflow_m,
+            'net': net_m,
+            'savings_defaulters': savings_default_count,
+        })
+
+    max_inflow = max([r['inflow'] for r in monthly_rows] + [1])
+    max_outflow = max([r['outflow'] for r in monthly_rows] + [1])
+    max_net_abs = max([abs(r['net']) for r in monthly_rows] + [1])
+    max_sav_defaulters = max([r['savings_defaulters'] for r in monthly_rows] + [1])
+
+    for r in monthly_rows:
+        r['inflow_pct'] = round((r['inflow'] / max_inflow) * 100, 1)
+        r['outflow_pct'] = round((r['outflow'] / max_outflow) * 100, 1)
+        r['net_pct'] = round((abs(r['net']) / max_net_abs) * 100, 1)
+        r['net_positive'] = r['net'] >= 0
+        r['savings_defaulters_pct'] = round((r['savings_defaulters'] / max_sav_defaulters) * 100, 1)
+
+    ytd_rows = [r for r in monthly_rows if r['period'].startswith(str(current_year))]
+    ytd_inflow = sum(r['inflow'] for r in ytd_rows)
+    ytd_outflow = sum(r['outflow'] for r in ytd_rows)
+    ytd_net = ytd_inflow - ytd_outflow
+    ytd_interest = sum(r['interest'] for r in ytd_rows)
+    ytd_penalties = sum(r['penalty'] for r in ytd_rows)
 
     return render_template(
         'admin/reports.html',
         current_year=current_year,
+        current_period=period_label(cur_period),
+        periods_12=periods_12,
+        monthly_rows=monthly_rows,
+        ytd_inflow=ytd_inflow,
+        ytd_outflow=ytd_outflow,
+        ytd_net=ytd_net,
+        ytd_interest=ytd_interest,
+        ytd_penalties=ytd_penalties,
         total_savings=total_savings,
         total_assets=total_assets,
         out_principal=out_principal,
@@ -4380,14 +5310,35 @@ def reports():
         fees_receivable=fees_receivable,
         income_fees=income_fees,
         income_fines=income_fines,
-        interest_collected=interest_collected,
+        loan_interest_collected=loan_interest_collected,
+        loan_penalty_collected=loan_penalty_collected,
+        loan_income_cash=loan_income_cash,
         expenses_spent=expenses_spent,
+        expenses_pending=expenses_pending,
+        expenses_count=expenses_count,
         operating_income=operating_income,
+        cash_estimate=cash_estimate,
         cash_available=cash_available,
-        loan_total_count=loan_totals['c'] or 0,
+        loan_total_count=loan_total_count,
+        loan_book_total=loan_book_total,
+        pending_loans_count=pending_loans_count,
+        overdue_loans_count=overdue_loans_count,
+        overdue_loans_total_owed=overdue_loans_total_owed,
+        top_loan_defaulters=top_loan_defaulters,
+        top_savings_defaulters=top_savings_defaulters,
+        arrears_members_count=arrears_members_count,
+        arrears_amount_total=arrears_amount_total,
+        current_month_unpaid_count=current_month_unpaid_count,
         active_members=active_members,
-        report_tiles=report_tiles,
-        trend=trend,
+        exited_members=exited_members,
+        minutes_total=minutes_stats['total'],
+        minutes_published=minutes_stats['published'],
+        audit_30d=audit_30d,
+        pending_expenses_count=pending_expenses_count,
+        fees_paid_ytd=fees_year['paid_amount'] or 0,
+        fees_unpaid_ytd=fees_year['unpaid_amount'] or 0,
+        fines_paid_ytd=fines_year['paid_amount'] or 0,
+        fines_unpaid_ytd=fines_year['unpaid_amount'] or 0,
     )
 
 

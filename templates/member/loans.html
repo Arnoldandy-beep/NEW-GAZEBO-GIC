@@ -2,126 +2,74 @@
 {% block title %}My Loans{% endblock %}
 {% block topbar %}My Loans{% endblock %}
 {% block content %}
-<div class="page-header">
-  <div><h1>My Loans</h1><div class="subtitle">All loans you have taken or guaranteed</div></div>
-</div>
-
-<div class="read-only-banner"><i class="ph ph-info"></i> Read-only. To request a new loan, talk to the Treasurer or Chairman.</div>
-
-<div class="card mb-3">
-  <div class="card-header"><i class="ph ph-hand-coins"></i> Loans I Have Taken</div>
-  <div class="card-body p-0 table-responsive">
-    {% if loans %}
-    <table class="table mb-0">
-      <thead>
-        <tr>
-          <th>Loan #</th><th>Issued</th><th>Principal</th><th>Term</th>
-          <th>Due</th><th>Outstanding</th><th>Status</th><th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for l in loans %}
-        <tr>
-          <td><strong>{{ l.loan_no }}</strong></td>
-          <td>{{ l.issued_date|datefmt }}</td>
-          <td class="table-money">{{ l.principal|money }}</td>
-          <td>{{ l.term_months }}m</td>
-          <td>{{ l.due_date|datefmt }}{% if l.is_overdue %} <span class="badge-pill badge-overdue">+{{ l.overdue_months }}m</span>{% endif %}</td>
-          <td class="table-money">{{ l.total_outstanding|money }}</td>
-          <td><span class="badge-pill badge-{{ l.status|lower }}">{{ l.status }}</span></td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary" type="button"
-                    data-bs-toggle="collapse" data-bs-target="#loan-{{ l.id }}">
-              <i class="ph ph-caret-down"></i>
-            </button>
-          </td>
-        </tr>
-        <tr class="collapse" id="loan-{{ l.id }}">
-          <td colspan="8" class="bg-light">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <strong>Loan Details</strong>
-                <dl class="kv-list mt-2">
-                  <dt>Purpose</dt><dd>{{ l.purpose or '-' }}</dd>
-                  <dt>Interest rate</dt><dd>{{ (l.interest_rate * 100)|int }}% / month</dd>
-                  <dt>Guarantor 1</dt><dd>{{ l.g1_no }} - {{ l.g1_name or '-' }} ({{ l.g1_locked_amount|money }} locked)</dd>
-                  <dt>Guarantor 2</dt><dd>{{ l.g2_no }} - {{ l.g2_name or '-' }} ({{ l.g2_locked_amount|money }} locked)</dd>
-                  <dt>My collateral</dt><dd>{{ l.self_locked_amount|money }} of my own savings</dd>
-                  <dt>Principal paid</dt><dd>{{ l.paid_principal|money }}</dd>
-                  <dt>Interest paid</dt><dd>{{ l.paid_interest|money }}</dd>
-                  <dt>Penalty paid</dt><dd>{{ l.paid_penalty|money }}</dd>
-                </dl>
-              </div>
-              <div class="col-md-6">
-                <strong>Repayments</strong>
-                {% if l.repayments %}
-                  <table class="table table-sm mt-2 mb-0">
-                    <thead><tr><th>Date</th><th>Total</th><th>Principal</th><th>Interest</th><th>Penalty</th></tr></thead>
-                    <tbody>
-                      {% for r in l.repayments %}
-                      <tr>
-                        <td>{{ r.payment_date|datefmt }}</td>
-                        <td class="table-money">{{ r.amount|money }}</td>
-                        <td class="table-money">{{ r.principal_part|money }}</td>
-                        <td class="table-money">{{ r.interest_part|money }}</td>
-                        <td class="table-money">{{ r.penalty_part|money }}</td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                {% else %}
-                  <div class="text-muted small mt-2">No repayments yet.</div>
-                {% endif %}
-
-                {% if l.penalties %}
-                <strong class="d-block mt-3">Penalties</strong>
-                <table class="table table-sm mb-0">
-                  <thead><tr><th>Period</th><th>Amount</th></tr></thead>
-                  <tbody>
-                    {% for p in l.penalties %}
-                    <tr><td>{{ p.period|period_label }}</td><td class="table-money">{{ p.penalty_amount|money }}</td></tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-                {% endif %}
-              </div>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state"><i class="ph ph-smiley"></i><div>You have no loan history.</div></div>
-    {% endif %}
+<style>
+.ml-root{--a:#10213b;--b:#21497d;--c:#6090d3;--line:#d9e4ef;--ink:#18324b;--muted:#61788f}.ml-hero{background:linear-gradient(140deg,var(--a) 0%,var(--b) 60%,var(--c) 100%);border-radius:18px;color:#fff;padding:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:10px;position:relative;overflow:hidden;margin-bottom:12px}.ml-hero:before{content:"";position:absolute;right:-70px;top:-70px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 66%)}.ml-id{display:flex;align-items:center;gap:14px}.ml-avatar{width:64px;height:64px;border-radius:18px;overflow:hidden;border:3px solid rgba(255,255,255,.34);background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px}.ml-avatar img{width:100%;height:100%;object-fit:cover}.ml-hero h1{margin:0;font-size:24px;font-weight:900}.ml-sub{margin-top:4px;font-size:12px;opacity:.9}.ml-chip{display:inline-flex;gap:6px;align-items:center;margin-top:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:800;text-transform:uppercase}.ml-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}.ml-kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 3px 10px rgba(17,40,64,.06);position:relative}.ml-kpi:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#224a7e,#78a8df)}.ml-kpi.bad:before{background:linear-gradient(90deg,#b13434,#e27a7a)}.ml-kpi .k{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.ml-kpi .v{margin-top:4px;font-size:22px;font-weight:900;color:var(--ink)}.ml-kpi .s{margin-top:3px;font-size:11px;color:var(--muted)}.ml-panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 3px 10px rgba(17,40,64,.06);overflow:hidden;margin-bottom:12px}.ml-head{padding:10px 12px;border-bottom:1px solid #edf2f8;font-size:12px;font-weight:800;color:#29527d;background:linear-gradient(180deg,#f7fbff,#fff);display:flex;justify-content:space-between;align-items:center;gap:8px}.ml-table{width:100%;border-collapse:collapse;font-size:12px}.ml-table th,.ml-table td{padding:8px 10px;border-top:1px solid #eef2f8;vertical-align:top}.ml-table th{border-top:none;background:#f8fbff;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6a8197;font-weight:800}.ml-money{text-align:right;font-weight:800;color:#20384f}.ml-pill{display:inline-flex;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800}.ml-pill.good{background:#e8f8f0;color:#117a58}.ml-pill.warn{background:#fff3dd;color:#9d6214}.ml-pill.bad{background:#fde8e8;color:#aa3535}.ml-detail{background:#fbfdff}.ml-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 12px}.ml-card{border:1px solid #e3ebf5;border-radius:10px;padding:10px;background:#fff}.ml-card .t{font-size:11px;font-weight:800;color:#274f78;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}@media (max-width:900px){.ml-hero,.ml-detail-grid{grid-template-columns:1fr}}@media (max-width:700px){.ml-kpis{grid-template-columns:1fr}}
+</style>
+<div class="ml-root">
+  <div class="ml-hero"><div class="ml-id"><div class="ml-avatar">{% if member.photo_url %}<img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}">{% else %}{{ (member.full_name or 'U')[0]|upper }}{% endif %}</div><div><h1>My Loans</h1><div class="ml-sub">All loans you have taken, their repayment position, and any guarantees currently tied to your savings.</div><div class="ml-chip"><i class="ph ph-identification-card"></i> {{ member.member_no }}</div></div></div><div></div></div>
+  <div class="ml-kpis">
+    <div class="ml-kpi"><div class="k">Loan Records</div><div class="v">{{ loans|length }}</div><div class="s">All loans taken to date</div></div>
+    <div class="ml-kpi"><div class="k">Guarantees</div><div class="v">{{ guaranteed|length }}</div><div class="s">Active or pending loans you back</div></div>
+    <div class="ml-kpi"><div class="k">Outstanding Total</div><div class="v">{{ (loans|sum(attribute='total_outstanding'))|money }}</div><div class="s">Across your current records</div></div>
+    <div class="ml-kpi {{ (loans|selectattr('is_overdue')|list|length) > 0 and 'bad' or '' }}"><div class="k">Overdue Loans</div><div class="v">{{ loans|selectattr('is_overdue')|list|length }}</div><div class="s">Loans needing urgent clearance</div></div>
   </div>
-</div>
-
-<div class="card">
-  <div class="card-header"><i class="ph ph-shield-check"></i> Loans I Am Guaranteeing</div>
-  <div class="card-body p-0 table-responsive">
-    {% if guaranteed %}
-    <table class="table mb-0">
-      <thead><tr><th>Loan #</th><th>Borrower</th><th>Principal</th><th>My Collateral</th><th>Due</th><th>Status</th></tr></thead>
-      <tbody>
-        {% for g in guaranteed %}
-        <tr>
-          <td>{{ g.loan_no }}</td>
-          <td>{{ g.member_no }} - {{ g.borrower }}</td>
-          <td class="table-money">{{ g.principal|money }}</td>
-          <td class="table-money">
-            {% if g.guarantor1_id == member.id %}{{ g.g1_locked_amount|money }}
-            {% else %}{{ g.g2_locked_amount|money }}{% endif %}
-          </td>
-          <td>{{ g.due_date|datefmt }}</td>
-          <td><span class="badge-pill badge-{{ g.status|lower }}">{{ g.status }}</span></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state"><i class="ph ph-check-circle"></i><div>Not guaranteeing any active loans.</div></div>
-    {% endif %}
+  <div class="ml-panel">
+    <div class="ml-head"><span><i class="ph ph-hand-coins"></i> Loans I Have Taken</span><span class="small text-muted">Read-only</span></div>
+    <div class="table-responsive">
+      {% if loans %}
+      <table class="ml-table">
+        <thead><tr><th>Loan #</th><th>Issued</th><th class="ml-money">Principal</th><th>Term</th><th>Due</th><th class="ml-money">Outstanding</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for l in loans %}
+          <tr>
+            <td><strong>{{ l.loan_no }}</strong></td>
+            <td>{{ l.issued_date|datefmt }}</td>
+            <td class="ml-money">{{ l.principal|money }}</td>
+            <td>{{ l.term_months }}m</td>
+            <td>{{ l.due_date|datefmt }}</td>
+            <td class="ml-money">{{ l.total_outstanding|money }}</td>
+            <td>{% if l.is_overdue %}<span class="ml-pill bad">Overdue</span>{% elif l.status == 'Active' %}<span class="ml-pill good">Active</span>{% else %}<span class="ml-pill warn">{{ l.status }}</span>{% endif %}</td>
+            <td class="text-end"><button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#loan-{{ l.id }}"><i class="ph ph-caret-down"></i></button></td>
+          </tr>
+          <tr class="collapse ml-detail" id="loan-{{ l.id }}">
+            <td colspan="8">
+              <div class="ml-detail-grid">
+                <div class="ml-card">
+                  <div class="t">Loan Position</div>
+                  <dl class="kv-list mt-0 mb-0">
+                    <dt>Purpose</dt><dd>{{ l.purpose or '-' }}</dd>
+                    <dt>Interest Rate</dt><dd>{{ (l.interest_rate * 100)|int }}% / month</dd>
+                    <dt>Guarantor 1</dt><dd>{{ l.g1_no }} - {{ l.g1_name or '-' }} ({{ l.g1_locked_amount|money }})</dd>
+                    <dt>Guarantor 2</dt><dd>{{ l.g2_no }} - {{ l.g2_name or '-' }} ({{ l.g2_locked_amount|money }})</dd>
+                    <dt>My Collateral</dt><dd>{{ l.self_locked_amount|money }}</dd>
+                    <dt>Principal Paid</dt><dd>{{ l.paid_principal|money }}</dd>
+                    <dt>Interest Paid</dt><dd>{{ l.paid_interest|money }}</dd>
+                    <dt>Penalty Paid</dt><dd>{{ l.paid_penalty|money }}</dd>
+                  </dl>
+                </div>
+                <div class="ml-card">
+                  <div class="t">Repayments</div>
+                  {% if l.repayments %}
+                  <table class="ml-table"><thead><tr><th>Date</th><th class="ml-money">Total</th><th class="ml-money">Principal</th><th class="ml-money">Interest</th><th class="ml-money">Penalty</th></tr></thead><tbody>{% for r in l.repayments %}<tr><td>{{ r.payment_date|datefmt }}</td><td class="ml-money">{{ r.amount|money }}</td><td class="ml-money">{{ r.principal_part|money }}</td><td class="ml-money">{{ r.interest_part|money }}</td><td class="ml-money">{{ r.penalty_part|money }}</td></tr>{% endfor %}</tbody></table>
+                  {% else %}<div class="small text-muted">No repayments recorded yet.</div>{% endif %}
+                  {% if l.penalties %}<div class="t mt-3">Penalties</div><table class="ml-table"><thead><tr><th>Period</th><th class="ml-money">Amount</th></tr></thead><tbody>{% for p in l.penalties %}<tr><td>{{ p.period|period_label }}</td><td class="ml-money">{{ p.penalty_amount|money }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div class="empty-state"><i class="ph ph-smiley"></i><div>You have no loan history.</div></div>{% endif %}
+    </div>
+  </div>
+  <div class="ml-panel">
+    <div class="ml-head"><span><i class="ph ph-shield-check"></i> Loans I Am Guaranteeing</span></div>
+    <div class="table-responsive">
+      {% if guaranteed %}
+      <table class="ml-table"><thead><tr><th>Loan #</th><th>Borrower</th><th class="ml-money">Principal</th><th class="ml-money">My Collateral</th><th>Due</th><th>Status</th></tr></thead><tbody>{% for g in guaranteed %}<tr><td>{{ g.loan_no }}</td><td>{{ g.member_no }} - {{ g.borrower }}</td><td class="ml-money">{{ g.principal|money }}</td><td class="ml-money">{% if g.guarantor1_id == member.id %}{{ g.g1_locked_amount|money }}{% else %}{{ g.g2_locked_amount|money }}{% endif %}</td><td>{{ g.due_date|datefmt }}</td><td><span class="ml-pill {{ g.status == 'Active' and 'good' or 'warn' }}">{{ g.status }}</span></td></tr>{% endfor %}</tbody></table>
+      {% else %}<div class="empty-state"><i class="ph ph-check-circle"></i><div>Not guaranteeing any active loans.</div></div>{% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}

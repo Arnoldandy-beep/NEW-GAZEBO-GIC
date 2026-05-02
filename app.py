@@ -68,12 +68,53 @@ def create_app():
     @app.context_processor
     def inject_globals():
         pending_expenses_count = 0
-        if session.get('user_id') and session.get('role') in ('CHAIRMAN', 'IT_ADMIN'):
+        pending_approvals_count = 0
+        unread_notifications_count = 0
+        if session.get('user_id'):
             try:
                 db = get_db()
-                pending_expenses_count = db.execute(
-                    "SELECT COUNT(*) c FROM expenses WHERE status='Pending'"
-                ).fetchone()['c']
+                role = session.get('role')
+                uid = session.get('user_id')
+                if role in ('CHAIRMAN', 'IT_ADMIN'):
+                    pending_expenses_count = db.execute(
+                        "SELECT COUNT(*) c FROM expenses WHERE status='Pending'"
+                    ).fetchone()['c']
+                if role in ('IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'):
+                    cnt = 0
+                    if role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN'):
+                        cnt += db.execute(
+                            """SELECT COUNT(*) c FROM loan_amendments la
+                               WHERE la.status='Pending' AND la.requested_by!=?
+                               AND NOT EXISTS (
+                                   SELECT 1 FROM loan_approvals lax
+                                   WHERE lax.loan_id=la.loan_id AND lax.amendment_id=la.id
+                                     AND lax.stage='AMENDMENT' AND lax.user_id=?)""",
+                            (uid, uid)
+                        ).fetchone()['c']
+                    if role in ('CHAIRMAN', 'IT_ADMIN'):
+                        cnt += db.execute(
+                            "SELECT COUNT(*) c FROM expenses WHERE status='Pending'"
+                        ).fetchone()['c']
+                    if role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN'):
+                        cnt += db.execute(
+                            """SELECT COUNT(*) c FROM loans l
+                               WHERE l.status='Pending'
+                               AND NOT EXISTS (
+                                   SELECT 1 FROM loan_approvals la
+                                   WHERE la.loan_id=l.id AND la.stage='NEW' AND la.user_id=?)""",
+                            (uid,)
+                        ).fetchone()['c']
+                    if role in ('TREASURER', 'IT_ADMIN'):
+                        cnt += db.execute(
+                            """SELECT COUNT(*) c
+                                 FROM member_profile_change_requests r
+                                WHERE r.status='Pending' AND r.request_type='NEXT_OF_KIN'"""
+                        ).fetchone()['c']
+                    pending_approvals_count = cnt
+                    unread_notifications_count = db.execute(
+                        "SELECT COUNT(*) c FROM notifications WHERE user_id=? AND is_read=0",
+                        (uid,)
+                    ).fetchone()['c']
             except Exception:
                 pass
         return dict(
@@ -82,6 +123,8 @@ def create_app():
             now=datetime.now(),
             ROLES=Config.ROLES,
             pending_expenses_count=pending_expenses_count,
+            pending_approvals_count=pending_approvals_count,
+            unread_notifications_count=unread_notifications_count,
         )
 
     @app.before_request
@@ -153,15 +196,27 @@ def create_app():
 
 app = create_app()
 
+_DEFAULT_SECRET = 'gazebo-gic-change-this-in-production-2026'
+
+if Config.SECRET_KEY == _DEFAULT_SECRET:
+    import warnings
+    warnings.warn(
+        "\n[SECURITY] SECRET_KEY is set to the insecure default value. "
+        "Set the SECRET_KEY environment variable to a strong random secret before deploying.",
+        stacklevel=1,
+    )
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     host = os.environ.get('HOST', '127.0.0.1')
+    debug_mode = os.environ.get('FLASK_DEBUG', '0').strip() in ('1', 'true', 'yes')
     print("=" * 60)
     print("GAZEBO Investment Club - Management System")
     print("=" * 60)
     print(f"Database: {Config.DATABASE_PATH}")
     print(f"Visit:    http://{host}:{port}/")
     print(f"Login:    use seeded credentials (see README.md)")
+    if debug_mode:
+        print("WARNING:  Debug mode is ON — do not use in production!")
     print("=" * 60)
-    app.run(debug=True, host=host, port=port)
+    app.run(debug=debug_mode, host=host, port=port)

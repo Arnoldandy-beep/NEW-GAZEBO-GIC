@@ -1,128 +1,415 @@
-﻿{% extends "base.html" %}
-{% block title %}Loans{% endblock %}
-{% block topbar %}Loans{% endblock %}
+{% extends "base.html" %}
+{% block title %}Loans — {{ CONFIG.CLUB_NAME }}{% endblock %}
+{% block topbar %}Loans Module{% endblock %}
+
 {% block content %}
-<div class="page-header">
-  <div><h1>Loans</h1><div class="subtitle">{{ (CONFIG.LOAN_INTEREST_RATE_MONTHLY * 100)|int }}%/mo (members) &middot; Max {{ CONFIG.LOAN_MAX_TERM_MONTHS }} months</div></div>
-  <div class="d-flex gap-2 module-action-group loans-module-actions">
-    <form method="post" action="{{ url_for('admin.penalties_run') }}" data-confirm="Run penalty cycle? This will apply 5% penalty to all overdue active loans for unrecorded months." class="d-inline">
-      <button type="submit" class="btn btn-outline-warning btn-sm module-warn-btn"><i class="ph ph-clock"></i> Run Penalties</button>
-    </form>
-    {% if session.role in ('IT_ADMIN', 'TREASURER') %}
-    <a href="{{ url_for('admin.loan_create') }}" class="btn btn-primary module-highlight-btn"><i class="ph ph-plus-circle"></i> New Loan</a>
+<style>
+/* ============================================================
+   LOANS MODULE — Premium Financial UI
+   ============================================================ */
+.ln-root {
+  --loan-a:  #1d4ed8; --loan-b:  #60a5fa; --loan-bg: #eff6ff; --loan-border: #93c5fd;
+  --gold-a:  #92400e; --gold-b:  #f59e0b; --gold-bg: #fef3c7; --gold-border: #fcd34d;
+  --int-a:   #7c3aed; --int-b:   #a78bfa; --int-bg:  #f5f3ff; --int-border: #c4b5fd;
+  --red-a:   #b91c1c; --red-b:   #f87171;
+  --grn-a:   #059669; --grn-b:   #34d399; --grn-bg:  #ecfdf5; --grn-border: #6ee7b7;
+  --ops-a:   #0d9488; --ops-b:   #2dd4bf;
+}
+
+/* --- Hero bar --- */
+.ln-hero {
+  background: linear-gradient(135deg, #0f1e35 0%, #1a3a6b 55%, #1d4ed8 100%);
+  border-radius: 18px;
+  padding: 22px 26px 18px;
+  color: #fff;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.ln-hero::before {
+  content:''; position:absolute; top:-50px; right:-50px;
+  width:240px; height:240px; border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.07) 0%,transparent 70%);
+}
+.ln-hero h1  { font-size:24px; font-weight:900; margin:0; letter-spacing:-.3px; }
+.ln-hero .sub { font-size:13px; opacity:.75; margin-top:4px; }
+.ln-hero .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.ln-hero .actions a,
+.ln-hero .actions button {
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.3);
+  color:#fff; border-radius:8px;
+  padding:6px 14px; font-size:12px; font-weight:600;
+  text-decoration:none;
+  display:inline-flex; align-items:center; gap:5px;
+  cursor:pointer; transition:background .15s;
+}
+.ln-hero .actions a:hover,
+.ln-hero .actions button:hover { background:rgba(255,255,255,.25); color:#fff; }
+.ln-hero .actions .btn-danger-ghost {
+  background:rgba(220,38,38,.25); border-color:rgba(252,165,165,.4);
+}
+
+/* --- KPI grid --- */
+.ln-kpi-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;
+  margin-bottom:20px;
+}
+.ln-kpi {
+  background:#fff; border-radius:14px;
+  padding:16px 18px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+  text-decoration:none; color:inherit;
+  transition:transform .15s,box-shadow .15s;
+  position:relative; overflow:hidden;
+}
+.ln-kpi:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.09); }
+.ln-kpi::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+}
+.ln-kpi.blue::before   { background:linear-gradient(90deg,var(--loan-a),var(--loan-b)); }
+.ln-kpi.gold::before   { background:linear-gradient(90deg,var(--gold-a),var(--gold-b)); }
+.ln-kpi.green::before  { background:linear-gradient(90deg,var(--grn-a),var(--grn-b)); }
+.ln-kpi.purple::before { background:linear-gradient(90deg,var(--int-a),var(--int-b)); }
+.ln-kpi.red::before    { background:linear-gradient(90deg,var(--red-a),var(--red-b)); }
+.ln-kpi.teal::before   { background:linear-gradient(90deg,var(--ops-a),var(--ops-b)); }
+
+.ln-kpi-top   { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+.ln-kpi-label { font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; }
+.ln-kpi-value { font-size:22px; font-weight:900; color:#0f172a; line-height:1.1; margin-bottom:4px; }
+.ln-kpi-sub   { font-size:11px; color:#64748b; line-height:1.4; }
+
+.ln-icon {
+  width:38px; height:38px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.ln-icon.blue   { background:var(--loan-bg); color:var(--loan-a); box-shadow:0 2px 6px rgba(29,78,216,.2),inset 0 1px 0 rgba(255,255,255,.7); }
+.ln-icon.gold   { background:var(--gold-bg); color:var(--gold-a); box-shadow:0 2px 6px rgba(146,64,14,.2),inset 0 1px 0 rgba(255,255,255,.7); }
+.ln-icon.green  { background:var(--grn-bg);  color:var(--grn-a);  box-shadow:0 2px 6px rgba(5,150,105,.2),inset 0 1px 0 rgba(255,255,255,.7); }
+.ln-icon.purple { background:var(--int-bg);  color:var(--int-a);  box-shadow:0 2px 6px rgba(124,58,237,.2),inset 0 1px 0 rgba(255,255,255,.7); }
+.ln-icon.red    { background:#fff1f2;        color:var(--red-a);  box-shadow:0 2px 6px rgba(185,28,28,.2),inset 0 1px 0 rgba(255,255,255,.7); }
+.ln-icon.teal   { background:#f0fdfa;        color:var(--ops-a);  box-shadow:0 2px 6px rgba(13,148,136,.2),inset 0 1px 0 rgba(255,255,255,.7); }
+
+/* --- Section shell --- */
+.ln-section {
+  background:#fff; border-radius:16px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+  margin-bottom:20px; overflow:hidden;
+}
+.ln-section-head {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 18px; font-size:13px; font-weight:700;
+  color:#1e293b; border-bottom:1px solid #e2e8f0;
+  background:#f8fafc;
+}
+.ln-section-head.blue   { border-bottom-color:var(--loan-border); color:var(--loan-a); }
+.ln-section-head.gold   { border-bottom-color:var(--gold-border); color:var(--gold-a); }
+.ln-section-head.green  { border-bottom-color:var(--grn-border);  color:var(--grn-a); }
+.ln-section-head.purple { border-bottom-color:var(--int-border);  color:var(--int-a); }
+.ln-section-head.red    { border-bottom-color:#fecaca;            color:var(--red-a); }
+
+/* Pool utilisation bar */
+.ln-pool-bar {
+  height:8px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin:10px 0 4px;
+}
+.ln-pool-bar .fill {
+  height:100%; border-radius:99px;
+  background:linear-gradient(90deg,#1d4ed8,#60a5fa); transition:width .3s;
+}
+
+/* Filter / sort chip strip */
+.ln-filter-bar {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:14px 18px 10px; border-bottom:1px solid #f1f5f9;
+}
+.ln-chip {
+  padding:5px 13px; border-radius:20px; font-size:12px; font-weight:600;
+  color:#64748b; background:#f1f5f9; text-decoration:none; border:none; cursor:pointer;
+  transition:all .15s; display:inline-flex; align-items:center; gap:5px;
+  white-space:nowrap;
+}
+.ln-chip:hover { background:#e2e8f0; color:#334155; }
+.ln-chip.active { background:#1d4ed8; color:#fff; }
+.ln-chip.sort-active { background:#0f172a; color:#fff; }
+.ln-sep { width:1px; height:24px; background:#e2e8f0; margin:0 4px; flex-shrink:0; }
+
+/* Premium table */
+.ln-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.ln-tbl thead th {
+  padding:10px 14px; text-align:left;
+  font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.5px; color:#94a3b8;
+  background:#f8fafc; border-bottom:1px solid #e2e8f0;
+}
+.ln-tbl thead th a { color:#94a3b8; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.ln-tbl thead th a:hover { color:#1d4ed8; }
+.ln-tbl thead th a.sort-active { color:#1d4ed8; }
+.ln-tbl tbody td { padding:11px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.ln-tbl tbody tr:last-child td { border-bottom:none; }
+.ln-tbl tbody tr:hover { background:#f8fafc; }
+.ln-tbl td.money { text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
+.ln-tbl td.money.pos { color:#059669; }
+.ln-tbl td.money.neg { color:#b91c1c; }
+.ln-tbl td.money.warn { color:#92400e; }
+
+/* Status badges */
+.ln-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;
+}
+.ln-badge.active  { background:#dbeafe; color:#1d4ed8; }
+.ln-badge.cleared { background:#dcfce7; color:#166534; }
+.ln-badge.pending { background:#fef3c7; color:#92400e; }
+.ln-badge.overdue { background:#fee2e2; color:#991b1b; }
+
+/* Overdue warning row */
+.ln-tbl tbody tr.row-overdue { background:#fff8f8; }
+.ln-tbl tbody tr.row-overdue:hover { background:#fff1f1; }
+
+/* WA notice button */
+.wa-btn-sm {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600;
+  background:#dcfce7; color:#166534; border:1px solid #86efac;
+  text-decoration:none; transition:background .15s;
+}
+.wa-btn-sm:hover { background:#bbf7d0; color:#166534; }
+</style>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<div class="ln-hero">
+  <h1><i class="ph ph-hand-coins" style="margin-right:8px"></i>Loans Module</h1>
+  <div class="sub">
+    {{ (CONFIG.LOAN_INTEREST_RATE_MONTHLY * 100)|int }}% interest/month &nbsp;&middot;&nbsp;
+    Max {{ CONFIG.LOAN_MAX_TERM_MONTHS }} months term &nbsp;&middot;&nbsp;
+    Pool: {{ loan_pools.total_savings|money }}
+  </div>
+  <div class="actions">
+    {% if session.role in ('IT_ADMIN','TREASURER') %}
+    <a href="{{ url_for('admin.loan_create') }}">
+      <i class="ph ph-plus-circle"></i> New Loan
+    </a>
     {% endif %}
+    <form method="post" action="{{ url_for('admin.penalties_run') }}"
+          data-confirm="Run penalty cycle? Applies 5% penalty to all overdue active loans."
+          class="d-inline">
+      <button type="submit" class="btn-danger-ghost">
+        <i class="ph ph-clock-countdown"></i> Run Penalties
+      </button>
+    </form>
+    <a href="{{ url_for('admin.loans_list', sort='overdue', dir='desc') }}">
+      <i class="ph ph-warning"></i> Overdue View
+    </a>
   </div>
 </div>
 
-<div class="card mb-3 loan-pools-panel">
-  <div class="card-body">
-    <div class="loan-pools-header mb-3">
-      <div>
-        <strong><i class="ph ph-bank"></i> Available Funds For New Loans</strong>
-        <div class="small text-muted">Total savings pool: <strong>{{ loan_pools.total_savings|money }}</strong> &middot; Standard SACCO rates &middot; Updated on every transaction</div>
+<!-- ============================================================
+     KPI ROW 1 — Funds & Volume
+     ============================================================ -->
+<div class="ln-kpi-grid">
+  <a class="ln-kpi gold"
+     href="{{ url_for('admin.loans_list', pool='', sort=sort_by, dir=sort_dir) }}"
+     style="text-decoration:none">
+    <div class="ln-kpi-top">
+      <div class="ln-kpi-label">Available to Deploy</div>
+      <div class="ln-icon gold"><i class="ph ph-bank"></i></div>
+    </div>
+    <div class="ln-kpi-value">{{ loan_pools.available_to_deploy|money }}</div>
+    <div class="ln-kpi-sub">Savings pool minus active loan principal</div>
+  </a>
+
+  <a class="ln-kpi blue"
+     href="{{ url_for('admin.loans_list', pool='deployed_active', sort=sort_by, dir=sort_dir) }}"
+     style="text-decoration:none">
+    <div class="ln-kpi-top">
+      <div class="ln-kpi-label">Deployed (Active)</div>
+      <div class="ln-icon blue"><i class="ph ph-arrows-clockwise"></i></div>
+    </div>
+    <div class="ln-kpi-value">{{ loan_pools.deployed_active|money }}</div>
+    <div class="ln-kpi-sub">
+      Principal outstanding on active loans
+      <div class="ln-pool-bar">
+        <div class="fill" style="width:{{ [loan_pools.pool_utilization, 100]|min }}%"></div>
       </div>
-      <div class="loan-pools-amount">{{ loan_pools.available_to_deploy|money }}</div>
+      {{ loan_pools.pool_utilization }}% pool utilisation
     </div>
-    <div class="loan-pools-grid">
-      <a href="{{ url_for('admin.loans_list', pool='deployed_active', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-danger {% if pool == 'deployed_active' %}pool-active{% endif %}">
-        <div class="pool-box-icon"><i class="ph ph-arrows-clockwise"></i></div>
-        <div class="label">Deployed (Active Loans)</div>
-        <div class="value">{{ loan_pools.deployed_active|money }}</div>
-      </a>
-      <a href="{{ url_for('admin.loans_list', pool='interest_pending_active', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-warn {% if pool == 'interest_pending_active' %}pool-active{% endif %}">
-        <div class="pool-box-icon"><i class="ph ph-clock"></i></div>
-        <div class="label">Outstanding Interest + Penalty (Active)</div>
-        <div class="value">{{ loan_pools.interest_pending_active|money }}</div>
-        <div class="small text-muted mt-1">Base {{ loan_pools.interest_pending_active_base|money }} + Penalty {{ loan_pools.interest_pending_active_penalty|money }}</div>
-      </a>
-      <a href="{{ url_for('admin.loans_list', pool='total_loans_interest', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-info {% if pool == 'total_loans_interest' %}pool-active{% endif %}">
-        <div class="pool-box-icon"><i class="ph ph-trend-up"></i></div>
-        <div class="label">Total Interest + Penalty (All Loans)</div>
-        <div class="value">{{ loan_pools.total_loans_interest|money }}</div>
-        <div class="small text-muted mt-1">Base {{ loan_pools.total_loans_interest_base|money }} + Penalty {{ loan_pools.total_loans_interest_penalty|money }}</div>
-      </a>
-      <a href="{{ url_for('admin.loans_list', pool='principal_all_loans', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-info {% if pool == 'principal_all_loans' %}pool-active{% endif %}">
-        <div class="pool-box-icon"><i class="ph ph-stack"></i></div>
-        <div class="label">Principal on All Loans</div>
-        <div class="value">{{ loan_pools.principal_all_loans|money }}</div>
-      </a>
-      <a href="{{ url_for('admin.loans_list', pool='closed_loans_count', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-success {% if pool == 'closed_loans_count' %}pool-active{% endif %}">
-        <div class="pool-box-icon"><i class="ph ph-check-circle"></i></div>
-        <div class="label">Closed Loans</div>
-        <div class="value">{{ loan_pools.closed_loans_count }}</div>
-      </a>
-      <a href="{{ url_for('admin.loans_list', pool='interest_on_closed', sort=sort_by, dir=sort_dir) }}" class="loan-pool-box loan-pool-link pool-box-success {% if pool == 'interest_on_closed' %}pool-active{% endif %}">
-        <div class="pool-box-icon"><i class="ph ph-receipt"></i></div>
-        <div class="label">Interest on Closed Loans</div>
-        <div class="value">{{ loan_pools.interest_on_closed|money }}</div>
-      </a>
+  </a>
+
+  <a class="ln-kpi blue"
+     href="{{ url_for('admin.loans_list', pool='principal_all_loans', sort=sort_by, dir=sort_dir) }}"
+     style="text-decoration:none">
+    <div class="ln-kpi-top">
+      <div class="ln-kpi-label">Total Principal (All Loans)</div>
+      <div class="ln-icon blue"><i class="ph ph-stack"></i></div>
     </div>
-    <div class="loan-pool-progress mt-3">
-      <div class="loan-pool-progress-bar" style="width: {{ loan_pools.pool_utilization }}%"></div>
+    <div class="ln-kpi-value">{{ loan_pools.principal_all_loans|money }}</div>
+    <div class="ln-kpi-sub">Aggregate principal across all {{ loans|length }} loans</div>
+  </a>
+
+  <a class="ln-kpi green"
+     href="{{ url_for('admin.loans_list', pool='closed_loans_count', sort=sort_by, dir=sort_dir) }}"
+     style="text-decoration:none">
+    <div class="ln-kpi-top">
+      <div class="ln-kpi-label">Loans Closed / Cleared</div>
+      <div class="ln-icon green"><i class="ph ph-check-circle"></i></div>
     </div>
-    <div class="small text-muted mt-1">Pool Utilisation (principal outstanding / pool): {{ loan_pools.pool_utilization }}%</div>
+    <div class="ln-kpi-value">{{ loan_pools.closed_loans_count }}</div>
+    <div class="ln-kpi-sub">Fully repaid loans to date</div>
+  </a>
+</div>
+
+<!-- ============================================================
+     INTEREST INCOME PANEL (moved from Savings)
+     ============================================================ -->
+<div class="ln-section">
+  <div class="ln-section-head purple">
+    <i class="ph ph-chart-line-up"></i>
+    Loan Income — Collected &amp; Projected
+    <span style="margin-left:auto;font-size:11px;font-weight:600;opacity:.7">
+      Consistent with Dashboard &amp; Dividends
+    </span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:16px">
+
+    <div class="ln-kpi purple" style="box-shadow:none">
+      <div class="ln-kpi-top">
+        <div class="ln-kpi-label">Total Loan Income (Cash)</div>
+        <div class="ln-icon purple"><i class="ph ph-coins"></i></div>
+      </div>
+      <div class="ln-kpi-value">{{ loan_income_total|money }}</div>
+      <div class="ln-kpi-sub">
+        Interest collected: {{ loan_interest_collected|money }}<br>
+        Penalties collected: {{ loan_penalty_collected|money }}
+      </div>
+    </div>
+
+    <a class="ln-kpi purple"
+       href="{{ url_for('admin.loans_list', pool='interest_on_closed', sort=sort_by, dir=sort_dir) }}"
+       style="box-shadow:none;text-decoration:none">
+      <div class="ln-kpi-top">
+        <div class="ln-kpi-label">Interest on Closed Loans</div>
+        <div class="ln-icon green"><i class="ph ph-receipt"></i></div>
+      </div>
+      <div class="ln-kpi-value">{{ loan_pools.interest_on_closed|money }}</div>
+      <div class="ln-kpi-sub">All interest realised from cleared/repaid loans</div>
+    </a>
+
+    <a class="ln-kpi purple"
+       href="{{ url_for('admin.loans_list', pool='interest_pending_active', sort=sort_by, dir=sort_dir) }}"
+       style="box-shadow:none;text-decoration:none">
+      <div class="ln-kpi-top">
+        <div class="ln-kpi-label">Outstanding Interest (Active)</div>
+        <div class="ln-icon purple"><i class="ph ph-trend-up"></i></div>
+      </div>
+      <div class="ln-kpi-value">{{ loan_interest_projected|money }}</div>
+      <div class="ln-kpi-sub">Contractual interest still owed on open loans</div>
+    </a>
+
+    <a class="ln-kpi red"
+       href="{{ url_for('admin.loans_list', pool='interest_pending_active', sort=sort_by, dir=sort_dir) }}"
+       style="box-shadow:none;text-decoration:none">
+      <div class="ln-kpi-top">
+        <div class="ln-kpi-label">Penalty Outstanding (Active)</div>
+        <div class="ln-icon red"><i class="ph ph-percent"></i></div>
+      </div>
+      <div class="ln-kpi-value">{{ loan_penalty_projected|money }}</div>
+      <div class="ln-kpi-sub">
+        Overdue penalty charges still unpaid<br>
+        Base: {{ loan_pools.interest_pending_active_base|money }} &nbsp;|&nbsp;
+        Penalty: {{ loan_pools.interest_pending_active_penalty|money }}
+      </div>
+    </a>
+
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body p-0 table-responsive">
-      <div class="loan-strip-wrap p-3 pb-2">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="loan-strip">
-            <a class="chip {% if not status %}active{% endif %}" href="{{ url_for('admin.loans_list', sort=sort_by, dir=sort_dir, pool=pool) }}">All</a>
-            {% for s in statuses %}
-            <a class="chip {% if s == status %}active{% endif %}" href="{{ url_for('admin.loans_list', status=s, sort=sort_by, dir=sort_dir, pool=pool) }}">{{ s }}</a>
-            {% endfor %}
-          </div>
-          <div class="loan-strip loan-strip-sort">
-            <a class="chip chip-sort {% if sort_by == 'overdue' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='overdue', dir='desc') }}"><i class="ph ph-warning"></i> Overdue First</a>
-            <a class="chip chip-sort {% if sort_by == 'outstanding' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='outstanding', dir='desc') }}"><i class="ph ph-sort-descending"></i> Highest Outstanding</a>
-            <a class="chip chip-sort {% if sort_by == 'due' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='due', dir='asc') }}"><i class="ph ph-calendar-blank"></i> Nearest Due</a>
-            <a class="chip chip-sort {% if sort_by == 'newest' %}active{% endif %}" href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='newest', dir='desc') }}"><i class="ph ph-clock"></i> Newest</a>
-          </div>
-        </div>
-        {% if sort_by == 'overdue' %}
-        <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
-          <div class="small fw-semibold text-danger"><i class="ph ph-bell-ringing"></i> Loan Notification</div>
-          <div class="d-flex gap-2 flex-wrap">
-            <form method="post" action="{{ url_for('admin.loans_send_reminders') }}" class="d-inline">
-              {% for r in overdue_reminders %}
-              <input type="hidden" name="loan_ids" value="{{ r.id }}">
-              {% endfor %}
-              <button type="submit" class="btn btn-sm btn-outline-danger" {% if not overdue_reminders %}disabled{% endif %}>
-                <i class="ph ph-bell"></i> SEND Reminders ({{ overdue_reminders|length }})
-              </button>
-            </form>
-            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#whatsappRemindersModal" {% if not overdue_reminders %}disabled{% endif %}>
-              <i class="ph ph-whatsapp-logo"></i> Send WhatsApp Reminder ({{ overdue_reminders|length }})
-            </button>
-          </div>
-        </div>
-        {% endif %}
-      </div>
-    <table class="table table-sortable mb-0">
+<!-- ============================================================
+     LOANS TABLE
+     ============================================================ -->
+<div class="ln-section">
+  <!-- Filter strip -->
+  <div class="ln-filter-bar">
+    <a class="ln-chip {% if not status %}active{% endif %}"
+       href="{{ url_for('admin.loans_list', sort=sort_by, dir=sort_dir, pool=pool) }}">All</a>
+    {% for s in statuses %}
+    <a class="ln-chip {% if s == status %}active{% endif %}"
+       href="{{ url_for('admin.loans_list', status=s, sort=sort_by, dir=sort_dir, pool=pool) }}">{{ s }}</a>
+    {% endfor %}
+
+    <div class="ln-sep"></div>
+
+    <a class="ln-chip {% if sort_by == 'overdue' %}sort-active{% endif %}"
+       href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='overdue', dir='desc') }}">
+      <i class="ph ph-warning"></i> Overdue First
+    </a>
+    <a class="ln-chip {% if sort_by == 'outstanding' %}sort-active{% endif %}"
+       href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='outstanding', dir='desc') }}">
+      <i class="ph ph-sort-descending"></i> Highest Outstanding
+    </a>
+    <a class="ln-chip {% if sort_by == 'due' %}sort-active{% endif %}"
+       href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='due', dir='asc') }}">
+      <i class="ph ph-calendar-blank"></i> Nearest Due
+    </a>
+    <a class="ln-chip {% if sort_by == 'newest' %}sort-active{% endif %}"
+       href="{{ url_for('admin.loans_list', status=status, pool=pool, sort='newest', dir='desc') }}">
+      <i class="ph ph-clock"></i> Newest
+    </a>
+  </div>
+
+  <!-- Overdue notification bar -->
+  {% if sort_by == 'overdue' and overdue_reminders %}
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;background:#fff8f8;border-bottom:1px solid #fecaca;font-size:12px;">
+    <i class="ph ph-bell-ringing" style="color:#b91c1c;font-size:16px"></i>
+    <span class="fw-semibold" style="color:#b91c1c">{{ overdue_reminders|length }} overdue loan{{ 's' if overdue_reminders|length != 1 }} need attention</span>
+    <div class="ms-auto d-flex gap-2">
+      <form method="post" action="{{ url_for('admin.loans_send_reminders') }}" class="d-inline">
+        {% for r in overdue_reminders %}
+        <input type="hidden" name="loan_ids" value="{{ r.id }}">
+        {% endfor %}
+        <button type="submit" class="ln-chip" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5">
+          <i class="ph ph-bell"></i> Send {{ overdue_reminders|length }} Reminder{{ 's' if overdue_reminders|length != 1 }}
+        </button>
+      </form>
+      <button type="button" class="ln-chip" style="background:#dcfce7;color:#166534;border:1px solid #86efac"
+              data-bs-toggle="modal" data-bs-target="#whatsappRemindersModal">
+        <i class="ph ph-whatsapp-logo"></i> WhatsApp ({{ overdue_reminders|length }})
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="ln-tbl">
       <thead>
         <tr>
           {% set cols = [
-            ('loan_no', 'No.'),
+            ('loan_no',  'Loan No.'),
             ('borrower', 'Borrower'),
-            ('principal', 'Principal'),
+            ('principal','Principal'),
             ('interest', 'Interest'),
-            ('rate', 'Rate'),
-            ('due', 'Due Date'),
-            ('outstanding', 'Outstanding'),
-            ('status', 'Status'),
+            ('due',      'Due Date'),
+            ('outstanding','Outstanding'),
+            ('status',   'Status'),
           ] %}
           {% for col_key, col_label in cols %}
           {% set is_active = (sort_by == col_key) %}
           {% set next_dir = 'asc' if (is_active and sort_dir == 'desc') else 'desc' %}
           <th>
-            <a href="{{ url_for('admin.loans_list', status=status, pool=pool, sort=col_key, dir=next_dir) }}" class="sort-th {% if is_active %}sort-active{% endif %}">
+            <a href="{{ url_for('admin.loans_list', status=status, pool=pool, sort=col_key, dir=next_dir) }}"
+               class="{% if is_active %}sort-active{% endif %}">
               {{ col_label }}
               {% if is_active %}
                 <i class="ph ph-caret-{{ 'up' if sort_dir == 'asc' else 'down' }}"></i>
               {% else %}
-                <i class="ph ph-caret-up-down sort-idle"></i>
+                <i class="ph ph-caret-up-down" style="opacity:.3"></i>
               {% endif %}
             </a>
           </th>
@@ -132,107 +419,137 @@
       </thead>
       <tbody>
         {% for l in loans %}
-        <tr>
-          <td><strong>{{ l.loan_no }}</strong></td>
+        {% set pending_int = l.outstanding_interest + l.outstanding_penalty %}
+        {% set paid_int    = l.paid_interest + l.paid_penalty %}
+        <tr class="{% if l.is_overdue %}row-overdue{% endif %}">
           <td>
-            {{ l.member_no }} - {{ l.borrower_name }}
-            <div class="small text-muted">G: {{ l.g1_name or '-' }} / {{ l.g2_name or '-' }}</div>
-          </td>
-          <td class="table-money">{{ l.principal|money }}</td>
-          <td>
-            {% set pending_interest_total = l.outstanding_interest + l.outstanding_penalty %}
-            {% set paid_interest_total = l.paid_interest + l.paid_penalty %}
-            {% set total_interest_due = paid_interest_total + pending_interest_total %}
-            {% if pending_interest_total == 0 and paid_interest_total > 0 %}
-            <div class="interest-cleared-wrap">
-              <div class="interest-cleared-line">{{ total_interest_due|money }}</div>
-              <div class="interest-cleared-note">NO INTEREST PENDING</div>
+            <strong style="color:#1d4ed8">{{ l.loan_no }}</strong>
+            {% if l.is_overdue %}
+            <div>
+              <span class="ln-badge overdue" style="font-size:10px">
+                <i class="ph ph-warning-circle"></i> +{{ l.overdue_months }}m
+              </span>
             </div>
-            {% else %}
-            <div>{{ total_interest_due|money }}</div>
-            <div class="small text-muted">Pending {{ pending_interest_total|money }}</div>
-            {% if l.outstanding_penalty > 0 %}
-            <div class="small text-danger">Penalty {{ l.outstanding_penalty|money }}</div>
-            {% endif %}
-            {% if l.paid_interest + l.paid_penalty > 0 %}
-            <div class="small text-success">Paid {{ (l.paid_interest + l.paid_penalty)|money }}</div>
-            {% endif %}
             {% endif %}
           </td>
-          <td>{{ (l.interest_rate * 100)|int }}%/mo</td>
           <td>
-            {{ l.due_date|datefmt }}
-            {% if l.is_overdue %}<div><span class="badge-pill badge-overdue">+{{ l.overdue_months }}m late</span></div>{% endif %}
+            <strong>{{ l.borrower_name }}</strong>
+            <div style="font-size:11px;color:#94a3b8">{{ l.member_no }}</div>
+            <div style="font-size:11px;color:#94a3b8">G: {{ l.g1_name or '—' }} / {{ l.g2_name or '—' }}</div>
           </td>
-          <td class="table-money">{{ l.total_outstanding|money }}</td>
-          <td><span class="badge-pill badge-{{ l.status|lower }}">{{ l.status }}</span></td>
-          <td><a href="{{ url_for('admin.loan_detail', loan_id=l.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+          <td class="money">{{ l.principal|money }}</td>
+          <td>
+            {% if pending_int == 0 and paid_int > 0 %}
+            <div style="font-weight:700;color:#059669">{{ (paid_int + pending_int)|money }}</div>
+            <div style="font-size:10px;color:#059669;font-weight:600">ALL CLEARED</div>
+            {% else %}
+            <div style="font-weight:700">{{ (paid_int + pending_int)|money }}</div>
+            {% if pending_int > 0 %}
+            <div style="font-size:11px;color:#92400e">Pending {{ pending_int|money }}</div>
+            {% endif %}
+            {% if l.outstanding_penalty > 0 %}
+            <div style="font-size:11px;color:#b91c1c">Penalty {{ l.outstanding_penalty|money }}</div>
+            {% endif %}
+            {% if paid_int > 0 %}
+            <div style="font-size:11px;color:#059669">Paid {{ paid_int|money }}</div>
+            {% endif %}
+            {% endif %}
+          </td>
+          <td>
+            <strong>{{ l.due_date|datefmt }}</strong>
+            <div style="font-size:11px;color:#64748b">{{ (l.interest_rate * 100)|int }}%/mo</div>
+          </td>
+          <td class="money {% if l.total_outstanding > 0 %}neg{% else %}pos{% endif %}">
+            {{ l.total_outstanding|money }}
+          </td>
+          <td>
+            <span class="ln-badge {{ l.status|lower }}">{{ l.status }}</span>
+          </td>
+          <td>
+            <a href="{{ url_for('admin.loan_detail', loan_id=l.id) }}"
+               class="ln-chip" style="background:var(--loan-bg);color:var(--loan-a);border:1px solid var(--loan-border)">
+              <i class="ph ph-eye"></i> View
+            </a>
+          </td>
         </tr>
         {% else %}
-        <tr><td colspan="9" class="text-center text-muted py-4">No loans match.</td></tr>
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="ph ph-hand-coins" style="font-size:36px;opacity:.3"></i>
+            <p class="mt-2 mb-0">No loans match the current filter.</p>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
+<!-- ============================================================
+     WHATSAPP OVERDUE MODAL (unchanged functionality)
+     ============================================================ -->
 {% if sort_by == 'overdue' %}
 <div class="modal fade" id="whatsappRemindersModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">WhatsApp Repayment Reminders (+{{ overdue_reminders|length }})</h5>
+      <div class="modal-header" style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+        <h5 class="modal-title fw-bold">
+          <i class="ph ph-whatsapp-logo" style="color:#25d366"></i>
+          WhatsApp Repayment Reminders — {{ overdue_reminders|length }} borrower{{ 's' if overdue_reminders|length != 1 }}
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <div class="alert alert-primary">
-          <div class="fw-bold">Instructions:</div>
-          <div>1. Click <strong>Send to Contact</strong> to open WhatsApp chat with the borrower (requires phone number on file)</div>
-          <div>2. Or click <strong>Copy Message</strong> to copy the formatted message and send manually</div>
-          <div>3. Message includes details on outstanding balance, overdue days, and penalties</div>
+        <div class="alert alert-info mb-3" style="font-size:13px">
+          <strong>How to use:</strong> Click <strong>Send to Contact</strong> to open WhatsApp directly,
+          or <strong>Copy Message</strong> to paste it manually.
         </div>
-
         {% for r in overdue_reminders %}
-        <div class="card mb-3">
+        <div class="card mb-3 border-0" style="background:#f8fafc;border-radius:12px">
           <div class="card-body">
-            <h5 class="mb-1">{{ r.borrower_name }} ({{ r.loan_no }})</h5>
-            <div class="small text-muted mb-2">Amount Owed: {{ r.amount_owed|money }} | Days Overdue: {{ r.days_overdue }}</div>
-            <pre class="bg-light border rounded p-3 small mb-3" style="white-space:pre-wrap">{{ r.formal_text }}</pre>
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <strong>{{ r.borrower_name }}</strong>
+                <span class="ms-2" style="font-size:12px;color:#64748b">{{ r.loan_no }}</span>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:#b91c1c">
+                {{ r.amount_owed|money }} &nbsp;|&nbsp; {{ r.days_overdue }}d overdue
+              </div>
+            </div>
+            <pre class="border rounded p-3 small mb-3"
+                 style="white-space:pre-wrap;background:#fff;font-family:inherit;font-size:12px">{{ r.formal_text }}</pre>
             <div class="d-flex gap-2 flex-wrap">
               {% if r.wa_contact_url %}
-              <a class="btn btn-sm btn-outline-success" href="{{ r.wa_contact_url }}" target="_blank" rel="noopener noreferrer">
+              <a class="wa-btn-sm" href="{{ r.wa_contact_url }}" target="_blank" rel="noopener noreferrer">
                 <i class="ph ph-whatsapp-logo"></i> Send to Contact
               </a>
               {% else %}
-              <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Borrower phone is missing or invalid">
-                <i class="ph ph-whatsapp-logo"></i> Send to Contact
+              <button type="button" class="wa-btn-sm" disabled style="opacity:.5;cursor:not-allowed"
+                      title="Borrower phone missing or invalid">
+                <i class="ph ph-whatsapp-logo"></i> No Phone
               </button>
               {% endif %}
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-dark"
-                onclick="copyReminderMessage(this)"
-                data-message="{{ r.formal_text|e }}"
-              >
+              <button type="button" class="ln-chip"
+                      onclick="copyReminderMessage(this)"
+                      data-message="{{ r.formal_text|e }}">
                 <i class="ph ph-copy"></i> Copy Message
               </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-warning"
-                onclick="openWhatsAppManual(this)"
-                data-message="{{ r.formal_text|e }}"
-              >
+              <button type="button" class="ln-chip"
+                      onclick="openWhatsAppManual(this)"
+                      data-message="{{ r.formal_text|e }}">
                 <i class="ph ph-chat-circle"></i> WhatsApp (Manual)
               </button>
             </div>
           </div>
         </div>
         {% else %}
-        <div class="text-muted">No overdue loans to remind.</div>
+        <div class="text-center text-muted py-4">No overdue loans to remind.</div>
         {% endfor %}
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-success" data-bs-dismiss="modal"><i class="ph ph-check-square"></i> Done</button>
+      <div class="modal-footer" style="background:#f8fafc">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+          <i class="ph ph-check-square"></i> Done
+        </button>
       </div>
     </div>
   </div>
@@ -240,24 +557,18 @@
 
 <script>
 function copyReminderMessage(btn) {
-  var message = btn.getAttribute('data-message') || '';
-  if (!message) {
-    return;
-  }
-  navigator.clipboard.writeText(message).then(function () {
+  var msg = btn.getAttribute('data-message') || '';
+  navigator.clipboard.writeText(msg).then(function() {
     var old = btn.innerHTML;
-    btn.innerHTML = '<i class="ph ph-check"></i> Copied';
-    setTimeout(function () { btn.innerHTML = old; }, 1400);
+    btn.innerHTML = '<i class="ph ph-check"></i> Copied!';
+    setTimeout(function() { btn.innerHTML = old; }, 1400);
   });
 }
-
 function openWhatsAppManual(btn) {
-  var message = btn.getAttribute('data-message') || '';
-  var url = 'https://wa.me/?text=' + encodeURIComponent(message);
-  window.open(url, '_blank');
+  var msg = btn.getAttribute('data-message') || '';
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 </script>
 {% endif %}
+
 {% endblock %}
-
-

@@ -317,7 +317,9 @@
       <div class="fines-tag"><i class="ph ph-shield-check"></i> Governance and Compliance</div>
     </div>
   </div>
+  {% if session.get('role') in ['CHAIRMAN', 'SECRETARY', 'IT_ADMIN'] %}
   <a href="{{ url_for('admin.fines_create') }}" class="btn btn-primary module-highlight-btn"><i class="ph ph-plus-circle"></i> Issue Fine</a>
+  {% endif %}
 </div>
 
 <div class="fines-stats">
@@ -402,15 +404,19 @@
               {% if session.get('role') in ['CHAIRMAN', 'TREASURER', 'SECRETARY', 'IT_ADMIN'] %}
               <a href="{{ url_for('admin.fines_edit', fine_id=f.id) }}" class="btn btn-sm btn-outline-secondary"><i class="ph ph-pencil"></i> Edit</a>
               {% endif %}
-              {% if session.get('role') in ['TREASURER', 'IT_ADMIN'] %}
+              {% if session.get('role') in ['IT_ADMIN', 'SECRETARY', 'TREASURER', 'CHAIRMAN'] %}
               <form method="post" action="{{ url_for('admin.fines_delete', fine_id=f.id) }}" onsubmit="return confirm('Delete this fine record? This action cannot be undone.');">
                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ph ph-trash"></i> Delete</button>
               </form>
               {% endif %}
               {% if f.status == 'Unpaid' %}
-              <form method="post" action="{{ url_for('admin.fines_pay', fine_id=f.id) }}" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-success"><i class="ph ph-check"></i> Mark paid</button>
-              </form>
+                {% if session.get('role') in ['IT_ADMIN', 'SECRETARY', 'TREASURER', 'CHAIRMAN'] %}
+                <form method="post" action="{{ url_for('admin.fines_pay', fine_id=f.id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-success"><i class="ph ph-check"></i> Mark paid</button>
+                </form>
+                {% else %}
+                <span class="badge-pill badge-unpaid" style="font-size:10px">Unpaid</span>
+                {% endif %}
               {% else %}
               <span class="text-muted small">Paid {{ f.paid_date|datefmt if f.paid_date else '' }}</span>
               {% endif %}

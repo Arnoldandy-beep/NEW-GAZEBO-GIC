@@ -1,187 +1,600 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}{{ member.full_name }}{% endblock %}
 {% block topbar %}{{ member.full_name }} ({{ member.member_no }}){% endblock %}
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1>{{ member.full_name }}</h1>
-    <div class="subtitle">{{ member.member_no }} &middot; <span class="role-badge role-{{ member.role|lower }}">{{ ROLES[member.role].name }}</span> &middot;
+<style>
+/* ── HERO ── */
+.mdet-hero{background:linear-gradient(135deg,#0d1f3c 0%,#1a3a6b 45%,#1e4d8c 100%);border-radius:18px;padding:22px 26px;margin-bottom:20px;position:relative;overflow:hidden;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.mdet-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none}
+.mdet-hero::after{content:'';position:absolute;bottom:-80px;right:80px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.03);pointer-events:none}
+.mdet-avatar{flex-shrink:0;position:relative}
+.mdet-photo{width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.25);box-shadow:0 4px 20px rgba(0,0,0,.35)}
+.mdet-photo-init{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:900;color:#fff;border:4px solid rgba(255,255,255,.2);box-shadow:0 4px 20px rgba(0,0,0,.35)}
+.mdet-status-dot{position:absolute;bottom:5px;right:5px;width:16px;height:16px;border-radius:50%;border:3px solid #0d1f3c}
+.mdet-status-dot.active{background:#22c55e}
+.mdet-status-dot.inactive{background:#f59e0b}
+.mdet-status-dot.exited{background:#ef4444}
+.mdet-hero-body{flex:1;min-width:0}
+.mdet-hero-name{font-size:22px;font-weight:900;color:#fff;margin:0 0 4px;letter-spacing:-.3px}
+.mdet-hero-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.mdet-hero-meta span{font-size:11px;color:rgba(255,255,255,.55)}
+.mdet-hero-meta .sep{color:rgba(255,255,255,.2)}
+.mdet-hero-stats{display:flex;flex-wrap:wrap;gap:16px;margin-top:6px}
+.mdet-hstat{display:flex;flex-direction:column;gap:1px}
+.mdet-hstat .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45)}
+.mdet-hstat .val{font-size:15px;font-weight:900;color:#fff}
+.mdet-hstat .val.green{color:#86efac}
+.mdet-hstat .val.amber{color:#fcd34d}
+.mdet-hstat .val.red{color:#fca5a5}
+.mdet-hero-actions{display:flex;gap:8px;flex-wrap:wrap;z-index:2;margin-left:auto;flex-shrink:0;align-items:flex-start}
+.mdet-abtn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.mdet-abtn:hover{opacity:.88;transform:translateY(-1px);text-decoration:none}
+.mdet-abtn.edit{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.mdet-abtn.danger{background:#ef4444;color:#fff}
+.mdet-abtn.wa{background:#25d366;color:#fff}
+
+/* ── KPI TILES ── */
+.mdet-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.mdet-kpi{background:#fff;border-radius:14px;padding:14px 16px 12px;box-shadow:0 2px 12px rgba(30,60,120,.07);border:1px solid #eef2fa;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:2px}
+.mdet-kpi::before{content:'';position:absolute;top:-18px;right:-18px;width:70px;height:70px;border-radius:50%;opacity:.08}
+.mdet-kpi.k1::before{background:#3b82f6}
+.mdet-kpi.k2::before{background:#f59e0b}
+.mdet-kpi.k3::before{background:#10b981}
+.mdet-kpi.k4::before{background:#8b5cf6}
+.mdet-kpi-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:6px;flex-shrink:0}
+.mdet-kpi.k1 .mdet-kpi-icon{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff}
+.mdet-kpi.k2 .mdet-kpi-icon{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.mdet-kpi.k3 .mdet-kpi-icon{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.mdet-kpi.k4 .mdet-kpi-icon{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff}
+.mdet-kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8fa0b8}
+.mdet-kpi-val{font-size:18px;font-weight:900;color:#0f2040;letter-spacing:-.5px;margin-top:1px}
+.mdet-kpi-sub{font-size:10px;color:#94a3b8;margin-top:1px}
+
+/* ── TABS ── */
+.mdet-tabs{display:flex;gap:4px;border-bottom:2px solid #e8eff8;margin-bottom:0;flex-wrap:wrap}
+.mdet-tab{padding:9px 16px;font-size:12px;font-weight:700;color:#64748b;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:5px;border-radius:6px 6px 0 0;white-space:nowrap}
+.mdet-tab:hover{color:#1e3a6e;background:#f1f5fd}
+.mdet-tab.active{color:#1e3a6e;border-bottom-color:#3b82f6;background:#eef4ff}
+.mdet-tab .badge{background:#e2e8f0;color:#475569;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800}
+.mdet-tab.active .badge{background:#3b82f6;color:#fff}
+.mdet-tab-content{display:none}
+.mdet-tab-content.active{display:block}
+
+/* ── TABLES ── */
+.mdet-table{width:100%;font-size:12.5px;border-collapse:collapse}
+.mdet-table thead th{background:#f8fafc;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#64748b;padding:8px 12px;border-bottom:2px solid #e8eff8;white-space:nowrap}
+.mdet-table tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;color:#1e3a54;vertical-align:middle}
+.mdet-table tbody tr:last-child td{border-bottom:none}
+.mdet-table tbody tr:hover{background:#f8fafc}
+.mdet-table .money{text-align:right;font-weight:700;font-family:'Courier New',monospace;font-size:12px}
+.mdet-table .pos{color:#059669}
+.mdet-table .neg{color:#dc2626}
+
+/* ── PROFILE KV ── */
+.mdet-kv{list-style:none;margin:0;padding:0}
+.mdet-kv li{display:flex;align-items:baseline;gap:8px;padding:7px 14px;border-bottom:1px solid #f1f5f9;font-size:12px}
+.mdet-kv li:last-child{border-bottom:none}
+.mdet-kv .k{color:#8fa0b8;font-weight:600;min-width:110px;flex-shrink:0;font-size:11px}
+.mdet-kv .v{color:#1a334f;font-weight:500;word-break:break-word}
+.mdet-kv .v strong{color:#0f2040;font-weight:700}
+
+/* ── ACTIVITY LOG ── */
+.al-row{display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-bottom:1px solid #f1f5f9;font-size:12px}
+.al-row:last-child{border-bottom:none}
+.al-row:hover{background:#f8fafc}
+.al-icon{width:28px;height:28px;border-radius:50%;background:#eff6ff;color:#3b82f6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.al-icon.login{background:#f0fdf4;color:#059669}
+.al-icon.logout{background:#fef2f2;color:#dc2626}
+.al-icon.edit{background:#fffbeb;color:#d97706}
+.al-action{font-weight:700;color:#0f172a;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.al-desc{color:#64748b;margin-top:1px}
+.al-meta{color:#94a3b8;font-size:10px;margin-top:2px}
+
+/* ── DOCUMENT CARD ── */
+.doc-tile{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#fafcff;text-decoration:none;color:inherit;transition:all .15s;margin-bottom:8px}
+.doc-tile:hover{border-color:#3b82f6;background:#eff6ff;color:inherit}
+.doc-tile-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.doc-tile-icon.pdf{background:linear-gradient(135deg,#ef4444,#b91c1c)}
+.doc-tile-icon.img{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.doc-tile-body{}
+.doc-tile-title{font-size:12px;font-weight:700;color:#1a334f}
+.doc-tile-sub{font-size:10px;color:#8fa0b8;margin-top:1px}
+
+/* ── SECTION LABELS ── */
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#8fa0b8;padding:10px 14px 6px;display:flex;align-items:center;gap:6px}
+
+/* ── NID PREVIEW ── */
+.nid-preview{border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;max-width:260px;margin-top:6px}
+.nid-preview img{width:100%;display:block}
+
+/* ── LOGIN CARD ── */
+.login-strip{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#f8faff;margin-bottom:10px}
+.login-strip .licon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#1e3a6e,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.login-strip .lbody{flex:1;min-width:0}
+.login-strip .lname{font-size:12px;font-weight:700;color:#1a334f}
+.login-strip .lstatus{font-size:10px;color:#8fa0b8}
+</style>
+
+<!-- BACK -->
+<div class="mb-3">
+  <a href="{{ url_for('admin.members_list') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="ph ph-arrow-left"></i> Back to Members
+  </a>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div class="mdet-hero">
+  <div class="mdet-avatar">
+    {% if member.photo_url %}
+      <img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}" class="mdet-photo">
+    {% else %}
+      {% set colors=['linear-gradient(135deg,#3b82f6,#8b5cf6)','linear-gradient(135deg,#10b981,#0ea5e9)','linear-gradient(135deg,#f59e0b,#ef4444)','linear-gradient(135deg,#ec4899,#8b5cf6)','linear-gradient(135deg,#14b8a6,#3b82f6)','linear-gradient(135deg,#f97316,#fbbf24)'] %}
+      {% set ci = (member.id % 6) %}
+      <div class="mdet-photo-init" style="background:{{ colors[ci] }}">{{ (member.full_name or 'U')[0]|upper }}</div>
+    {% endif %}
+    <span class="mdet-status-dot {{ member.status|lower }}"></span>
+  </div>
+
+  <div class="mdet-hero-body">
+    <div class="mdet-hero-name">{{ member.full_name }}</div>
+    <div class="mdet-hero-meta">
+      <span>{{ member.member_no }}</span>
+      <span class="sep">·</span>
+      <span class="role-badge role-{{ member.role|lower }}">{{ ROLES[member.role].name }}</span>
+      <span class="sep">·</span>
       <span class="badge-pill badge-{% if member.status == 'Active' %}active{% elif member.status == 'Exited' %}exited{% else %}defaulted{% endif %}">{{ member.status }}</span>
+      {% if member.phone %}<span class="sep">·</span><span><i class="ph ph-phone" style="opacity:.6"></i> {{ member.phone }}</span>{% endif %}
+      {% if user_row and user_row.last_login %}<span class="sep">·</span><span><i class="ph ph-clock" style="opacity:.6"></i> {{ user_row.last_login|datetimefmt }}</span>{% endif %}
     </div>
-  </div>
-  <div class="d-flex gap-2">
-    <a href="{{ url_for('admin.member_edit', member_id=member.id) }}" class="btn btn-outline-primary"><i class="ph ph-pencil-simple"></i> Edit</a>
-    <form method="post" action="{{ url_for('admin.member_delete', member_id=member.id) }}"
-          onsubmit="return confirm('Remove member {{ member.member_no }}? Members with history will be marked as Exited and hidden from the default members list; clean records will be fully deleted.');">
-      <button type="submit" class="btn btn-outline-danger"><i class="ph ph-user-minus"></i> Delete Member</button>
-    </form>
-    <a href="{{ url_for('admin.members_list') }}" class="btn btn-outline-secondary"><i class="ph ph-arrow-left"></i> Back</a>
-  </div>
-</div>
-
-{% if is_exited_member %}
-<div class="alert alert-danger">
-  <strong>Exited Member:</strong> Financial figures are hidden for exited records. This profile is retained for historical membership reference only.
-</div>
-{% else %}
-<div class="stat-grid">
-  <div class="stat-card accent">
-    <div class="label">Total Savings</div>
-    <div class="value">{{ total_savings|money }}</div>
-  </div>
-  <div class="stat-card warn">
-    <div class="label">Locked (Collateral)</div>
-    <div class="value">{{ locked|money }}</div>
-  </div>
-  <div class="stat-card info">
-    <div class="label">Available</div>
-    <div class="value">{{ available|money }}</div>
-  </div>
-  <div class="stat-card gold">
-    <div class="label">Loans</div>
-    <div class="value">{{ loans|length }}</div>
-    <div class="sub">{{ loans|selectattr('status', 'equalto', 'Active')|list|length }} active</div>
-  </div>
-</div>
-{% endif %}
-
-<div class="row g-3">
-  <div class="col-lg-7">
-    <div class="card mb-3">
-      <div class="card-header"><i class="ph ph-user"></i> Profile</div>
-      <div class="card-body">
-        <dl class="kv-list">
-          <dt>Phone</dt><dd>{{ member.phone or '-' }}</dd>
-          <dt>Email</dt><dd>{{ member.email or '-' }}</dd>
-          <dt>National ID</dt><dd>{{ member.national_id or '-' }}</dd>
-          <dt>District</dt><dd>{{ member.district or '-' }}</dd>
-          <dt>Next of Kin</dt><dd>{{ member.next_of_kin or '-' }} {% if member.nok_phone %}({{ member.nok_phone }}){% endif %}</dd>
-          <dt>Joined</dt><dd>{{ member.join_date|datefmt }}</dd>
-          <dt>Notes</dt><dd>{{ member.notes or '-' }}</dd>
-        </dl>
-      </div>
-    </div>
-
     {% if not is_exited_member %}
-    <div class="card mb-3">
-      <div class="card-header"><i class="ph ph-bank"></i> Savings History</div>
-      <div class="card-body p-0 table-responsive" style="max-height:380px;overflow:auto">
-        {% if history %}
-        <table class="table mb-0">
-          <thead><tr><th>Period</th><th>Status</th><th>Amount</th><th>Paid On</th></tr></thead>
-          <tbody>
-            {% for h in history %}
-            <tr>
-              <td>{{ h.label }}</td>
-              <td>{% if h.paid %}<span class="badge-pill badge-paid">Paid</span>{% else %}<span class="badge-pill badge-unpaid">Unpaid</span>{% endif %}</td>
-              <td class="table-money">{{ h.amount|money if h.paid else '-' }}</td>
-              <td>{{ h.payment_date|datefmt if h.payment_date else '-' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% else %}<div class="empty-state small">No savings history.</div>{% endif %}
+    <div class="mdet-hero-stats">
+      <div class="mdet-hstat">
+        <span class="lbl">Total Savings</span>
+        <span class="val">{{ total_savings|money }}</span>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><i class="ph ph-hand-coins"></i> Loan History</div>
-      <div class="card-body p-0 table-responsive">
-        {% if loans %}
-        <table class="table mb-0">
-          <thead><tr><th>Loan #</th><th>Issued</th><th>Principal</th><th>Term</th><th>Status</th><th></th></tr></thead>
-          <tbody>
-            {% for l in loans %}
-            <tr>
-              <td>{{ l.loan_no }}</td>
-              <td>{{ l.issued_date|datefmt }}</td>
-              <td class="table-money">{{ l.principal|money }}</td>
-              <td>{{ l.term_months }}m</td>
-              <td><span class="badge-pill badge-{{ l.status|lower }}">{{ l.status }}</span></td>
-              <td><a href="{{ url_for('admin.loan_detail', loan_id=l.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% else %}<div class="empty-state small">No loans.</div>{% endif %}
+      <div class="mdet-hstat">
+        <span class="lbl">Locked</span>
+        <span class="val amber">{{ locked|money }}</span>
+      </div>
+      <div class="mdet-hstat">
+        <span class="val {% if available >= 0 %}green{% else %}red{% endif %}">{{ available|money }}</span>
+        <span class="lbl">Available</span>
+      </div>
+      <div class="mdet-hstat">
+        <span class="lbl">Loans</span>
+        <span class="val">{{ loans|length }} <span style="font-size:11px;opacity:.7">({{ loans|selectattr('status','equalto','Active')|list|length }} active)</span></span>
+      </div>
+      <div class="mdet-hstat">
+        <span class="lbl">Joined</span>
+        <span class="val" style="font-size:13px">{{ member.join_date|datefmt }}</span>
       </div>
     </div>
     {% endif %}
   </div>
 
-  <div class="col-lg-5">
+  {% if session.role in ('IT_ADMIN', 'SECRETARY') %}
+  <div class="mdet-hero-actions">
+    <a href="{{ url_for('admin.member_edit', member_id=member.id) }}" class="mdet-abtn edit">
+      <i class="ph ph-pencil-simple"></i> Edit
+    </a>
+    {% if member.whatsapp_no or member.phone %}
+    <a href="https://wa.me/{{ (member.whatsapp_no or member.phone)|replace(' ','')|replace('-','')|replace('+','') }}" target="_blank" class="mdet-abtn wa">
+      <i class="ph ph-whatsapp-logo"></i> WhatsApp
+    </a>
+    {% endif %}
+    <form method="post" action="{{ url_for('admin.member_delete', member_id=member.id) }}"
+          onsubmit="return confirm('Remove member {{ member.member_no }}? Members with history will be marked as Exited and hidden from the default members list; clean records will be fully deleted.');">
+      <button type="submit" class="mdet-abtn danger"><i class="ph ph-user-minus"></i> Delete</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+{% if is_exited_member %}
+<div class="alert alert-danger mb-4" style="border-radius:12px">
+  <i class="ph ph-warning-octagon"></i> <strong>Exited Member:</strong> Financial figures are hidden for exited records. This profile is retained for historical membership reference only.
+</div>
+{% endif %}
+
+<!-- ═══ MAIN LAYOUT ═══ -->
+<div class="row g-3">
+
+  <!-- ── LEFT SIDEBAR ── -->
+  <div class="col-xl-4 col-lg-5">
+
+    <!-- Profile card -->
     <div class="card mb-3">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="ph ph-shield-lock"></i> Login Account</span>
+      <div class="card-header" style="font-weight:800;font-size:12px;letter-spacing:.04em">
+        <i class="ph ph-user" style="color:#3b82f6"></i> Profile Details
       </div>
-      <div class="card-body">
-        {% if user_row %}
-        <dl class="kv-list mb-3">
-          <dt>Username</dt><dd><strong>{{ user_row.username }}</strong></dd>
-          <dt>Status</dt><dd>{% if user_row.is_active %}<span class="badge-pill badge-active">Active</span>{% else %}<span class="badge-pill badge-defaulted">Disabled</span>{% endif %}</dd>
-          <dt>Must change</dt><dd>{% if user_row.must_change_pw %}<span class="badge-pill badge-pending">Yes</span>{% else %}No{% endif %}</dd>
-          <dt>Last login</dt><dd>{{ user_row.last_login|datetimefmt if user_row.last_login else 'Never' }}</dd>
-        </dl>
-        <form method="post" action="{{ url_for('admin.member_reset_password', member_id=member.id) }}"
-              data-confirm="Reset this user's password to a temporary value?">
-          <div class="mb-2">
-            <input type="text" name="reset_reason" class="form-control form-control-sm" placeholder="Reason for reset (e.g. account recovery)">
+      <div class="card-body p-0">
+        <ul class="mdet-kv">
+          <li><span class="k">Phone</span><span class="v">{{ member.phone or '-' }}</span></li>
+          <li><span class="k">Alt Phone</span><span class="v">{{ member.alt_phone or '-' }}</span></li>
+          <li><span class="k">WhatsApp</span><span class="v">{{ member.whatsapp_no or '-' }}</span></li>
+          <li><span class="k">Email</span><span class="v">{{ member.email or '-' }}</span></li>
+          <li><span class="k">National ID</span><span class="v"><strong>{{ member.national_id or '-' }}</strong></span></li>
+          <li><span class="k">District</span><span class="v">{{ member.district or '-' }}</span></li>
+          <li><span class="k">Village / Street</span><span class="v">{{ member.village_street or '-' }}</span></li>
+          <li><span class="k">Occupation</span><span class="v">{{ member.occupation or '-' }}</span></li>
+          <li><span class="k">Employer</span><span class="v">{{ member.employer_business or '-' }}</span></li>
+          <li><span class="k">Next of Kin</span><span class="v">{{ member.next_of_kin or '-' }}{% if member.nok_phone %} <span style="color:#8fa0b8">({{ member.nok_phone }})</span>{% endif %}</span></li>
+          <li><span class="k">Relationship</span><span class="v">{{ member.nok_relationship or '-' }}</span></li>
+          {% if member.notes %}<li><span class="k">Notes</span><span class="v">{{ member.notes }}</span></li>{% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Documents card -->
+    <div class="card mb-3">
+      <div class="card-header" style="font-weight:800;font-size:12px;letter-spacing:.04em">
+        <i class="ph ph-files" style="color:#8b5cf6"></i> Documents
+      </div>
+      <div class="card-body py-2 px-3">
+        <!-- NID Copy -->
+        <div class="sec-label"><i class="ph ph-identification-card"></i> National ID Copy</div>
+        {% if member.nid_copy_url %}
+          <div class="nid-preview mb-2">
+            <a href="{{ url_for('static', filename=member.nid_copy_url) }}" target="_blank">
+              <img src="{{ url_for('static', filename=member.nid_copy_url) }}" alt="National ID copy">
+            </a>
           </div>
-          <div class="input-group input-group-sm">
-            <input type="text" name="new_password" class="form-control" placeholder="New temp password" required>
-            <button type="submit" class="btn btn-warning"><i class="ph ph-arrow-clockwise"></i> Reset</button>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <a href="{{ url_for('static', filename=member.nid_copy_url) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="ph ph-arrow-square-out"></i> Open Full Size
+            </a>
+            <span class="badge-pill badge-active" style="font-size:10px"><i class="ph ph-seal-check"></i> On file</span>
           </div>
-        </form>
         {% else %}
-        <p class="small text-muted">No login account configured.</p>
-        <form method="post" action="{{ url_for('admin.member_create_login', member_id=member.id) }}">
-          <div class="row g-2">
-            <div class="col-7"><input type="text" name="username" class="form-control form-control-sm" placeholder="username (optional)"></div>
-            <div class="col-5"><button type="submit" class="btn btn-primary btn-sm w-100"><i class="ph ph-key"></i> Create login</button></div>
+          <div class="small text-muted mb-2 fst-italic">No National ID copy on file.</div>
+        {% endif %}
+        {% if session.role in ('IT_ADMIN', 'SECRETARY') %}
+        <button type="button" class="btn btn-sm btn-outline-secondary mb-3" data-bs-toggle="modal" data-bs-target="#nationalIdUploadModal">
+          <i class="ph ph-upload-simple"></i> {% if member.nid_copy_url %}Replace{% else %}Upload{% endif %} NID Copy
+        </button>
+        {% endif %}
+
+        <!-- Membership Form -->
+        <div class="sec-label"><i class="ph ph-file-text"></i> Membership Registration Form</div>
+        {% if member.membership_form_url %}
+          {% set reg_is_pdf = member.membership_form_url.lower().endswith('.pdf') %}
+          {% if not reg_is_pdf %}
+          <div class="nid-preview mb-2">
+            <img src="{{ url_for('static', filename=member.membership_form_url) }}" alt="Registration form">
           </div>
-        </form>
+          {% endif %}
+          <div class="d-flex gap-2 flex-wrap mb-2">
+            <a href="{{ url_for('static', filename=member.membership_form_url) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="ph ph-arrow-square-out"></i> Open
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#membershipFormModal">
+              <i class="ph ph-arrows-out"></i> View Larger
+            </button>
+          </div>
+        {% else %}
+          <div class="small text-muted mb-2 fst-italic">No registration form uploaded yet.</div>
+        {% endif %}
+        {% if session.role in ('IT_ADMIN', 'SECRETARY') %}
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#membershipFormUploadModal">
+          <i class="ph ph-upload-simple"></i> {% if member.membership_form_url %}Replace{% else %}Upload{% endif %} Form
+        </button>
+        {% else %}
+        <p class="small text-muted fst-italic mb-0">Upload restricted to Secretary / IT Admin.</p>
         {% endif %}
       </div>
     </div>
 
-    {% if fees %}
-    <div class="card mb-3">
-      <div class="card-header"><i class="ph ph-receipt"></i> Annual Fees</div>
-      <div class="card-body p-0">
-        <table class="table mb-0">
-          <thead><tr><th>Year</th><th>Amount</th><th>Status</th></tr></thead>
+    <!-- Login Account card -->
+    <div class="card">
+      <div class="card-header" style="font-weight:800;font-size:12px;letter-spacing:.04em">
+        <i class="ph ph-shield-lock" style="color:#10b981"></i> Login Account
+      </div>
+      <div class="card-body">
+        {% if user_row %}
+        <div class="login-strip mb-3">
+          <div class="licon"><i class="ph ph-user-circle"></i></div>
+          <div class="lbody">
+            <div class="lname">{{ user_row.username }}</div>
+            <div class="lstatus">Last login: {{ user_row.last_login|datetimefmt if user_row.last_login else 'Never' }}</div>
+          </div>
+          {% if user_row.is_active %}<span class="badge-pill badge-active" style="font-size:10px">Active</span>{% else %}<span class="badge-pill badge-defaulted" style="font-size:10px">Disabled</span>{% endif %}
+        </div>
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          {% if user_row.must_change_pw %}<span class="badge-pill badge-pending" style="font-size:10px"><i class="ph ph-warning-circle"></i> Must change password</span>{% else %}<span class="badge-pill badge-active" style="font-size:10px"><i class="ph ph-check-circle"></i> Password OK</span>{% endif %}
+          {% if user_row.failed_login_count and user_row.failed_login_count > 0 %}
+          <span class="badge-pill badge-defaulted" style="font-size:10px"><i class="ph ph-warning-octagon"></i> {{ user_row.failed_login_count }} failed attempt(s)</span>
+          {% endif %}
+        </div>
+        {% if user_row.locked_until %}
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#856404"><i class="ph ph-lock"></i> Account Locked</div>
+            <div style="font-size:10px;color:#856404;margin-top:2px">Locked until: {{ user_row.locked_until|datetimefmt }}</div>
+          </div>
+          {% if session.role == 'IT_ADMIN' %}
+          <form method="post" action="{{ url_for('admin.users_clear_lockout', user_id=user_row.id) }}">
+            <button type="submit" class="btn btn-warning btn-sm" style="font-size:11px;font-weight:700">
+              <i class="ph ph-lock-open"></i> Unlock Account
+            </button>
+          </form>
+          {% else %}
+          <span style="font-size:10px;color:#856404">IT Admin can unlock</span>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if session.role in ('IT_ADMIN', 'SECRETARY') %}
+        <div class="sec-label" style="padding-left:0"><i class="ph ph-key"></i> Reset Password</div>
+        <form method="post" action="{{ url_for('admin.member_reset_password', member_id=member.id) }}"
+              data-confirm="Reset this user's password to a temporary value?">
+          <div class="mb-2">
+            <input type="text" name="reset_reason" class="form-control form-control-sm" placeholder="Reason (e.g. account recovery)">
+          </div>
+          <div class="input-group input-group-sm">
+            <input type="text" name="new_password" class="form-control" placeholder="New temporary password" required>
+            <button type="submit" class="btn btn-warning"><i class="ph ph-arrow-clockwise"></i> Reset</button>
+          </div>
+        </form>
+        {% else %}
+        <p class="small text-muted fst-italic mb-0">Password reset restricted to IT Admin / Secretary.</p>
+        {% endif %}
+        {% else %}
+        <p class="small text-muted mb-2"><i class="ph ph-warning-circle"></i> No login account configured.</p>
+        {% if session.role in ('IT_ADMIN', 'SECRETARY') %}
+        <form method="post" action="{{ url_for('admin.member_create_login', member_id=member.id) }}">
+          <div class="row g-2">
+            <div class="col-7"><input type="text" name="username" class="form-control form-control-sm" placeholder="username (optional, auto = GIC-xxx)"></div>
+            <div class="col-5"><button type="submit" class="btn btn-primary btn-sm w-100"><i class="ph ph-key"></i> Create Login</button></div>
+          </div>
+        </form>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- ── RIGHT CONTENT ── -->
+  <div class="col-xl-8 col-lg-7">
+
+    {% if not is_exited_member %}
+
+    <!-- TABS -->
+    <div class="card" style="border-radius:14px;overflow:hidden">
+      <div class="card-header" style="padding:0;border-bottom:none;background:#fff">
+        <div class="mdet-tabs px-3 pt-2">
+          <button class="mdet-tab active" onclick="switchTab('savings',this)">
+            <i class="ph ph-bank"></i> Savings
+            {% if history %}<span class="badge">{{ history|length }}</span>{% endif %}
+          </button>
+          <button class="mdet-tab" onclick="switchTab('loans',this)">
+            <i class="ph ph-hand-coins"></i> Loans
+            <span class="badge">{{ loans|length }}</span>
+          </button>
+          <button class="mdet-tab" onclick="switchTab('fees',this)">
+            <i class="ph ph-receipt"></i> Fees & Fines
+            <span class="badge">{{ (fees|length) + (fines|length) }}</span>
+          </button>
+          <button class="mdet-tab" onclick="switchTab('activity',this)">
+            <i class="ph ph-clock-clockwise"></i> Activity
+            {% if activity_log %}<span class="badge">{{ activity_log|length }}</span>{% endif %}
+          </button>
+        </div>
+      </div>
+
+      <!-- SAVINGS TAB -->
+      <div id="tab-savings" class="mdet-tab-content active" style="max-height:480px;overflow-y:auto">
+        {% if history %}
+        <table class="mdet-table">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Status</th>
+              <th class="text-end">Amount</th>
+              <th>Paid On</th>
+            </tr>
+          </thead>
           <tbody>
-          {% for f in fees %}
-          <tr><td>{{ f.year }}</td><td class="table-money">{{ f.amount|money }}</td><td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td></tr>
-          {% endfor %}
+            {% for h in history %}
+            <tr>
+              <td>{{ h.label }}</td>
+              <td>
+                {% if h.paid %}
+                  <span class="badge-pill badge-active">Paid</span>
+                {% else %}
+                  <span class="badge-pill badge-unpaid">Unpaid</span>
+                {% endif %}
+              </td>
+              <td class="money {% if h.paid %}pos{% endif %}">{{ h.amount|money if h.paid else '-' }}</td>
+              <td style="color:#8fa0b8;font-size:11px">{{ h.payment_date|datefmt if h.payment_date else '-' }}</td>
+            </tr>
+            {% endfor %}
           </tbody>
         </table>
+        {% else %}
+        <div class="empty-state"><i class="ph ph-bank"></i><div>No savings history yet.</div></div>
+        {% endif %}
+      </div>
+
+      <!-- LOANS TAB -->
+      <div id="tab-loans" class="mdet-tab-content" style="max-height:480px;overflow-y:auto">
+        {% if loans %}
+        <table class="mdet-table">
+          <thead>
+            <tr><th>Loan #</th><th>Issued</th><th class="text-end">Principal</th><th>Term</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for l in loans %}
+            <tr>
+              <td><strong>{{ l.loan_no }}</strong></td>
+              <td style="color:#8fa0b8;font-size:11px">{{ l.issued_date|datefmt }}</td>
+              <td class="money">{{ l.principal|money }}</td>
+              <td style="color:#8fa0b8">{{ l.term_months }}m</td>
+              <td><span class="badge-pill badge-{{ l.status|lower }}">{{ l.status }}</span></td>
+              <td style="text-align:right">
+                <a href="{{ url_for('admin.loan_detail', loan_id=l.id) }}" class="btn btn-sm btn-outline-primary" style="font-size:11px;padding:3px 10px">View</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="ph ph-hand-coins"></i><div>No loans on record.</div></div>
+        {% endif %}
+      </div>
+
+      <!-- FEES & FINES TAB -->
+      <div id="tab-fees" class="mdet-tab-content" style="max-height:480px;overflow-y:auto">
+        {% if fees %}
+        <div class="sec-label"><i class="ph ph-receipt"></i> Annual Fees</div>
+        <table class="mdet-table">
+          <thead><tr><th>Year</th><th class="text-end">Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for f in fees %}
+            <tr>
+              <td><strong>{{ f.year }}</strong></td>
+              <td class="money">{{ f.amount|money }}</td>
+              <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+        {% if fines %}
+        <div class="sec-label" style="margin-top:4px"><i class="ph ph-warning"></i> Fines</div>
+        <table class="mdet-table">
+          <thead><tr><th>Date</th><th>Violation</th><th class="text-end">Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for f in fines %}
+            <tr>
+              <td style="color:#8fa0b8;font-size:11px;white-space:nowrap">{{ f.fine_date|datefmt }}</td>
+              <td>{{ f.violation }}</td>
+              <td class="money neg">{{ f.amount|money }}</td>
+              <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+        {% if not fees and not fines %}
+        <div class="empty-state"><i class="ph ph-receipt"></i><div>No fees or fines on record.</div></div>
+        {% endif %}
+      </div>
+
+      <!-- ACTIVITY TAB -->
+      <div id="tab-activity" class="mdet-tab-content" style="max-height:480px;overflow-y:auto">
+        {% if activity_log %}
+        {% for a in activity_log %}
+        {% set icon_class = 'login' if a.action == 'LOGIN' else ('logout' if a.action == 'LOGOUT' else 'edit') %}
+        {% set icon = 'ph-sign-in' if a.action == 'LOGIN' else ('ph-sign-out' if a.action == 'LOGOUT' else 'ph-pencil-simple') %}
+        <div class="al-row">
+          <div class="al-icon {{ icon_class }}"><i class="ph {{ icon }}"></i></div>
+          <div style="min-width:0">
+            <div class="al-action">{{ a.action.replace('_',' ') }}</div>
+            {% if a.description %}<div class="al-desc">{{ a.description }}</div>{% endif %}
+            <div class="al-meta">{{ a.actor_name }} &middot; {{ a.created_at|datetimefmt }}{% if a.ip_address %} &middot; {{ a.ip_address }}{% endif %}</div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state"><i class="ph ph-clock-clockwise"></i><div>No activity recorded yet.</div></div>
+        {% endif %}
+      </div>
+
+    </div><!-- /card tabs -->
+
+    {% else %}
+    <div class="card">
+      <div class="card-body text-center py-5 text-muted">
+        <i class="ph ph-archive-box" style="font-size:48px;opacity:.3;display:block;margin-bottom:12px"></i>
+        <div style="font-size:14px;font-weight:600">Archived / Exited Member</div>
+        <div style="font-size:12px;margin-top:4px;opacity:.7">Financial data is hidden for exited records.</div>
       </div>
     </div>
     {% endif %}
 
-    {% if fines %}
-    <div class="card">
-      <div class="card-header"><i class="ph ph-warning"></i> Fines</div>
-      <div class="card-body p-0">
-        <table class="table mb-0">
-          <thead><tr><th>Date</th><th>Violation</th><th>Amount</th><th>Status</th></tr></thead>
-          <tbody>
-          {% for f in fines %}
-          <tr>
-            <td>{{ f.fine_date|datefmt }}</td>
-            <td>{{ f.violation }}</td>
-            <td class="table-money">{{ f.amount|money }}</td>
-            <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
+  </div><!-- /col-right -->
+</div>
+
+<!-- ═══ MODALS ═══ -->
+{% if session.role in ('IT_ADMIN', 'SECRETARY') %}
+<div class="modal fade" id="nationalIdUploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('admin.member_upload_national_id_copy', member_id=member.id) }}" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ph ph-identification-card"></i> Upload National ID Copy</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">National ID image</label>
+          <input type="file" name="nid_copy" class="form-control" accept="image/*" required>
+          <div class="form-text">Upload JPG, PNG, GIF, or WEBP.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save National ID</button>
+        </div>
+      </form>
     </div>
-    {% endif %}
   </div>
 </div>
+
+<div class="modal fade" id="membershipFormUploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('admin.member_upload_membership_form', member_id=member.id) }}" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ph ph-file-text"></i> Upload Registration Form</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Signed hard copy</label>
+          <input type="file" name="membership_form_file" class="form-control" accept=".pdf,image/*" required>
+          <div class="form-text">Upload PDF, JPG, JPEG, PNG, or WEBP.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Form</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if member.membership_form_url %}
+{% set reg_is_pdf = member.membership_form_url.lower().endswith('.pdf') %}
+<div class="modal fade" id="membershipFormModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Membership Form — {{ member.full_name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="min-height:65vh">
+        {% if reg_is_pdf %}
+        <iframe src="{{ url_for('static', filename=member.membership_form_url) }}" title="Membership form" style="width:100%;height:65vh;border:1px solid #e2e8f0;border-radius:8px;"></iframe>
+        {% else %}
+        <img src="{{ url_for('static', filename=member.membership_form_url) }}" alt="Membership form" style="width:100%;height:auto;border:1px solid #e2e8f0;border-radius:8px;">
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <a href="{{ url_for('static', filename=member.membership_form_url) }}" target="_blank" class="btn btn-primary">Open in New Tab</a>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.mdet-tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.mdet-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
 {% endblock %}
-
-

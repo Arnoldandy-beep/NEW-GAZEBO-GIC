@@ -1,6 +1,9 @@
 """
 GAZEBO Investment Club - Member-side routes (read-only)
 """
+import os
+import uuid
+import json
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
     session, flash, current_app
@@ -20,6 +23,75 @@ from utils import (
 from config import Config
 
 bp = Blueprint('member', __name__, url_prefix='/member')
+
+_IMAGE_MAGIC = {
+    b'\xff\xd8\xff':           'jpg',
+    b'\x89PNG\r\n\x1a\n':     'png',
+    b'GIF87a':                  'gif',
+    b'GIF89a':                  'gif',
+    b'RIFF':                    'webp',
+}
+
+
+def _file_magic_ok(file_obj, allowed_exts):
+    header = file_obj.read(12)
+    file_obj.seek(0)
+    ext_set = set(allowed_exts)
+    for sig, ftype in _IMAGE_MAGIC.items():
+        if ftype in ext_set and header[:len(sig)] == sig:
+            return True
+        if ftype == 'webp' and 'webp' in ext_set:
+            if header[:4] == b'RIFF' and header[8:12] == b'WEBP':
+                return True
+    return False
+
+
+def _save_upload(file_field_name, subfolder=''):
+    f = request.files.get(file_field_name)
+    if not f or not f.filename:
+        return None
+    ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else ''
+    if ext not in Config.ALLOWED_IMAGE_EXTENSIONS:
+        return None
+    if not _file_magic_ok(f, Config.ALLOWED_IMAGE_EXTENSIONS):
+        return None
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    dest_dir = os.path.join(Config.UPLOAD_FOLDER, subfolder)
+    os.makedirs(dest_dir, exist_ok=True)
+    f.save(os.path.join(dest_dir, filename))
+    rel = f"uploads/{subfolder}/{filename}" if subfolder else f"uploads/{filename}"
+    return rel.replace('\\', '/')
+
+
+def _notify_roles(db, roles, title, message, link=None):
+    placeholders = ','.join(['?'] * len(roles))
+    users = db.execute(
+        f"""SELECT u.id
+              FROM users u
+              JOIN members m ON m.id = u.member_id
+             WHERE u.is_active = 1 AND m.role IN ({placeholders})""",
+        list(roles),
+    ).fetchall()
+    for u in users:
+        db.execute(
+            """INSERT INTO notifications (user_id, title, message, link)
+               VALUES (?, ?, ?, ?)""",
+            (u['id'], title, message, link),
+        )
+
+
+def _notify_member_user(db, member_id, title, message, link=None):
+    user = db.execute(
+        "SELECT id FROM users WHERE member_id=? AND is_active=1 ORDER BY id LIMIT 1",
+        (member_id,),
+    ).fetchone()
+    if not user:
+        return
+    db.execute(
+        """INSERT INTO notifications (user_id, title, message, link)
+           VALUES (?, ?, ?, ?)""",
+        (user['id'], title, message, link),
+    )
 
 
 @bp.before_request
@@ -266,6 +338,35 @@ def notification_open(notification_id):
     return redirect(url_for('member.dashboard'))
 
 
+@bp.route('/notifications')
+@login_required
+def notifications_page():
+    db = get_db()
+    member = _current_member()
+    all_notifs = db.execute(
+        """SELECT * FROM notifications
+            WHERE user_id=?
+            ORDER BY id DESC LIMIT 150""",
+        (session['user_id'],),
+    ).fetchall()
+    unread_count = sum(1 for n in all_notifs if not n['is_read'])
+    return render_template(
+        'member/notifications.html',
+        member=member,
+        notifications=all_notifs,
+        unread_count=unread_count,
+    )
+
+
+@bp.route('/notifications/mark-all-read', methods=['POST'])
+@login_required
+def notifications_mark_all_read():
+    db = get_db()
+    db.execute("UPDATE notifications SET is_read=1 WHERE user_id=?", (session['user_id'],))
+    db.commit()
+    return redirect(url_for('member.notifications_page'))
+
+
 # ---------------------------------------------------------------------------
 # Savings Statement
 # ---------------------------------------------------------------------------
@@ -485,6 +586,7 @@ def loan_eligibility():
 @bp.route('/minutes')
 def minutes():
     db = get_db()
+    member = _current_member()
     rows = db.execute(
         """SELECT m.*, mem.full_name AS chair_name
              FROM minutes m
@@ -492,12 +594,13 @@ def minutes():
             WHERE m.is_published = 1
             ORDER BY m.meeting_date DESC"""
     ).fetchall()
-    return render_template('member/minutes.html', minutes=rows)
+    return render_template('member/minutes.html', member=member, minutes=rows)
 
 
 @bp.route('/minutes/<int:minutes_id>')
 def minutes_detail(minutes_id):
     db = get_db()
+    member = _current_member()
     m = db.execute(
         """SELECT m.*, mem.full_name AS chair_name, mem.member_no AS chair_no
              FROM minutes m
@@ -518,7 +621,7 @@ def minutes_detail(minutes_id):
                 f"SELECT id, full_name, member_no FROM members WHERE id IN ({placeholders})",
                 ids,
             ).fetchall()
-    return render_template('member/minutes_detail.html', m=m,
+    return render_template('member/minutes_detail.html', member=member, m=m,
                            attendees=attendees)
 
 
@@ -550,8 +653,87 @@ def profile():
         (member['id'],),
     ).fetchall()
 
+    pending_nok_request = db.execute(
+        """SELECT *
+             FROM member_profile_change_requests
+            WHERE member_id=? AND request_type='NEXT_OF_KIN' AND status='Pending'
+            ORDER BY created_at DESC LIMIT 1""",
+        (member['id'],),
+    ).fetchone()
+
+    pending_nok_payload = {}
+    if pending_nok_request:
+        try:
+            pending_nok_payload = json.loads(pending_nok_request['payload_json'] or '{}')
+        except (TypeError, ValueError):
+            pending_nok_payload = {}
+
     return render_template(
         'member/profile.html',
         member=member, user=user,
         fines=fines, fees=fees, payouts=payouts,
+        pending_nok_request=pending_nok_request,
+        pending_nok_payload=pending_nok_payload,
     )
+
+
+@bp.route('/profile/next-of-kin-request', methods=['POST'])
+def profile_next_of_kin_request():
+    db = get_db()
+    member = _current_member()
+    next_of_kin = (request.form.get('next_of_kin') or '').strip()
+    nok_relationship = (request.form.get('nok_relationship') or '').strip()
+    nok_phone = (request.form.get('nok_phone') or '').strip()
+    nok_address = (request.form.get('nok_address') or '').strip()
+
+    if not next_of_kin or not nok_relationship or not nok_phone:
+        flash('Enter Next of Kin full name, relationship, and phone number.', 'warning')
+        return redirect(url_for('member.profile'))
+
+    existing_pending = db.execute(
+        """SELECT id
+             FROM member_profile_change_requests
+            WHERE member_id=? AND request_type='NEXT_OF_KIN' AND status='Pending'
+            ORDER BY created_at DESC LIMIT 1""",
+        (member['id'],),
+    ).fetchone()
+
+    payload = json.dumps({
+        'next_of_kin': next_of_kin,
+        'nok_relationship': nok_relationship,
+        'nok_phone': nok_phone,
+        'nok_address': nok_address,
+    })
+    if existing_pending:
+        db.execute(
+            """UPDATE member_profile_change_requests
+                  SET payload_json=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?""",
+            (payload, existing_pending['id']),
+        )
+        request_id = existing_pending['id']
+    else:
+        db.execute(
+            """INSERT INTO member_profile_change_requests
+               (member_id, request_type, payload_json, status, requested_by_user_id)
+               VALUES (?, 'NEXT_OF_KIN', ?, 'Pending', ?)""",
+            (member['id'], payload, session['user_id']),
+        )
+        request_id = db.execute("SELECT last_insert_rowid() AS i").fetchone()['i']
+
+    _notify_roles(
+        db,
+        ['TREASURER', 'SECRETARY', 'IT_ADMIN'],
+        'Member Next of Kin update requires approval',
+        f"{member['full_name']} ({member['member_no']}) submitted Next of Kin update request #{request_id}.",
+        url_for('admin.approvals'),
+    )
+    db.commit()
+    flash('Submitted successfully. The details were sent for Treasurer approval and the Club Secretary will update your details within 2 hours.', 'success')
+    return redirect(url_for('member.profile'))
+
+
+@bp.route('/profile/national-id-copy', methods=['POST'])
+def profile_upload_national_id_copy():
+    flash('National ID copies are managed by the Secretary or IT Admin from your member record.', 'info')
+    return redirect(url_for('member.profile'))

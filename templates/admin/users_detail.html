@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}User: {{ user.username }}{% endblock %}
+{% block topbar %}System User Detail{% endblock %}
+{% block content %}
+<style>
+.ud-hero{background:linear-gradient(135deg,#10213b 0%,#21497d 60%,#3a6eb5 100%);border-radius:14px;padding:16px 20px;color:#fff;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.ud-hero .name{font-size:22px;font-weight:900;margin-bottom:4px}
+.ud-hero .sub{font-size:12px;opacity:.82}
+.ud-chip{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.ud-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.ud-actions a,.ud-actions button{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;text-decoration:none;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+.ud-actions a:hover,.ud-actions button:hover{background:rgba(255,255,255,.26)}
+.ud-actions button.danger{background:rgba(220,38,38,.3);border-color:rgba(220,38,38,.5)}
+.kv-row{border-bottom:1px solid #f0f4f8;padding:7px 0;display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:13px;align-items:start}
+.kv-row:last-child{border-bottom:none}
+.kv-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.al-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.3px;white-space:nowrap}
+.al-create{background:#e8f8f0;color:#0e6640}.al-update{background:#e8f0ff;color:#3a3ab5}
+.al-delete{background:#fde8e8;color:#aa2626}.al-auth{background:#f0e8ff;color:#6b21a8}
+.al-finance{background:#fff8e1;color:#7a5900}.al-system{background:#f0f4f8;color:#36546e}.al-default{background:#f2f2f2;color:#444}
+.act-row{display:grid;grid-template-columns:50px 145px 160px 1fr 80px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f0f4f8;font-size:12px}
+.act-row:last-child{border-bottom:none}
+</style>
+
+<!-- Hero -->
+<div class="ud-hero">
+  <div>
+    <div class="name"><i class="ph ph-user-circle"></i> {{ user.username }}</div>
+    <div class="sub">
+      {% if user.member_role %}{{ ROLES[user.member_role].name }} &nbsp;&middot;&nbsp;{% endif %}
+      {% if user.full_name %}{{ user.full_name }} &nbsp;&middot;&nbsp;{% endif %}
+      {{ user.is_active and 'Active account' or 'Inactive account' }}
+    </div>
+    {% if user.member_no %}<div class="ud-chip"><i class="ph ph-identification-card"></i> {{ user.member_no }}</div>{% endif %}
+  </div>
+  <div class="ud-actions">
+    <a href="{{ url_for('admin.users_edit', user_id=user.id) }}"><i class="ph ph-pencil-simple"></i> Edit</a>
+    {% if user.must_change_pw %}
+    <form method="post" action="{{ url_for('admin.users_unlock', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Clear the force-change-password flag for {{ user.username }}?')">
+      <button type="submit"><i class="ph ph-lock-open"></i> Clear PW Flag</button>
+    </form>
+    {% endif %}
+    {% if user.id != session.user_id %}
+    <form method="post" action="{{ url_for('admin.users_toggle_active', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Toggle access for {{ user.username }}?')">
+      <button type="submit">{% if user.is_active %}<i class="ph ph-lock"></i> Suspend{% else %}<i class="ph ph-lock-open"></i> Activate{% endif %}</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('admin.users_list') }}"><i class="ph ph-caret-left"></i> All Users</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-5">
+    <!-- Account info -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-shield-lock"></i> Account Details</div>
+      <div class="card-body">
+        <div class="kv-row"><span class="kv-label">Username</span><strong>{{ user.username }}</strong></div>
+        <div class="kv-row"><span class="kv-label">Status</span>
+          {% if user.is_active %}<span class="badge-pill badge-active">Active</span>{% else %}<span class="badge-pill badge-defaulted">Inactive</span>{% endif %}
+        </div>
+        <div class="kv-row"><span class="kv-label">PW Change Flag</span>
+          {% if user.must_change_pw %}<span class="badge bg-warning text-dark" style="font-size:10px">Must change on next login</span>{% else %}<span class="text-muted">None</span>{% endif %}
+        </div>
+        <div class="kv-row"><span class="kv-label">Last Login</span>{{ user.last_login | datetimefmt if user.last_login else 'Never' }}</div>
+        <div class="kv-row"><span class="kv-label">Account Created</span>{{ user.created_at | datetimefmt if user.created_at else '—' }}</div>
+      </div>
+    </div>
+
+    <!-- Linked member -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-identification-card"></i> Linked Member</div>
+      <div class="card-body">
+        {% if user.member_id %}
+        <div class="kv-row"><span class="kv-label">Member No</span><strong>{{ user.member_no }}</strong></div>
+        <div class="kv-row"><span class="kv-label">Full Name</span>{{ user.full_name }}</div>
+        <div class="kv-row"><span class="kv-label">Role</span>
+          {% if user.member_role %}<span class="role-badge role-{{ user.member_role|lower }}">{{ ROLES[user.member_role].name }}</span>{% else %}—{% endif %}
+        </div>
+        <div class="kv-row"><span class="kv-label">Member Status</span>{{ user.member_status or '—' }}</div>
+        <div class="kv-row"><span class="kv-label">Phone</span>{{ user.phone or '—' }}</div>
+        <div class="kv-row"><span class="kv-label">Email</span>{{ user.email or '—' }}</div>
+        <a href="{{ url_for('admin.member_detail', member_id=user.member_id) }}" class="btn btn-sm btn-outline-primary mt-2"><i class="ph ph-arrow-square-out"></i> Open Member Record</a>
+        {% else %}
+        <div class="text-muted small">This login is not linked to a member record (system-only account).</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Activity summary -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="ph ph-chart-bar"></i> Activity Summary</div>
+      <div class="card-body">
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0">
+          <div class="stat-card accent" style="padding:12px">
+            <div class="label">Total Actions</div>
+            <div class="value">{{ stats.total_actions | int }}</div>
+          </div>
+          <div class="stat-card gold" style="padding:12px">
+            <div class="label">Today</div>
+            <div class="value">{{ stats.today_actions | int }}</div>
+          </div>
+        </div>
+        {% if stats.first_action %}
+        <div class="kv-row mt-2"><span class="kv-label">First Action</span>{{ stats.first_action | datetimefmt }}</div>
+        <div class="kv-row"><span class="kv-label">Latest Action</span>{{ stats.last_action | datetimefmt }}</div>
+        {% else %}
+        <div class="small text-muted mt-2">No actions recorded yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <!-- Recent activity -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="ph ph-clock-counter-clockwise"></i> Recent Activity</span>
+        <a href="{{ url_for('admin.audit_list', user=user.username) }}" class="btn btn-sm btn-outline-secondary">Full log</a>
+      </div>
+      <div class="card-body p-0">
+        {% if activity %}
+        <div style="padding:0 12px">
+          {% for r in activity %}
+          {% set ac = r.action | upper %}
+          {% if 'CREATE' in ac or 'ADD' in ac %}{% set b='al-create' %}
+          {% elif 'UPDATE' in ac or 'EDIT' in ac or 'APPROVE' in ac or 'TOGGLE' in ac or 'SAVE' in ac or 'UNLOCK' in ac %}{% set b='al-update' %}
+          {% elif 'DELETE' in ac or 'REMOVE' in ac %}{% set b='al-delete' %}
+          {% elif 'LOGIN' in ac or 'AUTH' in ac or 'PASSWORD' in ac or 'PW' in ac %}{% set b='al-auth' %}
+          {% elif 'SAVINGS' in ac or 'LOAN' in ac or 'FEE' in ac or 'FINE' in ac or 'DIVIDEND' in ac %}{% set b='al-finance' %}
+          {% elif 'ALERT' in ac or 'SYSTEM' in ac or 'SETTINGS' in ac %}{% set b='al-system' %}
+          {% else %}{% set b='al-default' %}{% endif %}
+          <div class="act-row">
+            <span class="text-muted" style="font-size:11px">#{{ r.id }}</span>
+            <span style="font-size:11px;color:var(--text-muted)">{{ r.created_at | datetimefmt }}</span>
+            <span><span class="al-badge {{ b }}">{{ r.action }}</span></span>
+            <span style="font-size:11px;color:var(--text-muted)">{{ r.description or '—' }}</span>
+            <a href="{{ url_for('admin.audit_detail', log_id=r.id) }}" class="btn btn-sm btn-outline-secondary" style="padding:2px 8px;font-size:11px">Detail</a>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state small"><i class="ph ph-clock"></i><div>No activity recorded for this user yet.</div></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

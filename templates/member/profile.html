@@ -2,124 +2,72 @@
 {% block title %}My Profile{% endblock %}
 {% block topbar %}My Profile{% endblock %}
 {% block content %}
-<div class="page-header">
-  <div><h1>My Profile</h1><div class="subtitle">Your membership details (read-only)</div></div>
-  <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-key"></i> Change Password</a>
-</div>
+<style>
+.mpf-root{--a:#10213b;--b:#21497d;--c:#6090d3;--line:#d9e4ef;--ink:#18324b;--muted:#61788f}.mpf-hero{background:linear-gradient(140deg,var(--a) 0%,var(--b) 60%,var(--c) 100%);border-radius:16px;color:#fff;padding:14px;display:grid;grid-template-columns:1.35fr .85fr;gap:8px;position:relative;overflow:hidden;margin-bottom:10px}.mpf-hero:before{content:"";position:absolute;right:-70px;top:-70px;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 66%)}.mpf-id{display:flex;align-items:center;gap:12px}.mpf-avatar{width:66px;height:66px;border-radius:16px;overflow:hidden;border:3px solid rgba(255,255,255,.34);background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px}.mpf-avatar img{width:100%;height:100%;object-fit:cover}.mpf-hero h1{margin:0;font-size:21px;font-weight:900}.mpf-sub{margin-top:4px;font-size:11px;opacity:.92}.mpf-chip{display:inline-flex;gap:6px;align-items:center;margin-top:7px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:10px;font-weight:800;text-transform:uppercase}.mpf-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:10px}.mpf-panel{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 3px 8px rgba(17,40,64,.05);overflow:hidden;margin-bottom:10px}.mpf-head{padding:9px 10px;border-bottom:1px solid #edf2f8;font-size:11px;font-weight:800;color:#29527d;background:linear-gradient(180deg,#f7fbff,#fff);display:flex;justify-content:space-between;align-items:center}.mpf-body{padding:10px}.mpf-table{width:100%;border-collapse:collapse;font-size:11px}.mpf-table th,.mpf-table td{padding:7px 8px;border-top:1px solid #eef2f8}.mpf-table th{border-top:none;background:#f8fbff;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6a8197;font-weight:800}.mpf-money{text-align:right;font-weight:800;color:#20384f}.mpf-form .form-label{font-size:10px;font-weight:800;color:#5e748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.mpf-form .form-control{font-size:12px;padding:7px 9px}.mpf-note{font-size:11px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;padding:8px 9px;border-radius:8px;margin-bottom:8px}.mpf-nok-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mpf-id-preview{border:1px dashed #c3d2e1;border-radius:8px;padding:8px;background:#f9fbfe}.mpf-id-preview img{width:100%;max-height:170px;object-fit:cover;border-radius:8px;border:1px solid #d9e4ef}.mpf-pending{font-size:11px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:8px 9px;border-radius:8px;margin-top:8px}.mpf-section-label{font-size:12px;font-weight:800;color:#5f6f80;letter-spacing:.03em}@media (max-width:960px){.mpf-hero,.mpf-grid{grid-template-columns:1fr}}@media (max-width:640px){.mpf-nok-grid{grid-template-columns:1fr}.mpf-body{padding:8px}.mpf-panel{margin-bottom:8px}.mpf-hero{padding:11px}.mpf-avatar{width:56px;height:56px;border-radius:14px}.mpf-hero h1{font-size:19px}}
+</style>
+<div class="mpf-root">
+  <div class="mpf-hero"><div class="mpf-id"><div class="mpf-avatar">{% if member.photo_url %}<img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}">{% else %}{{ (member.full_name or 'U')[0]|upper }}{% endif %}</div><div><h1>My Profile</h1><div class="mpf-sub">Manage your profile identity records and submit Next of Kin updates for approval.</div><div class="mpf-chip"><i class="ph ph-identification-card"></i> {{ member.member_no }}</div></div></div><div class="text-end"><a href="{{ url_for('auth.change_password') }}" class="btn btn-light btn-sm"><i class="ph ph-key"></i> Change Password</a></div></div>
+  <div class="mpf-grid">
+    <div>
+      <div class="mpf-panel"><div class="mpf-head"><i class="ph ph-user-circle"></i> Personal Details</div><div class="mpf-body"><dl class="kv-list mb-0"><dt>Member No.</dt><dd><strong>{{ member.member_no }}</strong></dd><dt>Full Name</dt><dd>{{ member.full_name }}</dd><dt>Role</dt><dd><span class="role-badge role-{{ member.role|lower }}">{{ ROLES[member.role].name }}</span></dd><dt>Status</dt><dd><span class="badge-pill badge-active">{{ member.status }}</span></dd><dt>Phone</dt><dd>{{ member.phone or '-' }}</dd><dt>Email</dt><dd>{{ member.email or '-' }}</dd><dt>National ID</dt><dd>{{ member.national_id or '-' }}</dd><dt>District</dt><dd>{{ member.district or '-' }}</dd><dt>Next of Kin</dt><dd>{{ member.next_of_kin or '-' }}</dd><dt>Relationship</dt><dd>{{ member.nok_relationship or '-' }}</dd><dt>NOK Phone</dt><dd>{{ member.nok_phone or '-' }}</dd><dt>NOK Address</dt><dd>{{ member.nok_address or '-' }}</dd><dt>Joined</dt><dd>{{ member.join_date|datefmt }}</dd></dl></div></div>
 
-<div class="row g-3">
-  <div class="col-md-7">
-    <div class="card">
-      <div class="card-header"><i class="ph ph-user-circle"></i> Personal Details</div>
-      <div class="card-body">
-        <div class="member-profile-head">
-          {% if member.photo_url %}
-          <img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}" class="member-profile-photo">
-          {% else %}
-          <div class="member-profile-photo member-avatar-fallback">{{ (member.full_name or 'U')[0]|upper }}</div>
+      <div class="mpf-panel">
+        <div class="mpf-head"><i class="ph ph-users-three"></i> Section 5: Next of Kin</div>
+        <div class="mpf-body">
+          <div class="mpf-note"><i class="ph ph-info"></i> Submit Next of Kin details below. Treasurer approval is required, then the secretary updates your file within 2 hours.</div>
+          <form method="post" action="{{ url_for('member.profile_next_of_kin_request') }}" class="mpf-form">
+            <div class="mpf-section-label mb-2">* Full Name / Relationship / Phone</div>
+            <div class="mpf-nok-grid">
+              <div>
+                <label class="form-label">* Full Name</label>
+                <input type="text" name="next_of_kin" class="form-control" required value="{{ (pending_nok_payload.next_of_kin if pending_nok_payload else member.next_of_kin) or '' }}" placeholder="None">
+              </div>
+              <div>
+                <label class="form-label">* Relationship</label>
+                <input type="text" name="nok_relationship" class="form-control" required value="{{ (pending_nok_payload.nok_relationship if pending_nok_payload else member.nok_relationship) or '' }}" placeholder="None">
+              </div>
+              <div>
+                <label class="form-label">* Phone</label>
+                <input type="text" name="nok_phone" class="form-control" required value="{{ (pending_nok_payload.nok_phone if pending_nok_payload else member.nok_phone) or '' }}" placeholder="None">
+              </div>
+              <div>
+                <label class="form-label">Address</label>
+                <input type="text" name="nok_address" class="form-control" value="{{ (pending_nok_payload.nok_address if pending_nok_payload else member.nok_address) or '' }}" placeholder="None">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm mt-2"><i class="ph ph-paper-plane-tilt"></i> Submit for Approval</button>
+          </form>
+          {% if pending_nok_request %}
+          <div class="mpf-pending">
+            <strong>Pending Approval:</strong> submitted on {{ pending_nok_request.created_at|datetimefmt }}. The secretary updates your profile within 2 hours after approval.
+          </div>
           {% endif %}
-          <div>
-            <div class="h6 mb-0">{{ member.full_name }}</div>
-            <div class="small text-muted">{{ member.member_no }}</div>
+        </div>
+      </div>
+
+      <div class="mpf-panel">
+        <div class="mpf-head"><i class="ph ph-identification-card"></i> National ID Copy</div>
+        <div class="mpf-body">
+          <div class="mpf-note">
+            <i class="ph ph-info"></i> National ID copies are uploaded and maintained by the Secretary or IT Admin.
+          </div>
+          <div class="mpf-id-preview mt-3">
+            {% if member.nid_copy_url %}
+              <img src="{{ url_for('static', filename=member.nid_copy_url) }}" alt="National ID copy preview">
+              <a href="{{ url_for('static', filename=member.nid_copy_url) }}" target="_blank" class="small d-inline-block mt-2">Open full-size National ID copy</a>
+            {% else %}
+              <div class="small text-muted">No National ID copy uploaded yet.</div>
+            {% endif %}
           </div>
         </div>
-        <dl class="kv-list">
-          <dt>Member No.</dt><dd><strong>{{ member.member_no }}</strong></dd>
-          <dt>Full name</dt><dd>{{ member.full_name }}</dd>
-          <dt>Role</dt><dd><span class="role-badge role-{{ member.role|lower }}">{{ ROLES[member.role].name }}</span></dd>
-          <dt>Status</dt><dd><span class="badge-pill badge-active">{{ member.status }}</span></dd>
-          <dt>Phone</dt><dd>{{ member.phone or '-' }}</dd>
-          <dt>Email</dt><dd>{{ member.email or '-' }}</dd>
-          <dt>National ID</dt><dd>{{ member.national_id or '-' }}</dd>
-          <dt>District</dt><dd>{{ member.district or '-' }}</dd>
-          <dt>Next of Kin</dt><dd>{{ member.next_of_kin or '-' }}</dd>
-          <dt>NOK Phone</dt><dd>{{ member.nok_phone or '-' }}</dd>
-          <dt>Joined</dt><dd>{{ member.join_date|datefmt }}</dd>
-        </dl>
-        <p class="small text-muted mt-2 mb-0"><i class="ph ph-info"></i> Updates to your personal information should be requested through the Secretary.</p>
       </div>
     </div>
-  </div>
-
-  <div class="col-md-5">
-    <div class="card">
-      <div class="card-header"><i class="ph ph-shield-lock"></i> Login Account</div>
-      <div class="card-body">
-        {% if user %}
-        <dl class="kv-list">
-          <dt>Username</dt><dd><strong>{{ user.username }}</strong></dd>
-          <dt>Status</dt><dd>{% if user.is_active %}<span class="badge-pill badge-active">Active</span>{% else %}<span class="badge-pill badge-defaulted">Disabled</span>{% endif %}</dd>
-          <dt>Last login</dt><dd>{{ user.last_login|datetimefmt if user.last_login else 'Never' }}</dd>
-        </dl>
-        {% else %}
-        <p>No login configured. Contact IT Admin.</p>
-        {% endif %}
-      </div>
+    <div>
+      <div class="mpf-panel"><div class="mpf-head"><i class="ph ph-shield-lock"></i> Login Account</div><div class="mpf-body">{% if user %}<dl class="kv-list mb-0"><dt>Username</dt><dd><strong>{{ user.username }}</strong></dd><dt>Status</dt><dd>{% if user.is_active %}<span class="badge-pill badge-active">Active</span>{% else %}<span class="badge-pill badge-defaulted">Disabled</span>{% endif %}</dd><dt>Last Login</dt><dd>{{ user.last_login|datetimefmt if user.last_login else 'Never' }}</dd></dl>{% else %}<p class="mb-0">No login configured. Contact IT Admin.</p>{% endif %}</div></div>
+      <div class="mpf-panel"><div class="mpf-head"><i class="ph ph-receipt"></i> Annual Fees</div><div class="table-responsive">{% if fees %}<table class="mpf-table"><thead><tr><th>Year</th><th class="mpf-money">Amount</th><th>Status</th><th>Paid On</th></tr></thead><tbody>{% for f in fees %}<tr><td>{{ f.year }}</td><td class="mpf-money">{{ f.amount|money }}</td><td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td><td>{{ f.paid_date|datefmt if f.paid_date else '-' }}</td></tr>{% endfor %}</tbody></table>{% else %}<div class="empty-state small">No fee records.</div>{% endif %}</div></div>
+      {% if fines %}<div class="mpf-panel"><div class="mpf-head"><i class="ph ph-warning"></i> Fines</div><div class="table-responsive"><table class="mpf-table"><thead><tr><th>Date</th><th>Violation</th><th class="mpf-money">Amount</th><th>Status</th></tr></thead><tbody>{% for f in fines %}<tr><td>{{ f.fine_date|datefmt }}</td><td>{{ f.violation }}</td><td class="mpf-money">{{ f.amount|money }}</td><td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td></tr>{% endfor %}</tbody></table></div></div>{% endif %}
+      {% if payouts %}<div class="mpf-panel"><div class="mpf-head"><i class="ph ph-chart-line-up"></i> Dividend History</div><div class="table-responsive"><table class="mpf-table"><thead><tr><th>Year</th><th class="mpf-money">Amount</th><th>Distributed</th></tr></thead><tbody>{% for p in payouts %}<tr><td>{{ p.year }}{% if p.is_top_saver %} <i class="ph ph-trophy text-warning"></i>{% endif %}</td><td class="mpf-money">{{ p.amount|money }}</td><td>{{ p.distribution_date|datefmt }}</td></tr>{% endfor %}</tbody></table></div></div>{% endif %}
     </div>
-
-    <div class="card mt-3">
-      <div class="card-header"><i class="ph ph-receipt"></i> Annual Fees</div>
-      <div class="card-body p-0">
-        {% if fees %}
-        <table class="table mb-0">
-          <thead><tr><th>Year</th><th>Amount</th><th>Status</th><th>Paid On</th></tr></thead>
-          <tbody>
-            {% for f in fees %}
-            <tr>
-              <td>{{ f.year }}</td>
-              <td class="table-money">{{ f.amount|money }}</td>
-              <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
-              <td>{{ f.paid_date|datefmt if f.paid_date else '-' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% else %}
-          <div class="empty-state small">No fee records.</div>
-        {% endif %}
-      </div>
-    </div>
-
-    {% if fines %}
-    <div class="card mt-3">
-      <div class="card-header"><i class="ph ph-warning"></i> Fines</div>
-      <div class="card-body p-0">
-        <table class="table mb-0">
-          <thead><tr><th>Date</th><th>Violation</th><th>Amount</th><th>Status</th></tr></thead>
-          <tbody>
-            {% for f in fines %}
-            <tr>
-              <td>{{ f.fine_date|datefmt }}</td>
-              <td>{{ f.violation }}</td>
-              <td class="table-money">{{ f.amount|money }}</td>
-              <td><span class="badge-pill badge-{{ f.status|lower }}">{{ f.status }}</span></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if payouts %}
-    <div class="card mt-3">
-      <div class="card-header"><i class="ph ph-chart-line-up"></i> Dividend History</div>
-      <div class="card-body p-0">
-        <table class="table mb-0">
-          <thead><tr><th>Year</th><th>Amount</th><th>Distributed</th></tr></thead>
-          <tbody>
-            {% for p in payouts %}
-            <tr>
-              <td>{{ p.year }}{% if p.is_top_saver %} <i class="ph ph-trophy text-warning"></i>{% endif %}</td>
-              <td class="table-money">{{ p.amount|money }}</td>
-              <td>{{ p.distribution_date|datefmt }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {% endif %}
   </div>
 </div>
 {% endblock %}

@@ -1,262 +1,691 @@
-﻿{% extends "base.html" %}
-{% block title %}Savings{% endblock %}
-{% block topbar %}Savings{% endblock %}
+{% extends "base.html" %}
+{% block title %}Savings Module — {{ CONFIG.CLUB_NAME }}{% endblock %}
+{% block topbar %}Savings Module{% endblock %}
+
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1>Savings Module</h1>
-    <div class="subtitle">Club start: Aug-2025. Deposits are auto-allocated at {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} per month.</div>
+<style>
+/* ============================================================
+   SAVINGS MODULE — Premium Financial UI
+   (mirrors dashboard look & feel)
+   ============================================================ */
+.sv-root {
+  --sav-a:   #059669; --sav-b:   #34d399; --sav-bg: #ecfdf5; --sav-border: #6ee7b7;
+  --gold-a:  #92400e; --gold-b:  #f59e0b; --gold-bg: #fef3c7; --gold-border: #fcd34d;
+  --int-a:   #7c3aed; --int-b:   #a78bfa; --int-bg:  #f5f3ff; --int-border: #c4b5fd;
+  --red-a:   #b91c1c; --red-b:   #f87171;
+  --blue-a:  #1d4ed8; --blue-b:  #60a5fa; --blue-bg: #eff6ff; --blue-border: #93c5fd;
+  --ops-a:   #0d9488; --ops-b:   #2dd4bf; --ops-bg:  #f0fdfa; --ops-border: #99f6e4;
+}
+
+/* --- Hero bar --- */
+.sv-hero {
+  background: linear-gradient(135deg, #064e3b 0%, #059669 55%, #0d9488 100%);
+  border-radius: 18px;
+  padding: 22px 26px 18px;
+  color: #fff;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.sv-hero::before {
+  content: '';
+  position: absolute;
+  top: -50px; right: -50px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 70%);
+}
+.sv-hero h1 { font-size: 24px; font-weight: 900; margin: 0; letter-spacing: -.3px; }
+.sv-hero .sv-hero-sub { font-size: 13px; opacity: .75; margin-top: 4px; }
+.sv-hero .sv-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.sv-hero .sv-hero-actions a,
+.sv-hero .sv-hero-actions button {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.sv-hero .sv-hero-actions a:hover { background: rgba(255,255,255,.25); color:#fff; }
+
+/* --- Tab strip --- */
+.sv-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 5px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.sv-tab {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+  padding: 9px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all .15s;
+}
+.sv-tab:hover { background: #e2e8f0; color: #334155; }
+.sv-tab.active {
+  background: #fff;
+  color: #059669;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
+.sv-tab .sv-badge {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* --- KPI grid --- */
+.sv-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.sv-kpi {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  text-decoration: none;
+  color: inherit;
+  transition: transform .15s, box-shadow .15s;
+  position: relative;
+  overflow: hidden;
+}
+.sv-kpi:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
+.sv-kpi::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.sv-kpi.green::before  { background: linear-gradient(90deg, var(--sav-a), var(--sav-b)); }
+.sv-kpi.gold::before   { background: linear-gradient(90deg, var(--gold-a), var(--gold-b)); }
+.sv-kpi.purple::before { background: linear-gradient(90deg, var(--int-a), var(--int-b)); }
+.sv-kpi.red::before    { background: linear-gradient(90deg, var(--red-a), var(--red-b)); }
+.sv-kpi.blue::before   { background: linear-gradient(90deg, var(--blue-a), var(--blue-b)); }
+.sv-kpi.teal::before   { background: linear-gradient(90deg, var(--ops-a), var(--ops-b)); }
+
+.sv-kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.sv-kpi-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+.sv-kpi-value { font-size: 22px; font-weight: 900; color: #0f172a; line-height: 1.1; margin-bottom: 4px; }
+.sv-kpi-sub { font-size: 11px; color: #64748b; line-height: 1.4; }
+
+/* 3D icon */
+.sv-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.sv-icon.green  { background: var(--sav-bg);  color: var(--sav-a);  box-shadow: 0 2px 6px rgba(5,150,105,.2), inset 0 1px 0 rgba(255,255,255,.7); }
+.sv-icon.gold   { background: var(--gold-bg); color: var(--gold-a); box-shadow: 0 2px 6px rgba(146,64,14,.2),  inset 0 1px 0 rgba(255,255,255,.7); }
+.sv-icon.purple { background: var(--int-bg);  color: var(--int-a);  box-shadow: 0 2px 6px rgba(124,58,237,.2), inset 0 1px 0 rgba(255,255,255,.7); }
+.sv-icon.red    { background: #fff1f2;        color: var(--red-a);  box-shadow: 0 2px 6px rgba(185,28,28,.2),  inset 0 1px 0 rgba(255,255,255,.7); }
+.sv-icon.blue   { background: var(--blue-bg); color: var(--blue-a); box-shadow: 0 2px 6px rgba(29,78,216,.2),  inset 0 1px 0 rgba(255,255,255,.7); }
+.sv-icon.teal   { background: var(--ops-bg);  color: var(--ops-a);  box-shadow: 0 2px 6px rgba(13,148,136,.2), inset 0 1px 0 rgba(255,255,255,.7); }
+
+/* --- Section shell --- */
+.sv-section {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.sv-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.sv-section-head.green  { border-bottom-color: var(--sav-border);  color: var(--sav-a); }
+.sv-section-head.gold   { border-bottom-color: var(--gold-border); color: var(--gold-a); }
+.sv-section-head.purple { border-bottom-color: var(--int-border);  color: var(--int-a); }
+.sv-section-head.red    { border-bottom-color: #fecaca;            color: var(--red-a); }
+.sv-section-head.blue   { border-bottom-color: var(--blue-border); color: var(--blue-a); }
+.sv-section-head.teal   { border-bottom-color: var(--ops-border);  color: var(--ops-a); }
+
+/* --- Premium table --- */
+.sv-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sv-tbl thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+.sv-tbl tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.sv-tbl tbody tr:last-child td { border-bottom: none; }
+.sv-tbl tbody tr:hover { background: #f8fafc; }
+.sv-tbl td.money { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sv-tbl td.money.pos { color: #059669; }
+.sv-tbl td.money.neg { color: #b91c1c; }
+
+/* Status chips */
+.sv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sv-chip.paid    { background: #dcfce7; color: #166534; }
+.sv-chip.missed  { background: #fee2e2; color: #991b1b; }
+.sv-chip.future  { background: #f1f5f9; color: #64748b; }
+.sv-chip.arrears { background: #fef3c7; color: #92400e; }
+
+/* Coverage bar */
+.sv-progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.sv-progress-bar .fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #059669, #34d399);
+  transition: width .3s;
+}
+
+/* Ledger member card */
+.sv-member-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  border-bottom: 1px solid #d1fae5;
+}
+.sv-member-card .avatar {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #059669, #34d399);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 3px solid rgba(5,150,105,.25);
+  box-shadow: 0 4px 12px rgba(5,150,105,.2);
+}
+.sv-member-card .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.sv-member-card .info h3 { margin: 0; font-size: 15px; font-weight: 800; color: #064e3b; }
+.sv-member-card .info p  { margin: 2px 0 0; font-size: 12px; color: #059669; }
+
+/* Calendar cell */
+.cal-paid   { color: #059669; font-weight: 700; font-size: 16px; }
+.cal-missed { color: #dc2626; font-weight: 700; font-size: 16px; }
+.cal-future { color: #cbd5e1; font-size: 14px; }
+
+/* Selector card */
+.sv-selector {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+}
+</style>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<div class="sv-hero">
+  <h1><i class="ph ph-piggy-bank" style="margin-right:8px"></i>Savings Module</h1>
+  <div class="sv-hero-sub">
+    Club savings started {{ CONFIG.SAVINGS_START_PERIOD }} &mdash;
+    mandatory deposit {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }}/month per member
   </div>
-  <div class="d-flex gap-2 flex-wrap savings-module-actions">
-    <a href="{{ url_for('admin.savings_list', view=view, member_scope='active', member_id=selected_member_id if view == 'ledger' else None, year=year if view == 'calendar' else None) }}"
-       class="btn btn-sm {% if member_scope == 'active' %}btn-primary module-highlight-btn{% else %}btn-outline-secondary module-year-btn{% endif %}">
-      <i class="ph ph-user-check"></i> Active Savings
+  <div class="sv-hero-actions">
+    <a href="{{ url_for('admin.savings_list', view=view, member_scope='active') }}"
+       class="{% if member_scope == 'active' %}sv-tab active{% endif %}">
+      <i class="ph ph-user-check"></i> Active
     </a>
-    <a href="{{ url_for('admin.savings_list', view=view, member_scope='non_active', member_id=selected_member_id if view == 'ledger' else None, year=year if view == 'calendar' else None) }}"
-       class="btn btn-sm {% if member_scope == 'non_active' %}btn-primary module-highlight-btn{% else %}btn-outline-secondary module-year-btn{% endif %}">
-      <i class="ph ph-user-minus"></i> Non-Active Savings ({{ non_active_count }})
+    <a href="{{ url_for('admin.savings_list', view=view, member_scope='non_active') }}"
+       class="{% if member_scope == 'non_active' %}sv-tab active{% endif %}">
+      <i class="ph ph-user-minus"></i> Non-Active ({{ non_active_count }})
     </a>
-  {% if session.role in ('IT_ADMIN','TREASURER') %}
-    <a href="{{ url_for('admin.savings_record') }}" class="btn btn-primary"><i class="ph ph-plus-circle"></i> Record Deposit</a>
-    <a href="{{ url_for('admin.savings_bulk') }}" class="btn btn-outline-primary"><i class="ph ph-stack"></i> Bulk Record</a>
-  {% endif %}
+    {% if session.role in ('IT_ADMIN','TREASURER') %}
+    <a href="{{ url_for('admin.savings_record') }}"><i class="ph ph-plus-circle"></i> Record Deposit</a>
+    <a href="{{ url_for('admin.savings_bulk') }}"><i class="ph ph-stack"></i> Bulk Record</a>
+    {% endif %}
   </div>
 </div>
 
-<ul class="nav nav-tabs mb-3 savings-module-tabs">
-  <li class="nav-item">
-    <a class="nav-link {% if view == 'overview' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='overview', member_scope=member_scope) }}">
-      <i class="ph ph-chart-pie-slice"></i> Overview
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {% if view == 'ledger' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='ledger', member_id=selected_member_id, member_scope=member_scope) }}">
-      <i class="ph ph-book-bookmark"></i> Ledger
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {% if view == 'calendar' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='calendar', year=year, member_scope=member_scope) }}">
-      <i class="ph ph-calendar-check"></i> Calendar
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {% if view == 'amendments' %}active{% endif %}" href="{{ url_for('admin.savings_list', view='amendments', member_scope=member_scope) }}">
-      <i class="ph ph-note-pencil"></i> Amendments
-    </a>
-  </li>
-</ul>
+<!-- ============================================================
+     TAB STRIP
+     ============================================================ -->
+<div class="sv-tabs">
+  <a class="sv-tab {% if view == 'overview' %}active{% endif %}"
+     href="{{ url_for('admin.savings_list', view='overview', member_scope=member_scope) }}">
+    <i class="ph ph-chart-pie-slice"></i> Overview
+  </a>
+  <a class="sv-tab {% if view == 'ledger' %}active{% endif %}"
+     href="{{ url_for('admin.savings_list', view='ledger', member_id=selected_member_id, member_scope=member_scope) }}">
+    <i class="ph ph-book-bookmark"></i> Member Ledger
+  </a>
+  <a class="sv-tab {% if view == 'calendar' %}active{% endif %}"
+     href="{{ url_for('admin.savings_list', view='calendar', year=year, member_scope=member_scope) }}">
+    <i class="ph ph-calendar-check"></i> Payment Calendar
+  </a>
+  <a class="sv-tab {% if view == 'amendments' %}active{% endif %}"
+     href="{{ url_for('admin.savings_list', view='amendments', member_scope=member_scope) }}">
+    <i class="ph ph-note-pencil"></i> Amendments
+  </a>
+</div>
 
+{% set coverage_pct = ((total_savings_all / expected_to_date * 100)|round|int) if expected_to_date else 0 %}
+
+<!-- ============================================================
+     OVERVIEW TAB
+     ============================================================ -->
 {% if view == 'overview' %}
-  <div class="stat-grid">
-    <a class="stat-card accent text-decoration-none" href="#member-breakdown">
-      <div class="label">Total Savings</div>
-      <div class="value">{{ total_savings_all|money }}</div>
-      <div class="sub">Click for per-member breakdown</div>
-    </a>
-    <div class="stat-card info">
-      <div class="label">Expected To Date</div>
-      <div class="value">{{ expected_to_date|money }}</div>
-      <div class="sub">{{ scope_count }} {{ scope_label|lower }} members x months since Aug-2025</div>
+
+<!-- KPI row 1: Savings pool -->
+<div class="sv-kpi-grid">
+  <div class="sv-kpi green">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Total Savings Pool</div>
+      <div class="sv-icon green"><i class="ph ph-piggy-bank"></i></div>
     </div>
-    <div class="stat-card gold">
-      <div class="label">Coverage</div>
-      <div class="value">{% if expected_to_date %}{{ ((total_savings_all / expected_to_date) * 100)|round|int }}%{% else %}0%{% endif %}</div>
-      <div class="sub">Overall collection progress</div>
-    </div>
-    <div class="stat-card {% if scope_count %}accent{% else %}danger{% endif %}">
-      <div class="label">{{ scope_label }} Members</div>
-      <div class="value">{{ scope_count }}</div>
-      <div class="sub">Included in expected calculations</div>
-    </div>
+    <div class="sv-kpi-value">{{ total_savings_all|money }}</div>
+    <div class="sv-kpi-sub">All-time deposits — {{ scope_label|lower }} members</div>
   </div>
 
-  <div class="card" id="member-breakdown">
-    <div class="card-header"><i class="ph ph-users-three"></i> Total Savings Breakdown Per Member</div>
-    <div class="card-body p-0 table-responsive">
-      <table class="table mb-0">
-        <thead>
-          <tr><th>#</th><th>Name</th><th>Months Covered</th><th class="table-money">Total Savings</th><th></th></tr>
-        </thead>
-        <tbody>
-          {% for m in member_totals %}
-          <tr>
-            <td><strong>{{ m.member_no }}</strong></td>
-            <td>{{ m.full_name }}</td>
-            <td>{{ m.months_covered }}</td>
-            <td class="table-money money-positive">{{ m.total_savings|money }}</td>
-            <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.savings_list', view='ledger', member_id=m.id, member_scope=member_scope) }}">View Ledger</a></td>
-          </tr>
-          {% else %}
-          <tr><td colspan="5" class="text-center text-muted py-4">No member savings records yet.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="sv-kpi gold">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Expected To Date</div>
+      <div class="sv-icon gold"><i class="ph ph-target"></i></div>
     </div>
-  </div>
-{% endif %}
-
-{% if view == 'ledger' %}
-  <div class="card mb-3">
-    <div class="card-body">
-      <form method="get" class="row g-2 align-items-end">
-        <input type="hidden" name="view" value="ledger">
-        <input type="hidden" name="member_scope" value="{{ member_scope }}">
-        <div class="col-md-6">
-          <label class="form-label">Select Member</label>
-          <select name="member_id" class="form-select" onchange="this.form.submit()">
-            {% for m in members_for_ledger %}
-            <option value="{{ m.id }}" {% if m.id == selected_member_id %}selected{% endif %}>{{ m.member_no }} - {{ m.full_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </form>
-    </div>
+    <div class="sv-kpi-value">{{ expected_to_date|money }}</div>
+    <div class="sv-kpi-sub">{{ scope_count }} members &times; months since {{ CONFIG.SAVINGS_START_PERIOD }}</div>
   </div>
 
-  {% if selected_member %}
-  <div class="stat-grid">
-    <div class="stat-card accent">
-      <div class="label">Member</div>
-      <div class="value" style="font-size:18px">{{ selected_member.member_no }}</div>
-      <div class="sub">{{ selected_member.full_name }}</div>
-    </div>
-    <div class="stat-card info">
-      <div class="label">Total Saved</div>
-      <div class="value">{{ ledger_total|money }}</div>
-      <div class="sub">Across all recorded periods</div>
-    </div>
-    <div class="stat-card gold">
-      <div class="label">Months Covered</div>
-      <div class="value">{{ ledger_months }}</div>
-      <div class="sub">At {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} each</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><i class="ph ph-book-bookmark"></i> {{ selected_member.member_no }} Savings Ledger</div>
-    <div class="card-body p-0 table-responsive">
-      <table class="table mb-0">
-        <thead><tr><th>Period</th><th class="table-money">Amount</th><th>Payment Date</th><th>Method</th><th>Ref</th>{% if session.role in ('IT_ADMIN','TREASURER') %}<th></th>{% endif %}</tr></thead>
-        <tbody>
-          {% for r in ledger_rows %}
-          <tr>
-            <td>{{ r.period|period_label }}</td>
-            <td class="table-money">{{ r.amount|money }}</td>
-            <td>{{ r.payment_date|datefmt }}</td>
-            <td>{{ r.payment_method or 'Bank Transfer' }}</td>
-            <td>{{ r.reference_no or '-' }}</td>
-            {% if session.role in ('IT_ADMIN','TREASURER') %}
-            <td>
-              <form method="post" action="{{ url_for('admin.savings_delete', savings_id=r.id) }}" data-confirm="Delete this savings entry? This cannot be undone." class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="ph ph-trash"></i></button>
-              </form>
-            </td>
-            {% endif %}
-          </tr>
-          {% else %}
-          <tr><td colspan="{% if session.role in ('IT_ADMIN','TREASURER') %}6{% else %}5{% endif %}" class="text-center text-muted py-4">No savings yet for this member.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-  {% endif %}
-{% endif %}
-
-{% if view == 'calendar' %}
-  <div class="card mb-3">
-    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <div>
-        <strong>{{ year }} Savings Calendar</strong>
-        <div class="small text-muted mt-1">Each checkmark represents exactly {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} for that month.</div>
+  <div class="sv-kpi {% if coverage_pct >= 90 %}green{% elif coverage_pct >= 60 %}gold{% else %}red{% endif %}">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Collection Coverage</div>
+      <div class="sv-icon {% if coverage_pct >= 90 %}green{% elif coverage_pct >= 60 %}gold{% else %}red{% endif %}">
+        <i class="ph ph-chart-donut"></i>
       </div>
-      <div class="savings-calendar-actions">
-        {% for y in years %}
-          <a href="{{ url_for('admin.savings_list', view='calendar', year=y, member_scope=member_scope) }}"
-             class="btn btn-sm {% if y == year %}btn-primary module-highlight-btn{% else %}btn-outline-secondary module-year-btn{% endif %} me-1 mb-1">{{ y }} Savings</a>
+    </div>
+    <div class="sv-kpi-value">{{ coverage_pct }}%</div>
+    <div class="sv-kpi-sub">
+      <div class="sv-progress-bar"><div class="fill" style="width:{{ [coverage_pct, 100]|min }}%"></div></div>
+    </div>
+  </div>
+
+  <div class="sv-kpi blue">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Active Members</div>
+      <div class="sv-icon blue"><i class="ph ph-users-three"></i></div>
+    </div>
+    <div class="sv-kpi-value">{{ active_count }}</div>
+    <div class="sv-kpi-sub">Currently enrolled &amp; saving</div>
+  </div>
+</div>
+
+<!-- KPI row 2: Arrears -->
+<div class="sv-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));">
+  <div class="sv-kpi {% if sav_arrears_members > 0 %}red{% else %}green{% endif %}">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Members With Arrears</div>
+      <div class="sv-icon {% if sav_arrears_members > 0 %}red{% else %}green{% endif %}">
+        <i class="ph ph-warning-circle"></i>
+      </div>
+    </div>
+    <div class="sv-kpi-value">{{ sav_arrears_members }}</div>
+    <div class="sv-kpi-sub">Overdue on past months (excl. current)</div>
+  </div>
+
+  <div class="sv-kpi {% if sav_arrears_amount > 0 %}red{% else %}green{% endif %}">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Total Arrears Outstanding</div>
+      <div class="sv-icon {% if sav_arrears_amount > 0 %}red{% else %}green{% endif %}">
+        <i class="ph ph-clock-countdown"></i>
+      </div>
+    </div>
+    <div class="sv-kpi-value">{{ sav_arrears_amount|money }}</div>
+    <div class="sv-kpi-sub">Past overdue savings not yet received</div>
+  </div>
+
+  <div class="sv-kpi {% if sav_cur_defaulters > 0 %}gold{% else %}green{% endif %}">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Current Month Unpaid</div>
+      <div class="sv-icon {% if sav_cur_defaulters > 0 %}gold{% else %}green{% endif %}">
+        <i class="ph ph-calendar-x"></i>
+      </div>
+    </div>
+    <div class="sv-kpi-value">{{ sav_cur_defaulters }}</div>
+    <div class="sv-kpi-sub">Members who haven't paid this month yet</div>
+  </div>
+
+  <div class="sv-kpi teal">
+    <div class="sv-kpi-top">
+      <div class="sv-kpi-label">Shortfall To Date</div>
+      <div class="sv-icon teal"><i class="ph ph-arrows-down-up"></i></div>
+    </div>
+    <div class="sv-kpi-value">{{ [expected_to_date - total_savings_all, 0]|max|money }}</div>
+    <div class="sv-kpi-sub">Gap between expected and collected</div>
+  </div>
+</div>
+
+
+<!-- Member breakdown table -->
+<div class="sv-section">
+  <div class="sv-section-head green">
+    <i class="ph ph-users-three"></i>
+    Savings Breakdown — Per Member
+  </div>
+  <div class="table-responsive">
+    {% if member_totals %}
+    <table class="sv-tbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Member</th>
+          <th>Status</th>
+          <th style="text-align:center">Months Covered</th>
+          <th style="text-align:right">Total Saved</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in member_totals %}
+        <tr>
+          <td><strong style="color:#059669">{{ m.member_no }}</strong></td>
+          <td>{{ m.full_name }}</td>
+          <td>
+            <span class="sv-chip {% if m.status == 'Active' %}paid{% else %}arrears{% endif %}">
+              {{ m.status }}
+            </span>
+          </td>
+          <td style="text-align:center">
+            <strong>{{ m.months_covered }}</strong>
+          </td>
+          <td class="money pos">{{ m.total_savings|money }}</td>
+          <td>
+            <a class="btn btn-sm btn-outline-success"
+               href="{{ url_for('admin.savings_list', view='ledger', member_id=m.id, member_scope=member_scope) }}">
+              <i class="ph ph-book-bookmark"></i> Ledger
+            </a>
+          </td>
+        </tr>
         {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="ph ph-piggy-bank" style="font-size:36px;opacity:.3"></i>
+      <p class="mt-2 mb-0">No savings records yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endif %}
+
+<!-- ============================================================
+     LEDGER TAB
+     ============================================================ -->
+{% if view == 'ledger' %}
+
+<div class="sv-selector">
+  <form method="get" class="row g-2 align-items-end">
+    <input type="hidden" name="view" value="ledger">
+    <input type="hidden" name="member_scope" value="{{ member_scope }}">
+    <div class="col-md-7">
+      <label class="form-label fw-semibold small">Select Member</label>
+      <select name="member_id" class="form-select" onchange="this.form.submit()">
+        {% for m in members_for_ledger %}
+        <option value="{{ m.id }}" {% if m.id == selected_member_id %}selected{% endif %}>
+          {{ m.member_no }} — {{ m.full_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-success"><i class="ph ph-magnifying-glass"></i> View</button>
+    </div>
+  </form>
+</div>
+
+{% if selected_member %}
+<div class="sv-section">
+  <!-- Member card -->
+  <div class="sv-member-card">
+    <div class="avatar">
+      {% if selected_member.photo_url %}
+      <img src="{{ url_for('static', filename=selected_member.photo_url) }}" alt="{{ selected_member.full_name }}">
+      {% else %}
+      {{ (selected_member.full_name or 'U')[0]|upper }}
+      {% endif %}
+    </div>
+    <div class="info">
+      <h3>{{ selected_member.full_name }}</h3>
+      <p>{{ selected_member.member_no }} &mdash; {{ selected_member.role }}</p>
+    </div>
+    <div class="ms-auto d-flex gap-3 flex-wrap">
+      <div class="text-center">
+        <div style="font-size:20px;font-weight:900;color:#059669">{{ ledger_total|money }}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Total Saved</div>
+      </div>
+      <div class="text-center">
+        <div style="font-size:20px;font-weight:900;color:#1d4ed8">{{ ledger_months }}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Months</div>
       </div>
     </div>
   </div>
 
-  <div class="small mb-2">
-    <span class="me-2"><span class="text-success">&#10004;</span> = paid</span>
-    <span class="me-2"><span class="text-danger">&#10006;</span> = missed</span>
-    <span class="text-muted">blank = future month (not due yet)</span>
-  </div>
-
-  <div class="card">
-    <div class="card-body p-0 table-responsive">
-      <table class="table mb-0 savings-calendar-table">
-        <thead>
-          <tr>
-            <th>Member</th>
-            {% for p in month_periods %}
-            <th class="text-center">{{ p|period_label }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in calendar_rows %}
-          <tr>
-            <td>
-              <strong>{{ row.member.full_name }}</strong>
-              <div class="small text-muted">{{ row.member.member_no }}</div>
-            </td>
-            {% for c in row.cells %}
-            <td class="text-center">
-              {% if c.status == 'paid' %}
-                <span class="text-success fw-bold" title="{{ c.amount|money if c.amount else '' }}">&#10004;</span>
-              {% elif c.status == 'missed' %}
-                <span class="text-danger fw-bold">&#10006;</span>
-              {% else %}
-                <span class="text-muted">&nbsp;</span>
-              {% endif %}
-            </td>
-            {% endfor %}
-          </tr>
-          {% else %}
-          <tr><td colspan="{{ month_periods|length + 1 }}" class="text-center text-muted py-4">No active members found.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- Ledger table -->
+  <div class="table-responsive">
+    {% if ledger_rows %}
+    <table class="sv-tbl">
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th style="text-align:right">Amount</th>
+          <th>Payment Date</th>
+          <th>Method</th>
+          <th>Reference</th>
+          {% if session.role in ('IT_ADMIN','TREASURER') %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in ledger_rows %}
+        <tr>
+          <td><strong>{{ r.period|period_label }}</strong></td>
+          <td class="money pos">{{ r.amount|money }}</td>
+          <td>{{ r.payment_date|datefmt }}</td>
+          <td>
+            <span class="sv-chip paid">{{ r.payment_method or 'Bank Transfer' }}</span>
+          </td>
+          <td style="color:#64748b">{{ r.reference_no or '—' }}</td>
+          {% if session.role in ('IT_ADMIN','TREASURER') %}
+          <td>
+            <form method="post" action="{{ url_for('admin.savings_delete', savings_id=r.id) }}"
+                  data-confirm="Delete this savings entry? This cannot be undone." class="d-inline">
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                <i class="ph ph-trash"></i>
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="ph ph-file-dashed" style="font-size:36px;opacity:.3"></i>
+      <p class="mt-2 mb-0">No savings recorded for this member yet.</p>
     </div>
+    {% endif %}
   </div>
+</div>
+{% endif %}
 {% endif %}
 
-{% if view == 'amendments' %}
-  <div class="card">
-    <div class="card-header"><i class="ph ph-note-pencil"></i> Savings Amendments (Latest 200 Entries)</div>
-    <div class="card-body p-0 table-responsive">
-      <table class="table mb-0">
-        <thead><tr><th>#</th><th>Name</th><th>Period</th><th class="table-money">Amount</th><th>Date</th><th>Method</th><th>Recorded By</th><th></th></tr></thead>
-        <tbody>
-          {% for r in amendments_rows %}
-          <tr>
-            <td>{{ r.member_no }}</td>
-            <td>{{ r.full_name }}</td>
-            <td>{{ r.period|period_label }}</td>
-            <td class="table-money">{{ r.amount|money }}</td>
-            <td>{{ r.payment_date|datefmt }}</td>
-            <td>{{ r.payment_method or 'Bank Transfer' }}</td>
-            <td>{{ r.recorder_name or '-' }}</td>
-            {% if session.role in ('IT_ADMIN','TREASURER') %}
-            <td>
-              <form method="post" action="{{ url_for('admin.savings_delete', savings_id=r.id) }}" data-confirm="Delete this savings entry? This cannot be undone." class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="ph ph-trash"></i></button>
-              </form>
-            </td>
+<!-- ============================================================
+     CALENDAR TAB
+     ============================================================ -->
+{% if view == 'calendar' %}
+
+<div class="sv-section" style="margin-bottom:16px">
+  <div class="sv-section-head green">
+    <i class="ph ph-calendar-check"></i>
+    {{ year }} Savings Calendar
+    <div class="ms-auto d-flex gap-2 flex-wrap">
+      {% for y in years %}
+      <a href="{{ url_for('admin.savings_list', view='calendar', year=y, member_scope=member_scope) }}"
+         class="btn btn-sm {% if y == year %}btn-success{% else %}btn-outline-secondary{% endif %} py-1">
+        {{ y }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  <div style="padding:10px 16px;font-size:12px;color:#64748b;border-bottom:1px solid #f1f5f9">
+    <span class="me-3"><span class="cal-paid">&#10004;</span> Paid ({{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }})</span>
+    <span class="me-3"><span class="cal-missed">&#10006;</span> Missed / Overdue</span>
+    <span><span class="cal-future">&mdash;</span> Future / Not due yet</span>
+  </div>
+  <div class="table-responsive">
+    <table class="sv-tbl">
+      <thead>
+        <tr>
+          <th style="min-width:160px">Member</th>
+          {% for p in month_periods %}
+          <th style="text-align:center;min-width:70px">{{ p|period_label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in calendar_rows %}
+        <tr>
+          <td>
+            <strong style="color:#0f172a">{{ row.member.full_name }}</strong>
+            <div style="font-size:11px;color:#94a3b8">{{ row.member.member_no }}</div>
+          </td>
+          {% for c in row.cells %}
+          <td style="text-align:center">
+            {% if c.status == 'paid' %}
+              <span class="cal-paid" title="{{ c.amount|money }}">&#10004;</span>
+            {% elif c.status == 'missed' %}
+              <span class="cal-missed">&#10006;</span>
             {% else %}
-            <td>-</td>
+              <span class="cal-future">&mdash;</span>
             {% endif %}
-          </tr>
-          {% else %}
-          <tr><td colspan="8" class="text-center text-muted py-4">No savings entries found.</td></tr>
+          </td>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="{{ month_periods|length + 1 }}" class="text-center text-muted py-5">
+            No active members found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+</div>
 {% endif %}
-{% endblock %}
 
+<!-- ============================================================
+     AMENDMENTS TAB
+     ============================================================ -->
+{% if view == 'amendments' %}
+<div class="sv-section">
+  <div class="sv-section-head teal">
+    <i class="ph ph-note-pencil"></i>
+    Savings Amendments &mdash; Latest 200 Entries
+  </div>
+  <div class="table-responsive">
+    <table class="sv-tbl">
+      <thead>
+        <tr>
+          <th>#</th><th>Member</th><th>Period</th>
+          <th style="text-align:right">Amount</th><th>Date</th>
+          <th>Method</th><th>Recorded By</th>
+          {% if session.role in ('IT_ADMIN','TREASURER') %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in amendments_rows %}
+        <tr>
+          <td><strong style="color:#0d9488">{{ r.member_no }}</strong></td>
+          <td>{{ r.full_name }}</td>
+          <td><strong>{{ r.period|period_label }}</strong></td>
+          <td class="money pos">{{ r.amount|money }}</td>
+          <td>{{ r.payment_date|datefmt }}</td>
+          <td><span class="sv-chip paid">{{ r.payment_method or 'Bank Transfer' }}</span></td>
+          <td style="color:#64748b">{{ r.recorder_name or '—' }}</td>
+          {% if session.role in ('IT_ADMIN','TREASURER') %}
+          <td>
+            <form method="post" action="{{ url_for('admin.savings_delete', savings_id=r.id) }}"
+                  data-confirm="Delete this savings entry? This cannot be undone." class="d-inline">
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                <i class="ph ph-trash"></i>
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="{% if session.role in ('IT_ADMIN','TREASURER') %}8{% else %}7{% endif %}"
+              class="text-center text-muted py-5">
+            No savings entries found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

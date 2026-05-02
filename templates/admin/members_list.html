@@ -1,89 +1,266 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Members{% endblock %}
 {% block topbar %}Members{% endblock %}
 {% block content %}
-<div class="page-header">
-  <div><h1>Members</h1><div class="subtitle">All club members and their savings positions</div></div>
-  <a href="{{ url_for('admin.member_create') }}" class="btn btn-primary"><i class="ph ph-user-plus"></i> Add Member</a>
+<style>
+/* ── Member List Premium UI ── */
+:root{--ml-accent:#1d4ed8;--ml-green:#059669;--ml-amber:#d97706;--ml-red:#dc2626;--ml-line:#e5ecf6}
+
+.ml-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.ml-header h1{margin:0;font-size:24px;font-weight:900;color:#0f1e35}
+.ml-header .sub{font-size:12px;color:#64748b;margin-top:3px}
+
+/* ── KPI tiles ── */
+.ml-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.ml-kpi{background:#fff;border:1px solid var(--ml-line);border-radius:14px;padding:16px 16px 12px;
+  box-shadow:0 2px 10px rgba(17,40,64,.05);position:relative;overflow:hidden}
+.ml-kpi-ico{position:absolute;top:12px;right:14px;width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.3)}
+.ml-kpi-ico::after{content:'';position:absolute;top:0;left:0;right:0;height:42%;border-radius:12px 12px 0 0;
+  background:rgba(255,255,255,.22);pointer-events:none}
+.ico-blue{background:linear-gradient(145deg,#3b82f6,#1d4ed8)}
+.ico-green{background:linear-gradient(145deg,#34d399,#059669)}
+.ico-amber{background:linear-gradient(145deg,#fbbf24,#d97706)}
+.ico-purple{background:linear-gradient(145deg,#a78bfa,#7c3aed)}
+.ml-kpi .lbl{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px}
+.ml-kpi .val{font-size:22px;font-weight:900;color:#0f1e35;letter-spacing:-.4px;line-height:1}
+.ml-kpi .sub2{font-size:11px;color:#64748b;margin-top:4px}
+.ml-kpi-bar{height:3px;border-radius:999px;margin-top:12px;background:#f0f4f8;overflow:hidden}
+.ml-kpi-bar-fill{height:100%;border-radius:999px}
+
+/* ── Filter bar ── */
+.ml-filter{background:#fff;border:1px solid var(--ml-line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.ml-filter .form-label{font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.ml-filter .form-control,.ml-filter .form-select{font-size:13px;border-radius:8px;border-color:#d9e4ef}
+.ml-filter .form-control:focus,.ml-filter .form-select:focus{border-color:var(--ml-accent);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+
+/* ── Members table ── */
+.ml-table-wrap{background:#fff;border:1px solid var(--ml-line);border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(17,40,64,.05)}
+.ml-table{width:100%;border-collapse:collapse}
+.ml-table thead th{background:linear-gradient(180deg,#f8fbff,#f1f6fc);padding:10px 14px;
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;
+  border-bottom:2px solid var(--ml-line);white-space:nowrap;position:sticky;top:0;z-index:2}
+.ml-table tbody td{padding:11px 14px;border-bottom:1px solid #f1f6fb;vertical-align:middle;font-size:13px}
+.ml-table tbody tr:last-child td{border-bottom:none}
+.ml-table tbody tr{transition:background .1s;cursor:default}
+.ml-table tbody tr:hover{background:#f5f9ff}
+
+/* ── Avatar ── */
+.ml-av{width:40px;height:40px;border-radius:12px;object-fit:cover;flex-shrink:0;
+  border:2px solid rgba(29,78,216,.12);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.ml-av-fb{width:40px;height:40px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:900;color:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.ml-member-cell{display:flex;align-items:center;gap:10px}
+.ml-name{font-weight:700;color:#0f1e35;font-size:13px;line-height:1.2}
+.ml-no{font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:.04em;margin-top:1px}
+
+/* ── Badges ── */
+.ml-role{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.02em}
+.ml-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
+  padding:3px 9px;border-radius:999px}
+.ms-active{background:#dcfce7;color:#166534}
+.ms-inactive{background:#f3f4f6;color:#374151}
+.ms-exited{background:#fef3c7;color:#92400e}
+.ms-suspended{background:#fee2e2;color:#991b1b}
+.ml-login-yes{color:#059669;font-size:16px}
+.ml-login-no{color:#cbd5e1;font-size:16px}
+
+/* ── Money ── */
+.ml-money{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:#1e3a5f}
+.ml-money.locked{color:#d97706}
+
+/* ── Row action ── */
+.ml-view-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:8px;
+  background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;text-decoration:none;border:none;
+  transition:background .12s}
+.ml-view-btn:hover{background:#dbeafe;color:#1d4ed8;text-decoration:none}
+
+/* ── Pagination / footer ── */
+.ml-footer{padding:10px 16px;background:#f8fbff;border-top:1px solid var(--ml-line);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.ml-footer .count{font-size:12px;color:#64748b}
+
+/* ── Empty ── */
+.ml-empty{padding:48px;text-align:center;color:#9ca3af}
+.ml-empty i{font-size:40px;display:block;margin-bottom:10px;opacity:.4}
+
+@media(max-width:900px){.ml-kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:580px){.ml-kpis{grid-template-columns:1fr}}
+</style>
+
+<!-- Header -->
+<div class="ml-header">
+  <div>
+    <h1><i class="ph ph-users-three" style="color:var(--ml-accent)"></i> Members</h1>
+    <div class="sub">Club membership register &mdash; savings positions and account status</div>
+  </div>
+  {% if session.role in ('IT_ADMIN','SECRETARY') %}
+  <a href="{{ url_for('admin.member_create') }}" class="btn btn-primary" style="border-radius:10px;font-weight:700;padding:8px 18px">
+    <i class="ph ph-user-plus"></i> Add Member
+  </a>
+  {% endif %}
 </div>
 
-<div class="card mb-3">
-  <div class="card-body">
-    <form method="get" class="row g-2 align-items-end">
-      <div class="col-md-4">
-        <label class="form-label">Search</label>
-        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Name, member no., phoneâ€¦">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Role</label>
-        <select name="role" class="form-select">
-          <option value="">All roles</option>
-          {% for code, info in ROLES.items() %}
-          <option value="{{ code }}" {% if role_filter == code %}selected{% endif %}>{{ info.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Status</label>
-        <select name="status" class="form-select">
-          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
-          <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
-          <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
-          <option value="Exited" {% if status_filter == 'Exited' %}selected{% endif %}>Exited</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-primary w-100"><i class="ph ph-magnifying-glass"></i> Filter</button>
-      </div>
-    </form>
+<!-- KPI tiles -->
+{% set active_m = members | selectattr('status','equalto','Active') | list %}
+{% set total_sv = members | sum(attribute='savings_total') %}
+{% set total_locked = members | sum(attribute='locked') %}
+<div class="ml-kpis">
+  <div class="ml-kpi">
+    <div class="ml-kpi-ico ico-blue"><i class="ph ph-users-three"></i></div>
+    <div class="lbl">Total Members</div>
+    <div class="val">{{ members | length }}</div>
+    <div class="sub2">{{ active_m | length }} active &nbsp;·&nbsp; {{ (members | length) - (active_m | length) }} inactive/exited</div>
+    <div class="ml-kpi-bar"><div class="ml-kpi-bar-fill" style="width:{{ ((active_m|length / [members|length,1]|max)*100)|int }}%;background:linear-gradient(90deg,#3b82f6,#1d4ed8)"></div></div>
+  </div>
+  <div class="ml-kpi">
+    <div class="ml-kpi-ico ico-green"><i class="ph ph-piggy-bank"></i></div>
+    <div class="lbl">Savings Pool</div>
+    <div class="val" style="font-size:18px">{{ total_sv | money }}</div>
+    <div class="sub2">Total collected from all members</div>
+    <div class="ml-kpi-bar"><div class="ml-kpi-bar-fill" style="width:100%;background:linear-gradient(90deg,#34d399,#059669)"></div></div>
+  </div>
+  <div class="ml-kpi">
+    <div class="ml-kpi-ico ico-amber"><i class="ph ph-lock"></i></div>
+    <div class="lbl">Locked (Collateral)</div>
+    <div class="val" style="font-size:18px">{{ total_locked | money }}</div>
+    <div class="sub2">Pledged against active loans</div>
+    <div class="ml-kpi-bar"><div class="ml-kpi-bar-fill" style="width:{{ (((total_locked / [total_sv,1]|max))*100)|int }}%;background:linear-gradient(90deg,#fbbf24,#d97706)"></div></div>
+  </div>
+  <div class="ml-kpi">
+    <div class="ml-kpi-ico ico-purple"><i class="ph ph-chart-line-up"></i></div>
+    <div class="lbl">Avg. Savings / Member</div>
+    <div class="val" style="font-size:18px">{{ (total_sv // [active_m|length,1]|max) | money }}</div>
+    <div class="sub2">Per active member average</div>
+    <div class="ml-kpi-bar"><div class="ml-kpi-bar-fill" style="width:72%;background:linear-gradient(90deg,#a78bfa,#7c3aed)"></div></div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body p-0 table-responsive">
-    <table class="table mb-0">
+<!-- Filter bar -->
+<div class="ml-filter">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-lg-4 col-md-6">
+      <label class="form-label">Search</label>
+      <div class="input-group">
+        <span class="input-group-text" style="background:#f8fbff;border-color:#d9e4ef"><i class="ph ph-magnifying-glass"></i></span>
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Name, member no., phone…">
+      </div>
+    </div>
+    <div class="col-lg-2 col-md-3">
+      <label class="form-label">Role</label>
+      <select name="role" class="form-select">
+        <option value="">All roles</option>
+        {% for code, info in ROLES.items() %}
+        <option value="{{ code }}" {% if role_filter == code %}selected{% endif %}>{{ info.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-2 col-md-3">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-select">
+        <option value="all" {% if status_filter=='all' %}selected{% endif %}>All statuses</option>
+        <option value="Active"   {% if status_filter=='Active'   %}selected{% endif %}>Active</option>
+        <option value="Inactive" {% if status_filter=='Inactive' %}selected{% endif %}>Inactive</option>
+        <option value="Exited"   {% if status_filter=='Exited'   %}selected{% endif %}>Exited</option>
+      </select>
+    </div>
+    <div class="col-lg-2 col-md-6 d-flex gap-2">
+      <button type="submit" class="btn btn-primary w-100" style="border-radius:8px">
+        <i class="ph ph-funnel"></i> Filter
+      </button>
+      <a href="{{ url_for('admin.members_list') }}" class="btn btn-outline-secondary" style="border-radius:8px" title="Clear filters"><i class="ph ph-x"></i></a>
+    </div>
+    <div class="col-lg-2 col-md-6 text-end">
+      <span class="small text-muted">{{ members | length }} result{{ members|length != 1 and 's' or '' }}</span>
+    </div>
+  </form>
+</div>
+
+<!-- Members table -->
+<div class="ml-table-wrap">
+  {% if members %}
+  <div class="table-responsive">
+    <table class="ml-table">
       <thead>
         <tr>
-          <th>#</th><th>Name</th><th>Phone</th><th>Role</th>
-          <th class="table-money">Savings</th><th class="table-money">Locked</th>
-          <th>Login</th><th>Status</th><th></th>
+          <th style="width:44px"></th>
+          <th>Member</th>
+          <th>Phone</th>
+          <th>Role</th>
+          <th class="text-end">Savings</th>
+          <th class="text-end">Locked</th>
+          <th class="text-end">Available</th>
+          <th style="text-align:center">Login</th>
+          <th>Status</th>
+          <th style="width:80px"></th>
         </tr>
       </thead>
       <tbody>
         {% for m in members %}
-        <tr>
-          <td><strong>{{ m.member_no }}</strong></td>
+        {% set av = (m.savings_total or 0) - (m.locked or 0) %}
+        {% set initials = ((m.full_name or 'U').split()[0][0] ~ ((m.full_name or '').split()[-1][0] if (m.full_name or '').split()|length > 1 else ''))|upper %}
+        {% set av_clr_idx = loop.index0 % 6 %}
+        {% set av_colors = ['linear-gradient(135deg,#3b82f6,#1d4ed8)','linear-gradient(135deg,#059669,#047857)','linear-gradient(135deg,#7c3aed,#6d28d9)','linear-gradient(135deg,#d97706,#b45309)','linear-gradient(135deg,#0891b2,#0e7490)','linear-gradient(135deg,#e11d48,#be123c)'] %}
+        <tr onclick="window.location='{{ url_for('admin.member_detail', member_id=m.id) }}'" style="cursor:pointer">
           <td>
-            <div class="member-name-cell">
-              {% if m.photo_url %}
-              <img src="{{ url_for('static', filename=m.photo_url) }}" alt="{{ m.full_name }}" class="member-avatar-sm">
-              {% else %}
-              <span class="member-avatar-sm member-avatar-fallback">{{ (m.full_name or 'U')[0]|upper }}</span>
-              {% endif %}
-              <span>{{ m.full_name }}</span>
+            {% if m.photo_url %}
+            <img src="{{ url_for('static', filename=m.photo_url) }}" class="ml-av" alt="{{ m.full_name }}">
+            {% else %}
+            <div class="ml-av-fb" style="background:{{ av_colors[av_clr_idx] }}">{{ initials }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <div class="ml-member-cell">
+              <div>
+                <div class="ml-name">{{ m.full_name }}</div>
+                <div class="ml-no">{{ m.member_no }}</div>
+              </div>
             </div>
           </td>
-          <td>{{ m.phone or '-' }}</td>
+          <td style="color:#475569;font-size:12px">{{ m.phone or '—' }}</td>
           <td><span class="role-badge role-{{ m.role|lower }}">{{ ROLES[m.role].name }}</span></td>
-          <td class="table-money money-positive">{{ m.savings_total|money if m.savings_total is not none else '-' }}</td>
-          <td class="table-money">{{ m.locked|money if m.locked is not none else '-' }}</td>
-          <td>{% if m.has_login %}<i class="ph ph-check-circle text-success"></i>{% else %}<i class="ph ph-minus-circle text-muted"></i>{% endif %}</td>
-          <td>
-            <span class="badge-pill badge-{% if m.status == 'Active' %}active{% elif m.status == 'Exited' %}exited{% else %}defaulted{% endif %}">{{ m.status }}</span>
+          <td class="ml-money">{{ m.savings_total | money if m.savings_total is not none else '—' }}</td>
+          <td class="ml-money locked">{{ m.locked | money if m.locked is not none else '—' }}</td>
+          <td class="ml-money" style="color:{% if av > 0 %}#059669{% else %}#dc2626{% endif %}">
+            {{ [av, 0] | max | money }}
           </td>
-          <td><a href="{{ url_for('admin.member_detail', member_id=m.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+          <td style="text-align:center">
+            {% if m.has_login %}<i class="ph ph-check-circle ml-login-yes" title="Has login"></i>{% else %}<i class="ph ph-minus-circle ml-login-no" title="No login"></i>{% endif %}
+          </td>
+          <td>
+            <span class="ml-status ms-{{ m.status|lower }}">
+              <i class="ph ph-{{ 'check-circle' if m.status=='Active' else ('sign-out' if m.status=='Exited' else 'pause-circle') }}"></i>
+              {{ m.status }}
+            </span>
+          </td>
+          <td onclick="event.stopPropagation()">
+            <a href="{{ url_for('admin.member_detail', member_id=m.id) }}" class="ml-view-btn">
+              <i class="ph ph-arrow-right"></i> View
+            </a>
+          </td>
         </tr>
-        {% else %}
-        <tr><td colspan="9" class="text-center text-muted py-4">No members match the filters.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  <div class="ml-footer">
+    <span class="count">Showing <strong>{{ members | length }}</strong> member{{ members|length != 1 and 's' or '' }}</span>
+    <span class="small text-muted">Click any row to open member detail</span>
+  </div>
+  {% else %}
+  <div class="ml-empty">
+    <i class="ph ph-users-three"></i>
+    No members match your filters.
+  </div>
+  {% endif %}
 </div>
 
-<div class="alert alert-secondary mt-3 mb-0">
-  Members with deletion history and financial references are marked as Exited instead of hard-deleted. Exited members are hidden from the default list and can still be reviewed using the status filter.
+<div class="alert alert-secondary mt-3 mb-0 small" style="border-radius:10px">
+  <i class="ph ph-info"></i>
+  Members with financial history are marked as <strong>Exited</strong> instead of deleted — use the status filter to review them.
 </div>
 {% endblock %}
-
-

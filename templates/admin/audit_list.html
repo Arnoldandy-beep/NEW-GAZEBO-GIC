@@ -1,31 +1,200 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Audit Log{% endblock %}
 {% block topbar %}Audit Log{% endblock %}
 {% block content %}
+<style>
+.al-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.3px;white-space:nowrap}
+.al-create{background:#e8f8f0;color:#0e6640}
+.al-update{background:#e8f0ff;color:#3a3ab5}
+.al-delete{background:#fde8e8;color:#aa2626}
+.al-auth{background:#f0e8ff;color:#6b21a8}
+.al-finance{background:#fff8e1;color:#7a5900}
+.al-system{background:#f0f4f8;color:#36546e}
+.al-default{background:#f2f2f2;color:#444}
+.audit-row{cursor:pointer;transition:background .15s}
+.audit-row:hover{background:#f5f9ff!important}
+.filter-bar{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.filter-bar .row{align-items:flex-end}
+.pg-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pg-nav a,.pg-nav span{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 8px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none}
+.pg-nav a{background:#f5f8fb;border:1px solid #dce5ef;color:#2f4d6d}
+.pg-nav a:hover{background:#e6eef8}
+.pg-nav span.active{background:var(--accent);color:#fff;border:1px solid var(--accent)}
+.pg-nav span.disabled{background:#f2f4f6;color:#aaa;border:1px solid #e5e8ec}
+</style>
+
 <div class="page-header">
-  <div><h1>Audit Log</h1><div class="subtitle">Last 200 system actions</div></div>
+  <div>
+    <h1>Audit Log</h1>
+    <div class="subtitle">Complete system activity trail — every action, every user, every timestamp</div>
+  </div>
 </div>
 
+<!-- KPI tiles -->
+<div class="stat-grid" style="grid-template-columns:repeat(3,minmax(200px,1fr));margin-bottom:16px">
+  <div class="stat-card accent">
+    <i class="ph ph-list-magnifying-glass ico"></i>
+    <div class="label">Total Log Entries</div>
+    <div class="value">{{ stats.total | int | string | replace(',', '') }}</div>
+    <div class="sub">All-time system actions recorded</div>
+  </div>
+  <div class="stat-card gold">
+    <i class="ph ph-calendar-check ico"></i>
+    <div class="label">Actions Today</div>
+    <div class="value">{{ stats.today_count | int }}</div>
+    <div class="sub">{{ today.strftime('%d %b %Y') }}</div>
+  </div>
+  <div class="stat-card info">
+    <i class="ph ph-users ico"></i>
+    <div class="label">Unique Actors</div>
+    <div class="value">{{ stats.unique_users | int }}</div>
+    <div class="sub">Distinct users who have taken actions</div>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar">
+  <form method="get" class="row g-2">
+    <div class="col-lg-3 col-md-6">
+      <label class="form-label" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Action</label>
+      <input list="action-list" name="action" class="form-control form-control-sm" value="{{ f_action }}" placeholder="e.g. CREATE_USER">
+      <datalist id="action-list">
+        {% for a in action_types %}<option value="{{ a }}">{% endfor %}
+      </datalist>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <label class="form-label" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">User / Name</label>
+      <input type="text" name="user" class="form-control form-control-sm" value="{{ f_user }}" placeholder="username or full name">
+    </div>
+    <div class="col-lg-2 col-md-4">
+      <label class="form-label" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Entity Type</label>
+      <select name="entity" class="form-select form-select-sm">
+        <option value="">All entities</option>
+        {% for e in entity_types %}
+        <option value="{{ e }}" {% if e == f_entity %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-2 col-md-4">
+      <label class="form-label" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Date</label>
+      <input type="date" name="date" class="form-control form-control-sm" value="{{ f_date }}">
+    </div>
+    <div class="col-lg-2 col-md-4 d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm w-100"><i class="ph ph-funnel"></i> Filter</button>
+      <a href="{{ url_for('admin.audit_list') }}" class="btn btn-secondary btn-sm"><i class="ph ph-x"></i></a>
+    </div>
+  </form>
+  {% if f_action or f_user or f_entity or f_date %}
+  <div class="mt-2 small text-muted">
+    Showing <strong>{{ total }}</strong> result{{ total != 1 and 's' or '' }} matching your filters
+    &nbsp;—&nbsp; page {{ page }} of {{ total_pages }}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Log table -->
 <div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="ph ph-clock-counter-clockwise"></i> Log Entries</span>
+    <small class="text-muted">{{ total }} total &middot; showing {{ rows|length }} on this page</small>
+  </div>
   <div class="card-body p-0 table-responsive">
     {% if rows %}
     <table class="table mb-0">
-      <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+      <thead>
+        <tr>
+          <th style="width:52px">#</th>
+          <th style="width:140px">Timestamp</th>
+          <th style="width:140px">User</th>
+          <th style="width:160px">Action</th>
+          <th style="width:120px">Entity</th>
+          <th>Description</th>
+          <th style="width:100px">IP</th>
+          <th style="width:40px"></th>
+        </tr>
+      </thead>
       <tbody>
         {% for r in rows %}
-        <tr>
-          <td><small>{{ r.created_at|datetimefmt }}</small></td>
-          <td>{{ r.username or 'system' }}{% if r.full_name %}<div class="small text-muted">{{ r.full_name }}</div>{% endif %}</td>
-          <td><code>{{ r.action }}</code></td>
-          <td><small>{{ r.entity_type or '-' }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</small></td>
-          <td><small>{{ r.description or '-' }}</small></td>
+        {% set ac = r.action | upper %}
+        {% if 'CREATE' in ac or 'ADD' in ac or 'INSERT' in ac or 'REGISTER' in ac %}
+          {% set badge = 'al-create' %}
+        {% elif 'UPDATE' in ac or 'EDIT' in ac or 'CHANGE' in ac or 'SAVE' in ac or 'APPROVE' in ac or 'REJECT' in ac or 'TOGGLE' in ac or 'PUBLISH' in ac or 'UNLOCK' in ac %}
+          {% set badge = 'al-update' %}
+        {% elif 'DELETE' in ac or 'REMOVE' in ac or 'DROP' in ac %}
+          {% set badge = 'al-delete' %}
+        {% elif 'LOGIN' in ac or 'LOGOUT' in ac or 'AUTH' in ac or 'PASSWORD' in ac or 'PW' in ac %}
+          {% set badge = 'al-auth' %}
+        {% elif 'SAVINGS' in ac or 'LOAN' in ac or 'REPAY' in ac or 'FEE' in ac or 'FINE' in ac or 'DIVIDEND' in ac or 'EXPENSE' in ac %}
+          {% set badge = 'al-finance' %}
+        {% elif 'ALERT' in ac or 'SYSTEM' in ac or 'SETTINGS' in ac or 'BACKUP' in ac %}
+          {% set badge = 'al-system' %}
+        {% else %}
+          {% set badge = 'al-default' %}
+        {% endif %}
+        <tr class="audit-row" onclick="window.location='{{ url_for('admin.audit_detail', log_id=r.id) }}'">
+          <td class="text-muted" style="font-size:11px">{{ r.id }}</td>
+          <td><small>{{ r.created_at | datetimefmt }}</small></td>
+          <td>
+            <strong style="font-size:12px">{{ r.username or 'system' }}</strong>
+            {% if r.full_name %}<div style="font-size:11px;color:var(--text-muted)">{{ r.full_name }}</div>{% endif %}
+          </td>
+          <td><span class="al-badge {{ badge }}">{{ r.action }}</span></td>
+          <td>
+            {% if r.entity_type %}
+            <small style="color:var(--text-muted)">{{ r.entity_type }}{% if r.entity_id %} <strong>#{{ r.entity_id }}</strong>{% endif %}</small>
+            {% else %}<small class="text-muted">—</small>{% endif %}
+          </td>
+          <td><small>{{ r.description or '—' }}</small></td>
+          <td><small class="text-muted">{{ r.ip_address or '—' }}</small></td>
+          <td class="text-end"><i class="ph ph-caret-right" style="color:#aaa;font-size:14px"></i></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    {% else %}<div class="empty-state"><i class="ph ph-shield-check"></i><div>Nothing logged yet.</div></div>{% endif %}
+    {% else %}
+    <div class="empty-state"><i class="ph ph-shield-check"></i><div>No log entries match your filters.</div></div>
+    {% endif %}
+  </div>
+  {% if total_pages > 1 %}
+  <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <small class="text-muted">Page {{ page }} of {{ total_pages }} &mdash; {{ total }} entries</small>
+    <nav class="pg-nav">
+      {% if page > 1 %}
+      <a href="{{ url_for('admin.audit_list', page=page-1, action=f_action, user=f_user, entity=f_entity, date=f_date) }}"><i class="ph ph-caret-left"></i></a>
+      {% else %}
+      <span class="disabled"><i class="ph ph-caret-left"></i></span>
+      {% endif %}
+
+      {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+        {% if p == page %}
+        <span class="active">{{ p }}</span>
+        {% else %}
+        <a href="{{ url_for('admin.audit_list', page=p, action=f_action, user=f_user, entity=f_entity, date=f_date) }}">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page < total_pages %}
+      <a href="{{ url_for('admin.audit_list', page=page+1, action=f_action, user=f_user, entity=f_entity, date=f_date) }}"><i class="ph ph-caret-right"></i></a>
+      {% else %}
+      <span class="disabled"><i class="ph ph-caret-right"></i></span>
+      {% endif %}
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Legend -->
+<div class="card mt-3">
+  <div class="card-header"><i class="ph ph-info"></i> Action Badge Legend</div>
+  <div class="card-body" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+    <span class="al-badge al-create">CREATE / ADD</span>
+    <span class="al-badge al-update">UPDATE / APPROVE</span>
+    <span class="al-badge al-delete">DELETE / REMOVE</span>
+    <span class="al-badge al-auth">LOGIN / AUTH / PASSWORD</span>
+    <span class="al-badge al-finance">SAVINGS / LOAN / FINANCE</span>
+    <span class="al-badge al-system">SYSTEM / SETTINGS</span>
+    <span class="al-badge al-default">OTHER</span>
+    <span class="ms-auto text-muted small">Click any row to view full event details</span>
   </div>
 </div>
 {% endblock %}
-
-

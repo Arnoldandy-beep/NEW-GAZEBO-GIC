@@ -2,67 +2,40 @@
 {% block title %}Savings Statement{% endblock %}
 {% block topbar %}Savings Statement{% endblock %}
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1>Savings Statement</h1>
-    <div class="subtitle">{{ member.full_name }} &middot; {{ member.member_no }}</div>
+<style>
+.ms-root{--c1:#10213b;--c2:#225180;--c3:#6d9cda;--line:#d9e4ef;--ink:#18324b;--muted:#62788f}.ms-hero{background:linear-gradient(140deg,var(--c1) 0%,var(--c2) 60%,var(--c3) 100%);border-radius:18px;color:#fff;padding:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:10px;position:relative;overflow:hidden;margin-bottom:12px}.ms-hero:before{content:"";position:absolute;right:-70px;top:-70px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 66%)}.ms-id{display:flex;align-items:center;gap:14px}.ms-avatar{width:64px;height:64px;border-radius:18px;overflow:hidden;border:3px solid rgba(255,255,255,.34);background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px}.ms-avatar img{width:100%;height:100%;object-fit:cover}.ms-hero h1{margin:0;font-size:24px;font-weight:900}.ms-sub{margin-top:4px;font-size:12px;opacity:.9}.ms-chip{display:inline-flex;gap:6px;align-items:center;margin-top:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:800;text-transform:uppercase}.ms-art{position:relative}.ms-stack{position:absolute;right:14px;top:10px}.ms-stack span{display:block;width:70px;height:18px;border-radius:50%;background:linear-gradient(160deg,#ffe79f,#ffc63e 55%,#d68b00);border:1px solid rgba(126,77,0,.3);box-shadow:inset 0 4px 5px rgba(255,255,255,.45),0 6px 10px rgba(0,0,0,.2);margin-top:-4px}.ms-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}.ms-kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 3px 10px rgba(17,40,64,.06);position:relative}.ms-kpi:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#224a7e,#78a8df)}.ms-kpi.warn:before{background:linear-gradient(90deg,#b26a0e,#e6be6c)}.ms-kpi.bad:before{background:linear-gradient(90deg,#b13434,#e27a7a)}.ms-kpi .k{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.ms-kpi .v{margin-top:4px;font-size:22px;font-weight:900;color:var(--ink)}.ms-kpi .s{margin-top:3px;font-size:11px;color:var(--muted)}.ms-panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 3px 10px rgba(17,40,64,.06);overflow:hidden}.ms-head{padding:10px 12px;border-bottom:1px solid #edf2f8;font-size:12px;font-weight:800;color:#29527d;background:linear-gradient(180deg,#f7fbff,#fff)}.ms-table{width:100%;border-collapse:collapse;font-size:12px}.ms-table th,.ms-table td{padding:8px 10px;border-top:1px solid #eef2f8}.ms-table th{border-top:none;background:#f8fbff;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6a8197;font-weight:800}.ms-money{text-align:right;font-weight:800;color:#20384f}.ms-badge{display:inline-flex;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800}.ms-badge.paid{background:#e8f8f0;color:#117a58}.ms-badge.unpaid{background:#fde8e8;color:#aa3535}@media (max-width:900px){.ms-hero{grid-template-columns:1fr}}@media (max-width:700px){.ms-kpis{grid-template-columns:1fr}}
+</style>
+<div class="ms-root">
+  <div class="ms-hero">
+    <div class="ms-id"><div class="ms-avatar">{% if member.photo_url %}<img src="{{ url_for('static', filename=member.photo_url) }}" alt="{{ member.full_name }}">{% else %}{{ (member.full_name or 'U')[0]|upper }}{% endif %}</div><div><h1>Savings Statement</h1><div class="ms-sub">Read-only contribution ledger from {{ CONFIG.SAVINGS_START_PERIOD|period_label }} to date for {{ member.full_name }}.</div><div class="ms-chip"><i class="ph ph-identification-card"></i> {{ member.member_no }}</div></div></div>
+    <div class="ms-art" aria-hidden="true"><div class="ms-stack"><span></span><span></span><span></span><span></span></div></div>
   </div>
-</div>
-
-<div class="read-only-banner"><i class="ph ph-info"></i> Read-only view of your monthly contributions since {{ CONFIG.SAVINGS_START_PERIOD|period_label }}.</div>
-
-<div class="stat-grid">
-  <div class="stat-card accent">
-    <div class="label">Total Saved</div>
-    <div class="value">{{ total|money }}</div>
-    <div class="sub">{{ paid_count }} of {{ expected_count }} months paid</div>
+  <div class="ms-kpis">
+    <div class="ms-kpi"><div class="k">Total Saved</div><div class="v">{{ total|money }}</div><div class="s">{{ paid_count }} of {{ expected_count }} expected months paid</div></div>
+    <div class="ms-kpi warn"><div class="k">Locked Savings</div><div class="v">{{ locked|money }}</div><div class="s">Backing active loans and guarantees</div></div>
+    <div class="ms-kpi"><div class="k">Available Balance</div><div class="v">{{ available|money }}</div><div class="s">Currently free from collateral lock</div></div>
+    <div class="ms-kpi {{ (expected_count - paid_count) > 0 and 'bad' or '' }}"><div class="k">Months Pending</div><div class="v">{{ expected_count - paid_count }}</div><div class="s">{{ ((expected_count - paid_count) * CONFIG.MONTHLY_SAVINGS_AMOUNT)|money }} outstanding</div></div>
   </div>
-  <div class="stat-card warn">
-    <div class="label">Locked</div>
-    <div class="value">{{ locked|money }}</div>
-    <div class="sub">Backing your loans / guarantees</div>
-  </div>
-  <div class="stat-card info">
-    <div class="label">Available</div>
-    <div class="value">{{ available|money }}</div>
-    <div class="sub">Not currently locked</div>
-  </div>
-  <div class="stat-card {% if (expected_count - paid_count) > 0 %}danger{% else %}accent{% endif %}">
-    <div class="label">Months Pending</div>
-    <div class="value">{{ expected_count - paid_count }}</div>
-    <div class="sub">{{ ((expected_count - paid_count) * CONFIG.MONTHLY_SAVINGS_AMOUNT)|money }} arrears</div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-header"><i class="ph ph-file-text"></i> Monthly History</div>
-  <div class="card-body p-0 table-responsive">
-    <table class="table mb-0">
-      <thead>
-        <tr>
-          <th>Period</th><th>Status</th><th>Amount</th><th>Payment Date</th>
-          <th>Method</th><th>Reference</th><th class="table-money">Running Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for h in history %}
-        <tr>
-          <td><strong>{{ h.label }}</strong></td>
-          <td>
-            {% if h.paid %}<span class="badge-pill badge-paid">Paid</span>
-            {% else %}<span class="badge-pill badge-unpaid">Unpaid</span>{% endif %}
-          </td>
-          <td class="table-money">
-            {% if h.paid %}{{ h.amount|money }}{% else %}<span class="text-muted">- {{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} due -</span>{% endif %}
-          </td>
-          <td>{{ h.payment_date|datefmt if h.payment_date else '-' }}</td>
-          <td>{{ h.method or '-' }}</td>
-          <td>{{ h.reference or '-' }}</td>
-          <td class="table-money">{{ h.running|money }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="ms-panel">
+    <div class="ms-head"><i class="ph ph-file-text"></i> Monthly History</div>
+    <div class="table-responsive">
+      <table class="ms-table">
+        <thead><tr><th>Period</th><th>Status</th><th class="ms-money">Amount</th><th>Payment Date</th><th>Method</th><th>Reference</th><th class="ms-money">Running Total</th></tr></thead>
+        <tbody>
+          {% for h in history %}
+          <tr>
+            <td><strong>{{ h.label }}</strong></td>
+            <td>{% if h.paid %}<span class="ms-badge paid">Paid</span>{% else %}<span class="ms-badge unpaid">Unpaid</span>{% endif %}</td>
+            <td class="ms-money">{% if h.paid %}{{ h.amount|money }}{% else %}<span class="text-muted">{{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }} due</span>{% endif %}</td>
+            <td>{{ h.payment_date|datefmt if h.payment_date else '-' }}</td>
+            <td>{{ h.method or '-' }}</td>
+            <td>{{ h.reference or '-' }}</td>
+            <td class="ms-money">{{ h.running|money }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}

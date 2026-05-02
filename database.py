@@ -73,10 +73,15 @@ CREATE TABLE IF NOT EXISTS members (
     district        TEXT DEFAULT 'Kampala',
     address         TEXT,
     next_of_kin     TEXT,
+    nok_relationship TEXT,
     nok_phone       TEXT,
+    nok_address     TEXT,
     role            TEXT NOT NULL DEFAULT 'MEMBER',
     join_date       DATE NOT NULL,
     status          TEXT DEFAULT 'Active',        -- Active / Inactive / Suspended
+    nid_copy_url    TEXT,
+    nid_copy_approved INTEGER DEFAULT 0,
+    membership_form_url TEXT,
     photo_url       TEXT,
     notes           TEXT,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -201,6 +206,32 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read, created_at);
+
+-- ============================================================
+-- MEMBER PROFILE CHANGE REQUESTS - maker/checker for member self-updates
+-- ============================================================
+CREATE TABLE IF NOT EXISTS member_profile_change_requests (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id           INTEGER NOT NULL,
+    request_type        TEXT NOT NULL,   -- NEXT_OF_KIN
+    payload_json        TEXT NOT NULL,
+    status              TEXT DEFAULT 'Pending',  -- Pending / Approved / Rejected
+    requested_by_user_id INTEGER NOT NULL,
+    approved_by_user_id INTEGER,
+    approved_at         TIMESTAMP,
+    rejected_reason     TEXT,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+    FOREIGN KEY (requested_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (approved_by_user_id) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_member_profile_change_status
+ON member_profile_change_requests(status, request_type, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_member_profile_change_member
+ON member_profile_change_requests(member_id, request_type, created_at);
 
 -- ============================================================
 -- LOAN REPAYMENTS
@@ -430,3 +461,50 @@ def _apply_migrations(conn):
         conn.execute("ALTER TABLE minutes ADD COLUMN signed_file TEXT")
     if not _column_exists(conn, 'expenses', 'receipt_path'):
         conn.execute("ALTER TABLE expenses ADD COLUMN receipt_path TEXT")
+    if not _column_exists(conn, 'members', 'nid_copy_url'):
+        conn.execute("ALTER TABLE members ADD COLUMN nid_copy_url TEXT")
+    if not _column_exists(conn, 'members', 'nid_copy_approved'):
+        conn.execute("ALTER TABLE members ADD COLUMN nid_copy_approved INTEGER DEFAULT 0")
+    if not _column_exists(conn, 'members', 'membership_form_url'):
+        conn.execute("ALTER TABLE members ADD COLUMN membership_form_url TEXT")
+    if not _column_exists(conn, 'members', 'nok_relationship'):
+        conn.execute("ALTER TABLE members ADD COLUMN nok_relationship TEXT")
+    if not _column_exists(conn, 'members', 'nok_address'):
+        conn.execute("ALTER TABLE members ADD COLUMN nok_address TEXT")
+    # Audit log enrichment
+    if not _column_exists(conn, 'audit_log', 'user_agent'):
+        conn.execute("ALTER TABLE audit_log ADD COLUMN user_agent TEXT")
+    if not _column_exists(conn, 'audit_log', 'actor_username'):
+        conn.execute("ALTER TABLE audit_log ADD COLUMN actor_username TEXT")
+    # Account lockout
+    if not _column_exists(conn, 'users', 'failed_login_count'):
+        conn.execute("ALTER TABLE users ADD COLUMN failed_login_count INTEGER DEFAULT 0")
+    if not _column_exists(conn, 'users', 'locked_until'):
+        conn.execute("ALTER TABLE users ADD COLUMN locked_until TIMESTAMP")
+
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS member_profile_change_requests (
+               id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+               member_id           INTEGER NOT NULL,
+               request_type        TEXT NOT NULL,
+               payload_json        TEXT NOT NULL,
+               status              TEXT DEFAULT 'Pending',
+               requested_by_user_id INTEGER NOT NULL,
+               approved_by_user_id INTEGER,
+               approved_at         TIMESTAMP,
+               rejected_reason     TEXT,
+               created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+               FOREIGN KEY (requested_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
+               FOREIGN KEY (approved_by_user_id) REFERENCES users(id)
+           )"""
+    )
+    conn.execute(
+        """CREATE INDEX IF NOT EXISTS idx_member_profile_change_status
+           ON member_profile_change_requests(status, request_type, created_at)"""
+    )
+    conn.execute(
+        """CREATE INDEX IF NOT EXISTS idx_member_profile_change_member
+           ON member_profile_change_requests(member_id, request_type, created_at)"""
+    )

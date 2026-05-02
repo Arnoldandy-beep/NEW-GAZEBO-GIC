@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-List)",
+      "PowerShell(Get-Process python -ErrorAction SilentlyContinue | Select-Object Id, CPU, StartTime, @{N=\"CMD\";E={$_.CommandLine}})",
+      "PowerShell(netstat -ano)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8080/auth/login)",
+      "Bash(python app.py)",
+      "Bash(python -c ' *)",
+      "PowerShell(Stop-Process -Name python -Force -ErrorAction SilentlyContinue)",
+      "Bash(python -c \"import sqlite3; c=sqlite3.connect\\('data/gazebo_gic.db'\\); rows=c.execute\\('PRAGMA table_info\\(members\\)'\\).fetchall\\(\\); [print\\(r[1]\\) for r in rows]\")",
+      "Bash(python -c \"from app import create_app; app = create_app\\(\\); print\\('OK'\\)\")"
+    ]
+  }
+}

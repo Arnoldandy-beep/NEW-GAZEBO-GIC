@@ -660,21 +660,36 @@ def role_required(*roles):
 # ---------------------------------------------------------------------------
 # Audit log
 # ---------------------------------------------------------------------------
-def log_action(action, entity_type=None, entity_id=None, description=None):
-    """Persist an audit-log entry for the current request."""
+def log_action(action, entity_type=None, entity_id=None, description=None,
+               actor_user_id=None, actor_username=None):
+    """Persist an audit-log entry for the current request.
+
+    actor_user_id / actor_username allow logging events (e.g. LOGIN_FAILED)
+    where no session exists yet.
+    """
     try:
         db = get_db()
+        # Prefer X-Forwarded-For (set by reverse proxies) over direct remote_addr
+        ip = None
+        ua = None
+        if request:
+            ip = (request.headers.get('X-Forwarded-For') or
+                  request.remote_addr or '').split(',')[0].strip() or None
+            ua = (request.headers.get('User-Agent') or '')[:512] or None
         db.execute(
             """INSERT INTO audit_log
-               (user_id, action, entity_type, entity_id, description, ip_address)
-               VALUES (?, ?, ?, ?, ?, ?)""",
+               (user_id, action, entity_type, entity_id, description,
+                ip_address, actor_username, user_agent)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                session.get('user_id'),
+                actor_user_id if actor_user_id is not None else session.get('user_id'),
                 action,
                 entity_type,
                 entity_id,
                 description,
-                request.remote_addr if request else None,
+                ip,
+                actor_username if actor_username is not None else session.get('username'),
+                ua,
             ),
         )
         db.commit()
