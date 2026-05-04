@@ -86,6 +86,22 @@ step "Step 3 — Pull latest code from git"
 # ---------------------------------------------------------------------------
 cd "$APP_DIR"
 git fetch origin
+
+# Remove any local untracked files that would conflict with incoming changes.
+# We check which files are being added by the new commits and delete them if
+# they already exist locally as untracked — git refuses to overwrite them.
+INCOMING_NEW_FILES=$(git diff-tree --no-commit-id -r --name-only \
+    --diff-filter=A HEAD "origin/$GIT_BRANCH" 2>/dev/null || true)
+if [ -n "$INCOMING_NEW_FILES" ]; then
+    info "Removing locally untracked files that would conflict with the merge:"
+    echo "$INCOMING_NEW_FILES" | while read -r f; do
+        if [ -f "$APP_DIR/$f" ] && ! git ls-files --error-unmatch "$f" &>/dev/null 2>&1; then
+            rm -f "$APP_DIR/$f"
+            info "  removed: $f"
+        fi
+    done
+fi
+
 git checkout "$GIT_BRANCH"
 git pull --ff-only origin "$GIT_BRANCH"
 ok "git pull completed on branch: $GIT_BRANCH"
