@@ -110,6 +110,7 @@ def create_app():
                                  FROM member_profile_change_requests r
                                 WHERE r.status='Pending' AND r.request_type='NEXT_OF_KIN'"""
                         ).fetchone()['c']
+                    # Online registration suspended — no longer counted in approvals badge
                     pending_approvals_count = cnt
                     unread_notifications_count = db.execute(
                         "SELECT COUNT(*) c FROM notifications WHERE user_id=? AND is_read=0",

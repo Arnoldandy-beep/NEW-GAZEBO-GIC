@@ -1,13 +1,17 @@
-pycache/
+__pycache__/
 *.pyc
 *.pyo
-.pyd
+*.pyd
 .Python
 .env
 .venv/
 venv/
 env/
-data/.db
+# Exclude ALL database files — production DB must never be overwritten by git
+data/*.db
+data/backups/
 instance/
 .DS_Store
 .vscode/
+flask_err.txt
+static/uploads/

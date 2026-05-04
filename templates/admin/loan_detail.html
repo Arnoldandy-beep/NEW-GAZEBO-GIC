@@ -15,6 +15,12 @@
     {% if session.role in ('IT_ADMIN', 'TREASURER') %}
     <a href="{{ url_for('admin.loan_edit', loan_id=loan.id) }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-pencil-simple"></i> Edit</a>
     {% endif %}
+    {% if loan.status in ('Active', 'Defaulted') and session.role in ('TREASURER', 'CHAIRMAN', 'IT_ADMIN', 'SECRETARY', 'COMMITTEE') %}
+    <a href="{{ url_for('admin.force_recover', loan_id=loan.id) }}"
+       class="btn btn-sm {% if pos.is_overdue %}btn-danger{% else %}btn-outline-danger{% endif %}">
+      <i class="ph ph-bolt"></i> Forced Recovery
+    </a>
+    {% endif %}
     {% if session.role == 'IT_ADMIN' %}
     <form method="post" action="{{ url_for('admin.loan_delete', loan_id=loan.id) }}" data-confirm="Permanently delete loan {{ loan.loan_no }} and ALL related records (repayments, penalties, approvals)? This cannot be undone." class="d-inline">
       <button type="submit" class="btn btn-danger btn-sm"><i class="ph ph-trash"></i> Delete Loan</button>

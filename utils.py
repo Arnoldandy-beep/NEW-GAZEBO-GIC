@@ -703,3 +703,72 @@ def log_action(action, entity_type=None, entity_id=None, description=None,
     except Exception as e:
         # Audit logging must never break the main flow
         print(f"[audit_log] failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Shared notification helpers (used by both admin and member routes)
+# ---------------------------------------------------------------------------
+
+def notify_user(db, user_id, title, message, link=None):
+    """Insert a notification for a specific user_id."""
+    if not user_id:
+        return
+    db.execute(
+        "INSERT INTO notifications (user_id, title, message, link) VALUES (?, ?, ?, ?)",
+        (user_id, title, message, link),
+    )
+
+
+def notify_member(db, member_id, title, message, link=None):
+    """Push notification to the active user account of a member."""
+    if not member_id:
+        return
+    user = db.execute(
+        "SELECT id FROM users WHERE member_id=? AND is_active=1 ORDER BY id LIMIT 1",
+        (member_id,),
+    ).fetchone()
+    if user:
+        notify_user(db, user['id'], title, message, link)
+
+
+def notify_roles(db, roles, title, message, link=None, exclude_user_id=None):
+    """Broadcast a notification to all active users in the given roles."""
+    placeholders = ','.join(['?'] * len(roles))
+    params = list(roles)
+    sql = (
+        f"SELECT u.id FROM users u JOIN members m ON m.id = u.member_id "
+        f"WHERE u.is_active=1 AND m.role IN ({placeholders})"
+    )
+    if exclude_user_id:
+        sql += " AND u.id != ?"
+        params.append(exclude_user_id)
+    for u in db.execute(sql, params).fetchall():
+        notify_user(db, u['id'], title, message, link)
+
+
+def deduct_member_savings(db, member_id, amount_to_deduct):
+    """Delete/reduce savings records from most recent backwards to cover amount_to_deduct.
+    Returns (actual_deducted, periods_cleared)."""
+    if amount_to_deduct <= 0:
+        return 0, []
+    records = db.execute(
+        "SELECT * FROM savings WHERE member_id=? ORDER BY period DESC",
+        (member_id,),
+    ).fetchall()
+    remaining = amount_to_deduct
+    deducted = 0
+    periods_cleared = []
+    for rec in records:
+        if remaining <= 0:
+            break
+        if rec['amount'] <= remaining:
+            db.execute("DELETE FROM savings WHERE id=?", (rec['id'],))
+            deducted += rec['amount']
+            remaining -= rec['amount']
+            periods_cleared.append(rec['period'])
+        else:
+            db.execute("UPDATE savings SET amount=? WHERE id=?",
+                       (rec['amount'] - remaining, rec['id']))
+            deducted += remaining
+            remaining = 0
+    return deducted, periods_cleared

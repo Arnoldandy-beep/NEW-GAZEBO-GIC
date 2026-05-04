@@ -1,0 +1,782 @@
+{% extends "base.html" %}
+{% block title %}Member Registration – {{ CONFIG.CLUB_NAME }}{% endblock %}
+{% block auth_content %}
+<style>
+/* ── Shell & Layout ─────────────────────────────────────────────────────────── */
+.reg-shell{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+
+/* ── Letterhead Header ───────────────────────────────────────────────────────── */
+.reg-letterhead{background:#0d1b2a;border-radius:16px 16px 0 0;display:flex;align-items:stretch;overflow:hidden;min-height:84px}
+.reg-lh-badge{background:#c9a227;min-width:78px;width:78px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#0d1b2a;font-family:'Space Grotesk',sans-serif;letter-spacing:.04em;flex-shrink:0}
+.reg-lh-center{padding:14px 22px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.reg-lh-main{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:#c9a227;letter-spacing:.08em;line-height:1}
+.reg-lh-tag{font-size:9px;font-weight:600;color:rgba(255,255,255,.58);letter-spacing:.24em;text-transform:uppercase;margin-top:5px}
+.reg-lh-est{font-size:8px;color:rgba(255,255,255,.28);letter-spacing:.24em;text-transform:uppercase;margin-top:3px}
+.reg-lh-divider{width:1px;background:rgba(255,255,255,.08);margin:14px 0;flex-shrink:0}
+.reg-lh-right{padding:14px 20px;text-align:right;display:flex;flex-direction:column;justify-content:center;flex-shrink:0}
+.reg-lh-doc-title{font-size:13px;font-weight:800;color:#c9a227;letter-spacing:.01em;line-height:1.35}
+.reg-lh-detail{font-size:9px;color:rgba(255,255,255,.48);margin-top:3px}
+/* ── Page Footer ─────────────────────────────────────────────────────────────── */
+.reg-page-footer{background:#0d1b2a;border-radius:0 0 16px 16px;padding:8px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:10px;color:rgba(255,255,255,.38)}
+.reg-pf-brand{display:flex;align-items:center;gap:7px;color:#c9a227;font-weight:700;font-size:10.5px;flex-shrink:0}
+.reg-pf-mark{background:#c9a227;color:#0d1b2a;font-size:8.5px;font-weight:900;padding:2px 6px;border-radius:3px;letter-spacing:.03em}
+.reg-pf-sep{color:rgba(255,255,255,.15)}
+.reg-pf-right{margin-left:auto;font-size:9px;color:rgba(255,255,255,.32);text-align:right}
+
+/* ── Instructions Banner ─────────────────────────────────────────────────────── */
+.reg-instructions{
+  background:linear-gradient(135deg,#f0fdf4,#f8fafc);
+  border:1px solid #bbf7d0;border-top:none;
+  padding:14px 24px 16px
+}
+.reg-inst-title{font-size:11px;font-weight:800;color:#14532d;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.reg-instructions ol{margin:0;padding-left:20px;color:#374151;font-size:13px;line-height:1.8}
+.reg-instructions ol li strong{color:#0f172a}
+.reg-instructions ol li em{color:#dc2626;font-style:normal;font-weight:700}
+
+/* ── Form Card ───────────────────────────────────────────────────────────────── */
+.reg-card{background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0;box-shadow:0 14px 40px rgba(15,23,42,.08);overflow:hidden}
+.reg-section{padding:18px 20px 14px;border-bottom:1px solid #eef2f7}
+.reg-section:last-child{border-bottom:none}
+.reg-title{display:flex;gap:8px;align-items:center;margin-bottom:14px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.05em;font-size:11.5px}
+.reg-title i{color:#14532d;font-size:17px}
+.reg-sec-num{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:#0f172a;color:#fff;font-size:9.5px;font-weight:800;flex-shrink:0}
+.reg-opt-tag{font-size:10px;font-weight:500;color:#64748b;text-transform:none;letter-spacing:0;margin-left:4px}
+.reg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.reg-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.reg-field label{display:block;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.reg-field input,.reg-field select,.reg-field textarea{width:100%;border:1.5px solid #dbe3ee;border-radius:10px;padding:10px 12px;font-size:14px;background:#fcfdff;transition:border-color .15s,box-shadow .15s}
+.reg-field input:focus,.reg-field select:focus,.reg-field textarea:focus{outline:none;border-color:#14532d;box-shadow:0 0 0 3px rgba(20,83,45,.1)}
+.reg-field textarea{min-height:88px;resize:vertical}
+.reg-note{font-size:11.5px;color:#64748b;margin-top:4px}
+.reg-files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.reg-signature{border:1.5px dashed #cbd5e1;border-radius:16px;background:linear-gradient(180deg,#fff,#f8fafc);padding:14px}
+.reg-signature canvas{width:100%;height:175px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;touch-action:none;cursor:crosshair}
+.reg-sign-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px}
+/* Image picker */
+.img-pick-box{border:1.5px solid #dbe3ee;border-radius:12px;padding:12px;background:#f8fafc}
+.img-pick-preview{min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed #cbd5e1;border-radius:10px;background:#fff;margin-bottom:10px;padding:8px;text-align:center;color:#94a3b8;font-size:12px;overflow:hidden;transition:border-color .2s}
+.img-pick-preview.has-img{border-color:#14532d;border-style:solid}
+.img-pick-preview img{max-width:100%;max-height:150px;border-radius:6px;object-fit:cover}
+.img-pick-preview i{font-size:38px;margin-bottom:4px}
+.img-pick-actions{display:flex;gap:8px}
+.img-pick-actions label{cursor:pointer;flex:1;text-align:center;border-radius:8px !important}
+.img-pick-actions label input{display:none}
+/* Footer */
+.reg-footer{padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;background:#f8fafc;border-top:2px solid #e2e8f0}
+.reg-footer .btn{border-radius:999px;padding:10px 22px;font-weight:700;font-size:14px}
+.reg-small{font-size:12px;color:#64748b}
+.req{color:#dc2626}
+/* Badges */
+.draft-badge{display:none;align-items:center;gap:6px;background:#fef9c3;border:1px solid #fde047;border-radius:999px;padding:4px 12px;font-size:11px;font-weight:700;color:#854d0e}
+.draft-badge.visible{display:inline-flex}
+/* Submit notice */
+.submit-notice{background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#78350f;line-height:1.65}
+.submit-notice strong{color:#92400e}
+/* Declaration text */
+.declaration-text{font-size:13px;color:#374151;line-height:1.65;margin-bottom:14px}
+/* Login link */
+.reg-login-link{display:inline-flex;align-items:center;gap:6px;color:#64748b;font-size:13px;font-weight:600;text-decoration:none;margin-top:14px}
+.reg-login-link:hover{color:#0f172a}
+.reg-alerts .alert{margin-bottom:10px}
+
+@media(max-width:760px){
+  .reg-grid,.reg-grid-3,.reg-files{grid-template-columns:1fr}
+  .reg-shell{padding:10px 10px 28px}
+  .reg-letterhead{min-height:auto;flex-wrap:wrap}
+  .reg-lh-badge{min-width:60px;width:60px;font-size:18px;padding:14px 0}
+  .reg-lh-center{padding:12px 14px}
+  .reg-lh-main{font-size:22px}
+  .reg-lh-right{padding:12px 14px;text-align:left}
+  .reg-lh-divider{display:none}
+  .reg-page-footer{gap:8px}
+  .reg-pf-right{display:none}
+  .img-pick-actions{flex-direction:column}
+}
+
+/* ── Print fallback (if popup is blocked) ───────────────────────────────────── */
+#printContent{display:none}
+@media print{
+  body>*{display:none !important}
+  #printContent{display:block !important}
+  @page{size:A4 portrait;margin:10mm 12mm}
+}
+</style>
+
+<!-- Print fallback target (popup-blocked browsers only) -->
+<div id="printContent"></div>
+
+<div class="reg-shell">
+
+  <!-- ── Letterhead ── -->
+  <div class="reg-letterhead">
+    <div class="reg-lh-badge">GIC</div>
+    <div class="reg-lh-center">
+      <div class="reg-lh-main">GAZEBO</div>
+      <div class="reg-lh-tag">Investment &nbsp;Club</div>
+      <div class="reg-lh-est">Est. &nbsp;{{ CONFIG.ESTABLISHED_DATE[:4] }}</div>
+    </div>
+    <div class="reg-lh-divider"></div>
+    <div class="reg-lh-right">
+      <div class="reg-lh-doc-title">Membership Application</div>
+      <div class="reg-lh-detail">Form No: GIC-MBR-001</div>
+      <div class="reg-lh-detail">{{ CONFIG.CLUB_LOCATION }}</div>
+    </div>
+  </div>
+
+  <!-- ── Instructions Banner ── -->
+  <div class="reg-instructions">
+    <div class="reg-inst-title"><i class="ph ph-info"></i>&nbsp; How to Complete This Form</div>
+    <ol>
+      <li>Complete all fields marked with a red asterisk (<strong class="req">*</strong>) — these are <strong>mandatory</strong>.</li>
+      <li>Banking details are <strong>optional</strong> — only fill them in if you wish dividends paid directly to a bank account.</li>
+      <li>Attach a clear <strong>portrait photograph</strong> and a legible image of your <strong>National ID</strong> using the upload buttons in Section&nbsp;6.</li>
+      <li>Draw your signature in the box in Section&nbsp;7 using your finger (touch screen) or mouse.</li>
+      <li>Click <strong>Save as PDF</strong> when the form is complete. In the dialog, choose <strong>"Save as PDF"</strong> as the destination to download the form.</li>
+      <li><em>Important:</em> This form does <strong>not</strong> submit online. Save the completed PDF file to your device and share it through your preferred channel when needed.</li>
+    </ol>
+  </div>
+
+  <!-- ── Validation Alerts ── -->
+  <div class="reg-alerts" id="regAlerts"></div>
+
+  <!-- ── Registration Form ── -->
+  <form class="reg-card" id="registrationForm" onsubmit="return false;">
+
+    <!-- ① Personal Details -->
+    <div class="reg-section">
+      <div class="reg-title"><span class="reg-sec-num">1</span><i class="ph ph-user-circle"></i> Personal Details</div>
+      <div class="reg-grid-3">
+        <div class="reg-field"><label>Surname <span class="req">*</span></label><input type="text" name="surname" placeholder="e.g. MUKASA" autocomplete="family-name"></div>
+        <div class="reg-field"><label>First Name <span class="req">*</span></label><input type="text" name="first_name" placeholder="e.g. JOHN" autocomplete="given-name"></div>
+        <div class="reg-field"><label>Other Names</label><input type="text" name="other_names" placeholder="Middle name(s)" autocomplete="additional-name"></div>
+        <div class="reg-field"><label>Gender <span class="req">*</span></label>
+          <select name="gender">
+            <option value="">Select gender…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+        <div class="reg-field"><label>Date of Birth</label><input type="date" name="date_of_birth"></div>
+        <div class="reg-field"><label>Nationality</label><input type="text" name="nationality" value="Ugandan"></div>
+        <div class="reg-field"><label>Marital Status</label>
+          <select name="marital_status">
+            <option value="">Select…</option>
+            <option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option>
+          </select>
+        </div>
+        <div class="reg-field"><label>National ID No. <span class="req">*</span></label><input type="text" name="national_id" placeholder="e.g. CM90012345XXXX" style="text-transform:uppercase"></div>
+        <div class="reg-field"><label>TIN</label><input type="text" name="tin" placeholder="Tax Identification No."></div>
+      </div>
+    </div>
+
+    <!-- ② Contact Details -->
+    <div class="reg-section">
+      <div class="reg-title"><span class="reg-sec-num">2</span><i class="ph ph-phone"></i> Contact Details</div>
+      <div class="reg-grid-3">
+        <div class="reg-field"><label>Mobile Phone <span class="req">*</span></label><input type="tel" name="phone" placeholder="+256 700 000000" autocomplete="tel"></div>
+        <div class="reg-field"><label>Alternative Phone</label><input type="tel" name="alt_phone" placeholder="+256 …"></div>
+        <div class="reg-field"><label>WhatsApp No.</label><input type="tel" name="whatsapp_no" placeholder="+256 …"></div>
+        <div class="reg-field"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" autocomplete="email"></div>
+        <div class="reg-field"><label>District <span class="req">*</span></label><input type="text" name="district" value="Kampala"></div>
+        <div class="reg-field"><label>Village / Street</label><input type="text" name="village_street" placeholder="e.g. Ntinda, Plot 12"></div>
+      </div>
+    </div>
+
+    <!-- ③ Occupation & Contributions -->
+    <div class="reg-section">
+      <div class="reg-title"><span class="reg-sec-num">3</span><i class="ph ph-briefcase"></i> Occupation &amp; Contributions</div>
+      <div class="reg-grid-3">
+        <div class="reg-field"><label>Employment Status</label>
+          <select name="employment_status">
+            <option>Employed</option><option>Self-Employed</option>
+            <option>Business Owner</option><option>Student</option><option>Other</option>
+          </select>
+        </div>
+        <div class="reg-field"><label>Occupation <span class="req">*</span></label><input type="text" name="occupation" placeholder="e.g. Accountant, Teacher"></div>
+        <div class="reg-field"><label>Employer / Business</label><input type="text" name="employer_business" placeholder="Company or business name"></div>
+        <div class="reg-field"><label>Monthly Income (UGX)</label><input type="number" name="monthly_income" min="0" step="1000" placeholder="0"></div>
+        <div class="reg-field">
+          <label>Monthly Contribution (UGX) <span class="req">*</span></label>
+          <input type="number" name="monthly_contribution" min="100000" step="1000" value="100000">
+          <div class="reg-note">Minimum UGX 100,000 per month</div>
+        </div>
+        <div class="reg-field">
+          <label>Preferred Pay Date</label>
+          <input type="number" name="preferred_pay_date" min="1" max="31" value="5">
+          <div class="reg-note">Day of month contributions are paid (1–31)</div>
+        </div>
+        <div class="reg-field"><label>Mobile Money No.</label><input type="tel" name="mobile_money_no" placeholder="+256 …"></div>
+      </div>
+    </div>
+
+    <!-- ④ Banking Details (Optional) -->
+    <div class="reg-section">
+      <div class="reg-title">
+        <span class="reg-sec-num">4</span><i class="ph ph-bank"></i> Banking Details
+        <span class="reg-opt-tag">(Optional — for dividend payments to a bank account)</span>
+      </div>
+      <div class="reg-grid-3">
+        <div class="reg-field"><label>Bank Name</label><input type="text" name="bank_name" placeholder="e.g. Centenary Bank"></div>
+        <div class="reg-field"><label>Bank Branch</label><input type="text" name="bank_branch" placeholder="e.g. Kampala Road Branch"></div>
+        <div class="reg-field"><label>Account Name</label><input type="text" name="bank_account_name" placeholder="Name as it appears on the account"></div>
+        <div class="reg-field"><label>Account Number</label><input type="text" name="bank_account_no" placeholder="Bank account number"></div>
+      </div>
+    </div>
+
+    <!-- ⑤ Next of Kin -->
+    <div class="reg-section">
+      <div class="reg-title"><span class="reg-sec-num">5</span><i class="ph ph-users-three"></i> Next of Kin</div>
+      <div class="reg-grid">
+        <div class="reg-field"><label>Full Name <span class="req">*</span></label><input type="text" name="next_of_kin" placeholder="Full legal name of next of kin"></div>
+        <div class="reg-field"><label>Relationship <span class="req">*</span></label>
+          <select name="nok_relationship">
+            <option value="">Select relationship…</option>
+            <option>Spouse / Partner</option>
+            <option>Parent (Father / Mother)</option>
+            <option>Child (Son / Daughter)</option>
+            <option>Sibling (Brother / Sister)</option>
+            <option>Other Relative</option>
+            <option>Friend</option>
+            <option>Colleague</option>
+            <option>Legal Guardian</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="reg-field"><label>Phone Number <span class="req">*</span></label><input type="tel" name="nok_phone" placeholder="+256 …"></div>
+        <div class="reg-field"><label>Physical Address</label><input type="text" name="nok_address" placeholder="District / village / street address"></div>
+      </div>
+    </div>
+
+    <!-- ⑥ Identity Documents -->
+    <div class="reg-section">
+      <div class="reg-title"><span class="reg-sec-num">6</span><i class="ph ph-paperclip"></i> Identity Documents</div>
+      <div class="reg-files">
+        <div class="reg-field">
+          <label>Profile Portrait <span class="req">*</span></label>
+          <div class="img-pick-box">
+            <div class="img-pick-preview" id="photo-preview">
+              <i class="ph ph-user-circle"></i>
+              <span>No photo selected</span>
+            </div>
+            <div class="img-pick-actions">
+              <label class="btn btn-sm btn-outline-secondary" title="Choose an existing photo from your device gallery">
+                <i class="ph ph-images"></i> Gallery
+                <input type="file" id="photo-gallery-input" accept="image/*">
+              </label>
+              <label class="btn btn-sm btn-outline-primary" title="Take a selfie with your front camera">
+                <i class="ph ph-camera"></i> Camera
+                <input type="file" id="photo-camera-input" accept="image/*" capture="user">
+              </label>
+            </div>
+            <div class="reg-note">A clear, recent face photograph (passport or selfie style).</div>
+          </div>
+        </div>
+        <div class="reg-field">
+          <label>National ID Copy <span class="req">*</span></label>
+          <div class="img-pick-box">
+            <div class="img-pick-preview" id="nid-preview">
+              <i class="ph ph-identification-card"></i>
+              <span>No image selected</span>
+            </div>
+            <div class="img-pick-actions">
+              <label class="btn btn-sm btn-outline-secondary" title="Pick an existing photo of your ID from your gallery">
+                <i class="ph ph-images"></i> Gallery
+                <input type="file" id="nid-gallery-input" accept="image/*">
+              </label>
+              <label class="btn btn-sm btn-outline-primary" title="Photograph your National ID card with your rear camera">
+                <i class="ph ph-camera"></i> Camera
+                <input type="file" id="nid-camera-input" accept="image/*" capture="environment">
+              </label>
+            </div>
+            <div class="reg-note">Front face of your National ID — must be clearly legible.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑦ Declaration & Signature -->
+    <div class="reg-section">
+      <div class="reg-title"><span class="reg-sec-num">7</span><i class="ph ph-signature"></i> Declaration &amp; Signature</div>
+      <p class="declaration-text">
+        By signing below, I confirm that all information provided in this application is <strong>accurate, complete, and truthful</strong> to the best of my knowledge. I understand that providing false or misleading information may lead to rejection or cancellation of my membership application.
+      </p>
+      <div class="reg-signature">
+        <canvas id="signaturePad"></canvas>
+        <input type="hidden" id="signatureData">
+        <div class="reg-sign-actions">
+          <div class="reg-small">Draw your signature using your finger or mouse.</div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSignature">
+            <i class="ph ph-eraser"></i> Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑧ Additional Notes (Optional) -->
+    <div class="reg-section">
+      <div class="reg-title">
+        <span class="reg-sec-num">8</span><i class="ph ph-note-pencil"></i> Additional Notes
+        <span class="reg-opt-tag">(Optional)</span>
+      </div>
+      <div class="reg-field">
+        <textarea name="notes" placeholder="Any additional information, special requests, or remarks you wish to include with your application…"></textarea>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="reg-footer">
+      <div>
+        <div class="submit-notice">
+          <strong><i class="ph ph-warning"></i> Submission:</strong>
+          This form does <strong>not</strong> submit online. After clicking <strong>Save as PDF</strong>, save the file to your device for your records and sharing.
+        </div>
+        <div class="reg-small mt-2">Fields marked <span class="req">*</span> are required. Your progress is saved automatically.</div>
+        <span class="draft-badge mt-2" id="draftBadge"><i class="ph ph-cloud-check"></i> Draft saved — safe to refresh this page</span>
+      </div>
+      <div class="d-flex gap-2 flex-wrap align-items-center mt-2">
+        <button type="button" class="btn btn-outline-danger btn-sm" id="clearDraftBtn" title="Reset all fields and clear saved draft">
+          <i class="ph ph-trash"></i> Clear
+        </button>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary">
+          <i class="ph ph-arrow-left"></i> Back
+        </a>
+        <button type="button" class="btn btn-success" id="savePdfBtn">
+          <i class="ph ph-file-pdf"></i> Save as PDF
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- ── Page Footer ── -->
+  <div class="reg-page-footer">
+    <div class="reg-pf-brand">
+      <span class="reg-pf-mark">GIC</span>
+      {{ CONFIG.CLUB_NAME }}
+    </div>
+    <span class="reg-pf-sep">&bull;</span>
+    <span>{{ CONFIG.CLUB_LOCATION }}</span>
+    <span class="reg-pf-sep">&bull;</span>
+    <span>Est. {{ CONFIG.ESTABLISHED_DATE[:4] }}</span>
+    <div class="reg-pf-right">Deliver completed form to the Club Secretary for registration</div>
+  </div>
+
+  <a href="{{ url_for('auth.login') }}" class="reg-login-link">
+    <i class="ph ph-arrow-left"></i> Already have an account? Sign in
+  </a>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var DRAFT_KEY  = 'gic_reg_draft';
+  var CLUB_NAME  = "{{ CONFIG.CLUB_NAME|e }}";
+  var CLUB_SHORT = "{{ CONFIG.CLUB_SHORT_NAME|e }}";
+  var CLUB_LOC   = "{{ CONFIG.CLUB_LOCATION|e }}";
+
+  var _img  = { photo: null, nid: null };
+  var form  = document.getElementById('registrationForm');
+  var hidden = document.getElementById('signatureData');
+
+  // ── Draft Persistence ────────────────────────────────────────────────────────
+  function saveDraft() {
+    try {
+      var data = {};
+      form.querySelectorAll('[name]').forEach(function (el) { data[el.name] = el.value; });
+      data.__sig = hidden.value || '';
+      var base = JSON.stringify(data);
+      try {
+        var withImg = JSON.parse(base);
+        if (_img.photo) withImg.__photo = _img.photo;
+        if (_img.nid)   withImg.__nid   = _img.nid;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(withImg));
+      } catch (e) {
+        localStorage.setItem(DRAFT_KEY, base); // images too large — store text only
+      }
+      var badge = document.getElementById('draftBadge');
+      if (badge) badge.classList.add('visible');
+    } catch (e) { /* private browsing / storage disabled */ }
+  }
+
+  function restoreDraft() {
+    try {
+      var raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      var data = JSON.parse(raw);
+      form.querySelectorAll('[name]').forEach(function (el) {
+        if (data[el.name] !== undefined && data[el.name] !== null) el.value = data[el.name];
+      });
+      if (data.__sig) hidden.value = data.__sig;
+      function restoreImg(url, previewId, key) {
+        if (!url) return;
+        _img[key] = url;
+        var box = document.getElementById(previewId);
+        if (box) { box.innerHTML = '<img src="' + url + '" alt="preview">'; box.classList.add('has-img'); }
+      }
+      restoreImg(data.__photo, 'photo-preview', 'photo');
+      restoreImg(data.__nid,   'nid-preview',   'nid');
+      var badge = document.getElementById('draftBadge');
+      if (badge) badge.classList.add('visible');
+    } catch (e) { /* corrupt storage — ignore */ }
+  }
+
+  // Restore BEFORE resizeCanvas() so signature is redrawn on canvas init
+  restoreDraft();
+  form.addEventListener('input',  saveDraft);
+  form.addEventListener('change', saveDraft);
+
+  document.getElementById('clearDraftBtn').addEventListener('click', function () {
+    if (!confirm('Reset all fields and clear your saved draft? This cannot be undone.')) return;
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+    form.reset();
+    _img.photo = null; _img.nid = null;
+    ['photo-preview', 'nid-preview'].forEach(function (id) {
+      var box = document.getElementById(id);
+      if (box) { box.innerHTML = ''; box.classList.remove('has-img'); }
+    });
+    hidden.value = '';
+    var badge = document.getElementById('draftBadge');
+    if (badge) badge.classList.remove('visible');
+    resizeCanvas();
+  });
+
+  // ── Image Pickers ────────────────────────────────────────────────────────────
+  function setupPicker(galleryId, cameraId, previewId, key) {
+    function load(input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        _img[key] = e.target.result;
+        var box = document.getElementById(previewId);
+        box.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
+        box.classList.add('has-img');
+        saveDraft();
+      };
+      reader.readAsDataURL(file);
+    }
+    document.getElementById(galleryId).addEventListener('change', function () { load(this); });
+    document.getElementById(cameraId).addEventListener('change',  function () { load(this); });
+  }
+
+  setupPicker('photo-gallery-input', 'photo-camera-input', 'photo-preview', 'photo');
+  setupPicker('nid-gallery-input',   'nid-camera-input',   'nid-preview',   'nid');
+
+  // ── Signature Pad ────────────────────────────────────────────────────────────
+  var canvas   = document.getElementById('signaturePad');
+  var clearBtn = document.getElementById('clearSignature');
+  var ctx      = canvas.getContext('2d');
+  var drawing  = false, empty = true;
+
+  function resizeCanvas() {
+    var ratio = Math.max(window.devicePixelRatio || 1, 1);
+    var rect   = canvas.getBoundingClientRect();
+    var prev   = hidden.value;
+    canvas.width  = rect.width  * ratio;
+    canvas.height = rect.height * ratio;
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#0f172a'; ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    if (prev) {
+      var img = new Image();
+      img.onload = function () { ctx.drawImage(img, 0, 0, rect.width, rect.height); empty = false; };
+      img.src = prev;
+    } else { empty = true; }
+  }
+
+  function pt(e) {
+    var r = canvas.getBoundingClientRect();
+    var t = e.touches && e.touches[0];
+    return { x: (t ? t.clientX : e.clientX) - r.left, y: (t ? t.clientY : e.clientY) - r.top };
+  }
+  function commitSig() {
+    drawing = false;
+    hidden.value = empty ? '' : canvas.toDataURL('image/png');
+    saveDraft();
+  }
+
+  canvas.addEventListener('mousedown',  function (e) { e.preventDefault(); drawing = true; empty = false; var p = pt(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+  canvas.addEventListener('mousemove',  function (e) { if (!drawing) return; e.preventDefault(); var p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+  canvas.addEventListener('mouseup',    function () { if (drawing) commitSig(); });
+  canvas.addEventListener('mouseleave', function () { if (drawing) commitSig(); });
+  canvas.addEventListener('touchstart', function (e) { e.preventDefault(); drawing = true; empty = false; var p = pt(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+  canvas.addEventListener('touchmove',  function (e) { if (!drawing) return; e.preventDefault(); var p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+  canvas.addEventListener('touchend',   function () { if (drawing) commitSig(); }, { passive: false });
+  clearBtn.addEventListener('click', function () { hidden.value = ''; empty = true; resizeCanvas(); saveDraft(); });
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // ── Validation ───────────────────────────────────────────────────────────────
+  function showAlerts(errors) {
+    var box = document.getElementById('regAlerts');
+    if (!errors.length) { box.innerHTML = ''; return; }
+    box.innerHTML = errors.map(function (e) {
+      return '<div class="alert alert-danger py-2 small">' + e + '</div>';
+    }).join('');
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function fv(name) {
+    var el = form.querySelector('[name="' + name + '"]');
+    return el ? el.value.trim() : '';
+  }
+
+  function validate() {
+    var errors = [];
+    if (!fv('surname'))          errors.push('Surname is required.');
+    if (!fv('first_name'))       errors.push('First Name is required.');
+    if (!fv('gender'))           errors.push('Gender is required.');
+    if (!fv('national_id'))      errors.push('National ID number is required.');
+    if (!fv('phone'))            errors.push('Mobile phone number is required.');
+    if (!fv('district'))         errors.push('District is required.');
+    if (!fv('occupation'))       errors.push('Occupation is required.');
+    if ((parseFloat(fv('monthly_contribution')) || 0) < 100000)
+      errors.push('Monthly contribution must be at least UGX 100,000.');
+    if (!fv('next_of_kin'))      errors.push('Next of Kin full name is required.');
+    if (!fv('nok_relationship')) errors.push('Next of Kin relationship is required.');
+    if (!fv('nok_phone'))        errors.push('Next of Kin phone number is required.');
+    if (!_img.photo)             errors.push('Profile portrait is required — use Gallery or Camera to attach a photo.');
+    if (!_img.nid)               errors.push('National ID copy is required — use Gallery or Camera to attach a photo.');
+    if (!hidden.value)           errors.push('Declaration signature is required — please sign in the box above.');
+    return errors;
+  }
+
+  // ── PDF / Print Helpers ──────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function fmt(n) { return n ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '—'; }
+  function ordinal(d) { d = parseInt(d); return d + (d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th'); }
+  function blank(v) { return (v && String(v).trim()) ? esc(v) : '<span style="color:#94a3b8">—</span>'; }
+
+  var SL = 'padding:5px 10px;font-size:9.5px;color:#475569;font-weight:700;width:36%;border-bottom:1px solid #f1f5f9;vertical-align:top;text-transform:uppercase;letter-spacing:.04em';
+  var SV = 'padding:5px 10px;font-size:11px;color:#0f172a;border-bottom:1px solid #f1f5f9;vertical-align:top';
+
+  function pRow(label, val) {
+    return '<tr><td style="' + SL + '">' + esc(label) + '</td>' +
+           '<td style="' + SV + '">' + (val || '<span style="color:#94a3b8">—</span>') + '</td></tr>';
+  }
+
+  function pSection(num, title, rows) {
+    return '<div style="margin-bottom:9px;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;page-break-inside:avoid">' +
+      '<div style="background:#f1f5f9;padding:5px 10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px">' +
+        '<span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;min-width:15px;background:#0f172a;color:#fff;border-radius:50%;font-size:8px;font-weight:800">' + num + '</span>' +
+        '<span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#334155">' + esc(title) + '</span>' +
+      '</div>' +
+      '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
+    '</div>';
+  }
+
+  function buildPrintHTML() {
+    var surname    = fv('surname').toUpperCase();
+    var firstName  = fv('first_name');
+    var otherNames = fv('other_names');
+    var fullName   = [firstName, otherNames, surname].filter(Boolean).join(' ').toUpperCase();
+    var today      = new Date().toLocaleDateString('en-UG', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    var photoCell = _img.photo
+      ? '<img src="' + _img.photo + '" style="max-width:120px;max-height:140px;border-radius:6px;border:2px solid #e2e8f0;display:block;margin:0 auto">'
+      : '<div style="width:100px;height:120px;background:#f8fafc;border:2px dashed #cbd5e1;border-radius:6px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;text-align:center;padding:8px">No photo<br>attached</div>';
+    var nidCell = _img.nid
+      ? '<img src="' + _img.nid + '" style="max-width:200px;max-height:120px;border-radius:6px;border:2px solid #e2e8f0;display:block;margin:0 auto">'
+      : '<div style="width:180px;height:100px;background:#f8fafc;border:2px dashed #cbd5e1;border-radius:6px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;text-align:center;padding:8px">No ID copy<br>attached</div>';
+
+    var h = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#0f172a;line-height:1.45">';
+
+    // ── Letterhead ──
+    h +=
+      '<table style="width:100%;border-collapse:collapse;margin-bottom:0">' +
+        '<tr>' +
+          '<td style="background:#c9a227;width:64px;text-align:center;vertical-align:middle;padding:0">' +
+            '<div style="font-size:20px;font-weight:900;color:#0d1b2a;font-family:Arial;letter-spacing:.04em;padding:14px 0">GIC</div>' +
+          '</td>' +
+          '<td style="background:#0d1b2a;padding:12px 18px;vertical-align:middle">' +
+            '<div style="font-size:26px;font-weight:800;color:#c9a227;letter-spacing:.08em;line-height:1;font-family:Arial">GAZEBO</div>' +
+            '<div style="font-size:7.5px;font-weight:600;color:rgba(255,255,255,.58);letter-spacing:.24em;text-transform:uppercase;margin-top:5px">INVESTMENT CLUB</div>' +
+            '<div style="font-size:7px;color:rgba(255,255,255,.28);letter-spacing:.24em;text-transform:uppercase;margin-top:3px">EST. 2025</div>' +
+          '</td>' +
+          '<td style="background:#0d1b2a;padding:12px 18px;text-align:right;vertical-align:middle;border-left:1px solid rgba(255,255,255,.07)">' +
+            '<div style="font-size:12px;font-weight:800;color:#c9a227;letter-spacing:.01em">Membership Application</div>' +
+            '<div style="font-size:8px;color:rgba(255,255,255,.48);margin-top:3px">Form No: GIC-MBR-001</div>' +
+            '<div style="font-size:8px;color:rgba(255,255,255,.48);margin-top:2px">' + esc(CLUB_LOC) + '</div>' +
+            '<div style="font-size:8px;color:rgba(255,255,255,.48);margin-top:2px">Date: ' + esc(today) + '</div>' +
+          '</td>' +
+        '</tr>' +
+      '</table>' +
+      '<div style="height:3px;background:#c9a227;margin-bottom:12px"></div>';
+
+    // ── Sections ──
+    h += pSection(1, 'Personal Details',
+      pRow('Full Name', blank(fullName)) +
+      pRow('Gender', fv('gender') === 'M' ? 'Male' : fv('gender') === 'F' ? 'Female' : '') +
+      pRow('Date of Birth', fv('date_of_birth')) +
+      pRow('Nationality', fv('nationality')) +
+      pRow('Marital Status', fv('marital_status')) +
+      pRow('National ID No.', fv('national_id').toUpperCase()) +
+      pRow('TIN', fv('tin'))
+    );
+
+    h += pSection(2, 'Contact Details',
+      pRow('Mobile Phone', fv('phone')) +
+      pRow('Alternative Phone', fv('alt_phone')) +
+      pRow('WhatsApp No.', fv('whatsapp_no')) +
+      pRow('Email Address', fv('email')) +
+      pRow('District', fv('district')) +
+      pRow('Village / Street', fv('village_street'))
+    );
+
+    h += pSection(3, 'Occupation & Contributions',
+      pRow('Employment Status', fv('employment_status')) +
+      pRow('Occupation', fv('occupation')) +
+      pRow('Employer / Business', fv('employer_business')) +
+      pRow('Monthly Income', fv('monthly_income') ? 'UGX ' + fmt(fv('monthly_income')) : '') +
+      pRow('Monthly Contribution', 'UGX ' + fmt(fv('monthly_contribution'))) +
+      pRow('Preferred Pay Date', fv('preferred_pay_date') ? ordinal(fv('preferred_pay_date')) + ' of each month' : '') +
+      pRow('Mobile Money No.', fv('mobile_money_no'))
+    );
+
+    // Banking — only print if at least one field is filled
+    if (fv('bank_name') || fv('bank_branch') || fv('bank_account_name') || fv('bank_account_no')) {
+      h += pSection(4, 'Banking Details',
+        pRow('Bank Name', fv('bank_name')) +
+        pRow('Bank Branch', fv('bank_branch')) +
+        pRow('Account Name', fv('bank_account_name')) +
+        pRow('Account Number', fv('bank_account_no'))
+      );
+    }
+
+    h += pSection(5, 'Next of Kin',
+      pRow('Full Name', fv('next_of_kin')) +
+      pRow('Relationship', fv('nok_relationship')) +
+      pRow('Phone', fv('nok_phone')) +
+      pRow('Address', fv('nok_address'))
+    );
+
+    // Identity Documents
+    h +=
+      '<div style="margin-bottom:9px;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;page-break-inside:avoid">' +
+        '<div style="background:#f1f5f9;padding:5px 10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px">' +
+          '<span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;min-width:15px;background:#0f172a;color:#fff;border-radius:50%;font-size:8px;font-weight:800">6</span>' +
+          '<span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#334155">Identity Documents</span>' +
+        '</div>' +
+        '<table style="width:100%;border-collapse:collapse"><tr>' +
+          '<td style="padding:10px;text-align:center;vertical-align:top;width:50%">' +
+            '<div style="font-size:8.5px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px;letter-spacing:.05em">Profile Portrait</div>' +
+            photoCell +
+          '</td>' +
+          '<td style="padding:10px;text-align:center;vertical-align:top;width:50%;border-left:1px solid #f1f5f9">' +
+            '<div style="font-size:8.5px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px;letter-spacing:.05em">National ID Copy</div>' +
+            nidCell +
+          '</td>' +
+        '</tr></table>' +
+      '</div>';
+
+    if (fv('notes')) {
+      h += pSection(7, 'Additional Notes', pRow('Notes', blank(fv('notes'))));
+    }
+
+    // Declaration & Signature
+    h +=
+      '<div style="margin-bottom:9px;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;page-break-inside:avoid">' +
+        '<div style="background:#f1f5f9;padding:5px 10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px">' +
+          '<span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;min-width:15px;background:#0f172a;color:#fff;border-radius:50%;font-size:8px;font-weight:800">7</span>' +
+          '<span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#334155">Declaration &amp; Signature</span>' +
+        '</div>' +
+        '<div style="padding:10px 12px">' +
+          '<p style="font-size:10px;color:#374151;margin:0 0 10px;line-height:1.65">I, <strong>' + esc(fullName) + '</strong>, hereby declare that all information provided in this application is <strong>accurate, complete, and truthful</strong> to the best of my knowledge. I understand that providing false or misleading information may result in rejection or cancellation of my membership application.</p>' +
+          (hidden.value
+            ? '<img src="' + hidden.value + '" style="height:52px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;display:block">'
+            : '<div style="height:52px;border:1px dashed #e2e8f0;border-radius:4px;background:#f8fafc"></div>') +
+          '<div style="margin-top:6px;font-size:9px;color:#94a3b8">Applicant Signature &nbsp;&nbsp;|&nbsp;&nbsp; Date: ' + esc(today) + '</div>' +
+        '</div>' +
+      '</div>';
+
+    // File reference section
+    h +=
+      '<div style="margin-bottom:9px;border:1.5px dashed #cbd5e1;border-radius:5px;overflow:hidden">' +
+        '<div style="background:#fafafa;padding:5px 10px;border-bottom:1px solid #e2e8f0">' +
+          '<span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8">File Reference (Optional)</span>' +
+        '</div>' +
+        '<table style="width:100%;border-collapse:collapse">' +
+          '<tr>' +
+            '<td style="padding:8px 10px;border-right:1px solid #f1f5f9;width:25%">' +
+              '<div style="font-size:8.5px;color:#94a3b8;margin-bottom:18px">Member No.</div>' +
+              '<div style="border-top:1px solid #cbd5e1"></div>' +
+            '</td>' +
+            '<td style="padding:8px 10px;border-right:1px solid #f1f5f9;width:25%">' +
+              '<div style="font-size:8.5px;color:#94a3b8;margin-bottom:18px">Received By</div>' +
+              '<div style="border-top:1px solid #cbd5e1"></div>' +
+            '</td>' +
+            '<td style="padding:8px 10px;border-right:1px solid #f1f5f9;width:25%">' +
+              '<div style="font-size:8.5px;color:#94a3b8;margin-bottom:18px">Date Received</div>' +
+              '<div style="border-top:1px solid #cbd5e1"></div>' +
+            '</td>' +
+            '<td style="padding:8px 10px;width:25%">' +
+              '<div style="font-size:8.5px;color:#94a3b8;margin-bottom:18px">File Ref</div>' +
+              '<div style="border-top:1px solid #cbd5e1"></div>' +
+            '</td>' +
+          '</tr>' +
+        '</table>' +
+      '</div>';
+
+    // Footer strip
+    h +=
+      '<table style="width:100%;border-collapse:collapse;background:#0d1b2a;border-radius:4px;margin-top:10px">' +
+        '<tr>' +
+          '<td style="padding:7px 12px;font-size:8px;font-weight:700;color:#c9a227;white-space:nowrap">GIC &nbsp;&bull;&nbsp; ' + esc(CLUB_NAME) + '</td>' +
+          '<td style="padding:7px 12px;font-size:7.5px;color:rgba(255,255,255,.42);text-align:center">' + esc(CLUB_LOC) + '</td>' +
+          '<td style="padding:7px 12px;font-size:7.5px;color:rgba(255,255,255,.42);text-align:right;white-space:nowrap">Deliver completed form to the Club Secretary</td>' +
+        '</tr>' +
+      '</table>';
+
+    h += '</div>'; // close outer div
+    return h;
+  }
+
+  // ── Save as PDF ──────────────────────────────────────────────────────────────
+  document.getElementById('savePdfBtn').addEventListener('click', function () {
+    var errors = validate();
+    if (errors.length) { showAlerts(errors); return; }
+    showAlerts([]);
+
+    var html = buildPrintHTML();
+
+    // Open a clean new window — avoids all CSS interference from the main page
+    var win = window.open('', '_blank', 'width=860,height=1150');
+
+    if (win) {
+      win.document.open();
+      win.document.write(
+        '<!DOCTYPE html><html><head>' +
+        '<meta charset="utf-8">' +
+        '<title>' + esc(CLUB_NAME) + ' — Member Registration</title>' +
+        '<style>' +
+          'body{margin:0;padding:12mm 14mm 10mm;background:#fff}' +
+          'img{max-width:100%;display:block}' +
+          'td,th{-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+          '@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}' +
+          '@page{size:A4 portrait;margin:0}' +
+        '</style>' +
+        '</head><body>' + html + '</body></html>'
+      );
+      win.document.close();
+      // Wait 900 ms for images (base64 data URLs) to fully render before printing
+      setTimeout(function () { win.focus(); win.print(); }, 900);
+    } else {
+      // Fallback: in-page print (popup was blocked)
+      var pc = document.getElementById('printContent');
+      pc.innerHTML = html;
+      setTimeout(function () {
+        window.print();
+        setTimeout(function () { pc.innerHTML = ''; }, 2500);
+      }, 400);
+    }
+  });
+
+})();
+</script>
+{% endblock %}

@@ -420,6 +420,10 @@
                 <input type="hidden" name="amount" value="{{ fee_amount }}">
                 <button type="submit" class="btn btn-sm btn-success" title="Mark this member as paid"><i class="ph ph-check-circle"></i> Mark Paid</button>
               </form>
+              <form method="post" action="{{ url_for('admin.fees_remind', member_id=m.id) }}" style="margin: 0;" onsubmit="return confirm('Send fee reminder to {{ m.full_name }} via portal notification and WhatsApp?');">
+                <input type="hidden" name="year" value="{{ year }}">
+                <button type="submit" class="btn btn-sm btn-outline-warning" title="Send reminder notification + WhatsApp"><i class="ph ph-bell-ringing"></i> Remind</button>
+              </form>
               {% else %}
               <span class="text-muted small fst-italic">Read only</span>
               {% endif %}

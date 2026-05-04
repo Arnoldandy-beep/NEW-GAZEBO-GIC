@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}Forced Loan Recovery — {{ loan.loan_no }}{% endblock %}
+{% block topbar %}Forced Loan Recovery{% endblock %}
+{% block content %}
+<style>
+.fr-root{font-family:'Manrope',sans-serif}
+.fr-hero{background:linear-gradient(135deg,#450a0a 0%,#7f1d1d 60%,#dc2626 100%);border-radius:16px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden}
+.fr-hero h1{margin:0;font-size:20px;font-weight:800;color:#fff}
+.fr-hero .sub{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.65)}
+.fr-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:20px;overflow:hidden}
+.fr-card-head{display:flex;align-items:center;gap:10px;padding:14px 20px;font-size:13px;font-weight:700;color:#374151;border-bottom:1px solid #f1f5f9;background:#f8fafc}
+.fr-card-head i{font-size:16px}
+.fr-card-head.red i{color:#dc2626}
+.fr-card-head.blue i{color:#2563eb}
+.fr-card-head.amber i{color:#d97706}
+.fr-card-body{padding:20px}
+.fr-calc-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:13.5px}
+.fr-calc-row.owed{background:#fef2f2;color:#991b1b}
+.fr-calc-row.borrower{background:#fff7ed;color:#92400e}
+.fr-calc-row.g1{background:#eff6ff;color:#1e40af}
+.fr-calc-row.g2{background:#f0fdf4;color:#166534}
+.fr-calc-row.total{background:#f0fdf4;color:#166534;font-weight:700;font-size:15px}
+.fr-calc-row.shortfall{background:#fef2f2;color:#dc2626;font-weight:700}
+.fr-calc-row.na{background:#f9fafb;color:#94a3b8}
+.fr-calc-label{font-weight:600}
+.fr-calc-val{font-weight:800;font-family:'Space Grotesk',sans-serif}
+.fr-party{display:flex;align-items:center;gap:12px;padding:14px;border-radius:10px;margin-bottom:10px;border:1px solid #e2e8f0}
+.fr-party.borrower{border-color:#fed7aa;background:#fff7ed}
+.fr-party.g1{border-color:#bfdbfe;background:#eff6ff}
+.fr-party.g2{border-color:#bbf7d0;background:#f0fdf4}
+.fr-party-name{font-size:14px;font-weight:700;color:#0f172a}
+.fr-party-role{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.fr-party-role.borrower{color:#92400e}
+.fr-party-role.g1,.fr-party-role.g2{color:#1e40af}
+.fr-party-deduction{font-size:16px;font-weight:800;font-family:'Space Grotesk',sans-serif;margin-left:auto;flex-shrink:0}
+.fr-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.fr-badge.pending{background:#fef3c7;color:#92400e}
+.fr-badge.accepted{background:#d1fae5;color:#065f46}
+.fr-badge.declined{background:#fee2e2;color:#991b1b}
+.fr-badge.none{background:#f1f5f9;color:#64748b}
+.fr-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;border:none;transition:all .15s}
+.fr-btn.red{background:#dc2626;color:#fff}
+.fr-btn.red:hover{background:#b91c1c;color:#fff}
+.fr-btn.amber{background:#d97706;color:#fff}
+.fr-btn.amber:hover{background:#b45309;color:#fff}
+.fr-btn.outline{background:#fff;color:#374151;border:1.5px solid #d1d5db}
+.fr-btn.outline:hover{background:#f9fafb}
+.fr-status-box{padding:16px;border-radius:10px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.fr-status-box.info{background:#eff6ff;border:1px solid #bfdbfe}
+.fr-status-box.warn{background:#fffbeb;border:1px solid #fde68a}
+.fr-status-box.done{background:#f0fdf4;border:1px solid #bbf7d0}
+.fr-status-box.danger{background:#fef2f2;border:1px solid #fca5a5}
+</style>
+
+<div class="fr-root">
+
+  <div class="fr-hero">
+    <div>
+      <h1><i class="ph ph-coins"></i> Forced Loan Recovery — {{ loan.loan_no }}</h1>
+      <div class="sub">Resolve defaulted loan by force-recovering from borrower and guarantors</div>
+    </div>
+    <a href="{{ url_for('admin.loan_detail', loan_id=loan.id) }}" class="fr-btn outline ms-auto"><i class="ph ph-arrow-left"></i> Back to Loan</a>
+  </div>
+
+  <!-- Recovery status banner -->
+  {% if recovery %}
+    {% if recovery.status == 'COMPLETED' %}
+    <div class="fr-status-box done">
+      <i class="ph ph-check-circle" style="font-size:22px;color:#059669;flex-shrink:0;margin-top:2px"></i>
+      <div>
+        <strong style="font-size:14px;color:#065f46">Recovery Completed</strong>
+        <p style="margin:4px 0 0;font-size:13px;color:#166534">{{ recovery.narrative }}</p>
+      </div>
+    </div>
+    {% elif recovery.status == 'PENDING_CONSENT' %}
+    <div class="fr-status-box warn">
+      <i class="ph ph-hourglass" style="font-size:22px;color:#d97706;flex-shrink:0;margin-top:2px"></i>
+      <div>
+        <strong style="font-size:14px;color:#92400e">Awaiting Guarantor Consent</strong>
+        <p style="margin:4px 0 0;font-size:13px;color:#78350f">Consent requests have been sent to the guarantors. Once they respond, the Treasurer can execute the full recovery. You may also override and execute immediately.</p>
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <!-- Loan & parties summary -->
+      <div class="fr-card">
+        <div class="fr-card-head red"><i class="ph ph-hand-coins"></i> Loan Overview</div>
+        <div class="fr-card-body">
+          <table class="table table-sm mb-0" style="font-size:13px">
+            <tr><td class="text-muted">Loan No</td><td><strong>{{ loan.loan_no }}</strong></td></tr>
+            <tr><td class="text-muted">Borrower</td><td><strong>{{ loan.borrower_name }}</strong> ({{ loan.borrower_no }})</td></tr>
+            <tr><td class="text-muted">Principal</td><td>{{ loan.principal|money }}</td></tr>
+            <tr><td class="text-muted">Status</td><td><span class="badge bg-danger">{{ loan.status }}</span></td></tr>
+            <tr><td class="text-muted">Due Date</td><td>{{ loan.due_date|datefmt }}</td></tr>
+            <tr><td class="text-muted">Overdue Months</td><td>{{ pos.overdue_months }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Financial calculation -->
+      <div class="fr-card">
+        <div class="fr-card-head red"><i class="ph ph-calculator"></i> Recovery Calculation</div>
+        <div class="fr-card-body">
+          <div class="fr-calc-row owed">
+            <span class="fr-calc-label">Total Outstanding (Principal + Interest + Penalties)</span>
+            <span class="fr-calc-val">{{ total_owed|money }}</span>
+          </div>
+          <div class="fr-calc-row borrower">
+            <span class="fr-calc-label"><i class="ph ph-user"></i> From Borrower's Savings ({{ borrower_savings|money }} available)</span>
+            <span class="fr-calc-val">{{ from_borrower|money }}</span>
+          </div>
+          {% if loan.g1_id %}
+          <div class="fr-calc-row g1">
+            <span class="fr-calc-label"><i class="ph ph-users"></i> From Guarantor 1 — {{ loan.g1_name }} ({{ g1_savings|money }})</span>
+            <span class="fr-calc-val">{{ from_g1|money }}</span>
+          </div>
+          {% else %}
+          <div class="fr-calc-row na">
+            <span class="fr-calc-label">Guarantor 1</span><span class="fr-calc-val">None</span>
+          </div>
+          {% endif %}
+          {% if loan.g2_id %}
+          <div class="fr-calc-row g2">
+            <span class="fr-calc-label"><i class="ph ph-users"></i> From Guarantor 2 — {{ loan.g2_name }} ({{ g2_savings|money }})</span>
+            <span class="fr-calc-val">{{ from_g2|money }}</span>
+          </div>
+          {% else %}
+          <div class="fr-calc-row na">
+            <span class="fr-calc-label">Guarantor 2</span><span class="fr-calc-val">None</span>
+          </div>
+          {% endif %}
+          <div class="fr-calc-row total">
+            <span class="fr-calc-label">Total Recoverable</span>
+            <span class="fr-calc-val">{{ total_recoverable|money }}</span>
+          </div>
+          {% if final_shortfall > 0 %}
+          <div class="fr-calc-row shortfall">
+            <span class="fr-calc-label"><i class="ph ph-warning"></i> Unrecoverable Shortfall</span>
+            <span class="fr-calc-val">{{ final_shortfall|money }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <!-- Parties & consent status -->
+      <div class="fr-card">
+        <div class="fr-card-head blue"><i class="ph ph-users-three"></i> Parties Involved</div>
+        <div class="fr-card-body">
+          <div class="fr-party borrower">
+            <div>
+              <div class="fr-party-role borrower">Borrower</div>
+              <div class="fr-party-name">{{ loan.borrower_name }}</div>
+              <div style="font-size:12px;color:#92400e">{{ loan.borrower_no }} &middot; {{ loan.borrower_phone or '—' }}</div>
+              <div style="font-size:12px;margin-top:4px">Savings: <strong>{{ borrower_savings|money }}</strong> &rarr; Deduction: <strong>{{ from_borrower|money }}</strong></div>
+              <div style="font-size:11px;color:#92400e;margin-top:2px">No consent required — borrower is directly liable</div>
+            </div>
+          </div>
+
+          {% if loan.g1_id %}
+          <div class="fr-party g1">
+            <div style="flex:1">
+              <div class="fr-party-role g1">Guarantor 1</div>
+              <div class="fr-party-name">{{ loan.g1_name }}</div>
+              <div style="font-size:12px;color:#1e40af">{{ loan.g1_no }} &middot; {{ loan.g1_phone or '—' }}</div>
+              <div style="font-size:12px;margin-top:4px">Savings: <strong>{{ g1_savings|money }}</strong> &rarr; Required: <strong>{{ from_g1|money }}</strong></div>
+            </div>
+            <div>
+              {% if g1_consent %}
+                {% if g1_consent.consent_status == 'ACCEPTED' %}
+                <span class="fr-badge accepted"><i class="ph ph-check-circle"></i> Accepted</span>
+                {% elif g1_consent.consent_status == 'DECLINED' %}
+                <span class="fr-badge declined"><i class="ph ph-x-circle"></i> Declined</span>
+                {% else %}
+                <span class="fr-badge pending"><i class="ph ph-hourglass"></i> Pending</span>
+                {% endif %}
+              {% else %}
+              <span class="fr-badge none">No Request Yet</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if loan.g2_id %}
+          <div class="fr-party g2">
+            <div style="flex:1">
+              <div class="fr-party-role g2">Guarantor 2</div>
+              <div class="fr-party-name">{{ loan.g2_name }}</div>
+              <div style="font-size:12px;color:#166534">{{ loan.g2_no }} &middot; {{ loan.g2_phone or '—' }}</div>
+              <div style="font-size:12px;margin-top:4px">Savings: <strong>{{ g2_savings|money }}</strong> &rarr; Required: <strong>{{ from_g2|money }}</strong></div>
+            </div>
+            <div>
+              {% if g2_consent %}
+                {% if g2_consent.consent_status == 'ACCEPTED' %}
+                <span class="fr-badge accepted"><i class="ph ph-check-circle"></i> Accepted</span>
+                {% elif g2_consent.consent_status == 'DECLINED' %}
+                <span class="fr-badge declined"><i class="ph ph-x-circle"></i> Declined</span>
+                {% else %}
+                <span class="fr-badge pending"><i class="ph ph-hourglass"></i> Pending</span>
+                {% endif %}
+              {% else %}
+              <span class="fr-badge none">No Request Yet</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      {% if recovery and recovery.status == 'COMPLETED' %}
+      <div class="fr-status-box done">
+        <i class="ph ph-seal-check" style="font-size:22px;color:#059669"></i>
+        <div><strong>Recovery fully executed.</strong> Loan has been marked Cleared. See loan record for details.</div>
+      </div>
+      {% elif role in ('TREASURER', 'IT_ADMIN', 'CHAIRMAN') %}
+      <div class="fr-card">
+        <div class="fr-card-head amber"><i class="ph ph-lightning"></i> Actions</div>
+        <div class="fr-card-body d-flex flex-column gap-3">
+
+          {% if needs_guarantors and not recovery %}
+          <!-- Step 1: Send consent requests -->
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px">Step 1 — Send Consent Requests to Guarantors</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:10px">System notifications and WhatsApp messages will be sent. Guarantors must log in to accept or dispute.</div>
+            <form method="post" action="{{ url_for('admin.force_recover', loan_id=loan.id) }}">
+              <input type="hidden" name="action" value="request_consent">
+              <button type="submit" class="fr-btn amber" onclick="return confirm('Send consent requests to {{ loan.g1_name or '' }}{% if loan.g2_name %} and {{ loan.g2_name }}{% endif %}? System notifications and WhatsApp instructions will be dispatched.')">
+                <i class="ph ph-bell-ringing"></i> Send Consent Requests
+              </button>
+            </form>
+          </div>
+          <hr style="margin:4px 0">
+          {% elif needs_guarantors and recovery and recovery.status == 'PENDING_CONSENT' %}
+          <!-- Re-send consent requests -->
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px">Re-send Consent Requests</div>
+            <form method="post" action="{{ url_for('admin.force_recover', loan_id=loan.id) }}">
+              <input type="hidden" name="action" value="request_consent">
+              <button type="submit" class="fr-btn outline" style="font-size:12px">
+                <i class="ph ph-arrow-clockwise"></i> Re-send Notifications
+              </button>
+            </form>
+          </div>
+          <hr style="margin:4px 0">
+          {% endif %}
+
+          <!-- Execute Recovery -->
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px">
+              {% if needs_guarantors %}Step 2 — {% endif %}Execute Forced Recovery
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:10px">
+              Deducts savings from borrower immediately.
+              {% if needs_guarantors %}Guarantors are deducted only if they have accepted consent OR you check the override.{% endif %}
+            </div>
+            <form method="post" action="{{ url_for('admin.force_recover', loan_id=loan.id) }}"
+                  onsubmit="return confirm('Execute forced recovery? Savings will be permanently deducted and the loan will be marked Cleared. This cannot be undone.')">
+              <input type="hidden" name="action" value="execute">
+              {% if needs_guarantors %}
+              <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" name="override_consent" value="1" id="override">
+                <label class="form-check-label" for="override" style="font-size:12px;color:#dc2626;font-weight:600">
+                  <i class="ph ph-warning"></i> Override consent — deduct from guarantors even if they haven't responded
+                  <span style="font-weight:400;color:#64748b">(use only after committee resolution)</span>
+                </label>
+              </div>
+              {% endif %}
+              <button type="submit" class="fr-btn red">
+                <i class="ph ph-bolt"></i> Execute Forced Recovery
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="fr-status-box info">
+        <i class="ph ph-info" style="font-size:20px;color:#2563eb"></i>
+        <div>Only the Treasurer, Chairman, or IT Admin can execute forced recovery.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

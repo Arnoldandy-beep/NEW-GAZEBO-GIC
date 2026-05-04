@@ -93,6 +93,11 @@
           <a href="{{ url_for('admin.reports') }}" class="nav-link {% if request.endpoint == 'admin.reports' %}active{% endif %}">
             <i class="ph ph-chart-bar"></i> Reports
           </a>
+          {% if session.role in ('IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE') %}
+          <a href="{{ url_for('admin.offboarding_list') }}" class="nav-link {% if request.endpoint and 'offboarding' in request.endpoint %}active{% endif %}">
+            <i class="ph ph-user-minus"></i> Offboarding
+          </a>
+          {% endif %}
           {% if session.role in ('IT_ADMIN', 'CHAIRMAN') %}
           <a href="{{ url_for('admin.audit_list') }}" class="nav-link {% if request.endpoint == 'admin.audit_list' %}active{% endif %}">
             <i class="ph ph-shield-check"></i> Audit Log

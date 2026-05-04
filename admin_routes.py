@@ -26,6 +26,10 @@ from utils import (
     get_member_locked_amount, get_member_available_savings,
     determine_loan_security, calculate_max_loan_amount,
     next_member_no, next_loan_no, build_whatsapp_link, send_telegram_test_message,
+    notify_user as _notify_user_util,
+    notify_member as _notify_member_util,
+    notify_roles as _notify_roles_util,
+    deduct_member_savings,
 )
 from config import Config
 
@@ -198,44 +202,15 @@ def _save_membership_form(file_field_name='membership_form_file'):
 
 
 def _notify_roles(db, roles, title, message, link=None, exclude_user_id=None):
-    placeholders = ','.join(['?'] * len(roles))
-    params = list(roles)
-    sql = f"""SELECT u.id
-                FROM users u
-                JOIN members m ON m.id = u.member_id
-               WHERE u.is_active = 1 AND m.role IN ({placeholders})"""
-    if exclude_user_id:
-        sql += " AND u.id != ?"
-        params.append(exclude_user_id)
-    users = db.execute(sql, params).fetchall()
-    for u in users:
-        db.execute(
-            """INSERT INTO notifications (user_id, title, message, link)
-               VALUES (?, ?, ?, ?)""",
-            (u['id'], title, message, link),
-        )
+    _notify_roles_util(db, roles, title, message, link, exclude_user_id)
 
 
 def _notify_user(db, user_id, title, message, link=None):
-    if not user_id:
-        return
-    db.execute(
-        """INSERT INTO notifications (user_id, title, message, link)
-           VALUES (?, ?, ?, ?)""",
-        (user_id, title, message, link),
-    )
+    _notify_user_util(db, user_id, title, message, link)
 
 
 def _notify_member(db, member_id, title, message, link=None):
-    """Push a notification to a member login if one exists and is active."""
-    if not member_id:
-        return
-    user = db.execute(
-        "SELECT id FROM users WHERE member_id=? AND is_active=1 ORDER BY id LIMIT 1",
-        (member_id,),
-    ).fetchone()
-    if user:
-        _notify_user(db, user['id'], title, message, link)
+    _notify_member_util(db, member_id, title, message, link)
 
 
 def _member_removal_impact(db, member_id):
@@ -364,6 +339,116 @@ def _render_whatsapp_reset_redirect(wa_url, return_url):
         wa_url=wa_url,
         return_url=return_url,
     )
+
+
+def _registration_credentials_whatsapp_message(full_name, member_no, username, temp_password):
+    return (
+        f"Hello {full_name},\n\n"
+        f"Welcome to {Config.CLUB_NAME}. Your membership registration has been approved.\n"
+        f"Member Number: {member_no}\n"
+        f"Username: {username}\n"
+        f"Temporary Password: {temp_password}\n\n"
+        "Please sign in and change your password immediately before using the system.\n"
+        "Password guide: use at least 8 characters with uppercase, lowercase, and a number.\n"
+        f"App URL: {Config.APP_URL}\n\n"
+        "We are glad to have you on board."
+    )
+
+
+def _create_member_and_user_from_registration_request(db, reg_request):
+    try:
+        payload = json.loads(reg_request['payload_json'] or '{}')
+    except (TypeError, ValueError):
+        payload = {}
+
+    national_id = (payload.get('national_id') or '').strip()
+    phone = (payload.get('phone') or '').strip()
+    email = (payload.get('email') or '').strip()
+    existing_member = db.execute(
+        """SELECT id FROM members
+             WHERE national_id=? OR phone=? OR (email <> '' AND LOWER(email)=LOWER(?))
+             LIMIT 1""",
+        (national_id, phone, email),
+    ).fetchone()
+    if existing_member:
+        raise ValueError('A member already exists with the same National ID, phone, or email.')
+
+    member_no = next_member_no(db)
+    full_name = (payload.get('full_name') or reg_request['full_name'] or '').strip()
+    cur = db.execute(
+        """INSERT INTO members
+           (member_no, full_name, surname, first_name, other_names,
+            gender, date_of_birth, nationality, marital_status,
+            national_id, tin, nid_copy_url,
+            phone, alt_phone, whatsapp_no, email, district, village_street,
+            employment_status, occupation, employer_business, monthly_income,
+            monthly_contribution, preferred_pay_date, mobile_money_no, bank_account_no,
+            next_of_kin, nok_relationship, nok_phone, nok_address,
+            role, join_date, share_account_no, status, notes, photo_url)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            member_no,
+            full_name,
+            (payload.get('surname') or '').strip().upper(),
+            (payload.get('first_name') or '').strip().upper(),
+            (payload.get('other_names') or '').strip().upper(),
+            payload.get('gender') or '',
+            payload.get('date_of_birth') or None,
+            (payload.get('nationality') or 'Ugandan').strip(),
+            payload.get('marital_status') or '',
+            national_id,
+            (payload.get('tin') or '').strip(),
+            payload.get('nid_copy_url'),
+            phone,
+            (payload.get('alt_phone') or '').strip(),
+            (payload.get('whatsapp_no') or '').strip(),
+            email,
+            (payload.get('district') or 'Kampala').strip(),
+            (payload.get('village_street') or '').strip(),
+            payload.get('employment_status') or '',
+            (payload.get('occupation') or '').strip(),
+            (payload.get('employer_business') or '').strip(),
+            payload.get('monthly_income'),
+            float(payload.get('monthly_contribution') or 100000),
+            int(payload.get('preferred_pay_date') or 5),
+            (payload.get('mobile_money_no') or '').strip(),
+            (payload.get('bank_account_no') or '').strip(),
+            (payload.get('next_of_kin') or '').strip(),
+            (payload.get('nok_relationship') or '').strip(),
+            (payload.get('nok_phone') or '').strip(),
+            (payload.get('nok_address') or '').strip(),
+            'MEMBER',
+            date.today().isoformat(),
+            '',
+            'Active',
+            ((payload.get('notes') or '').strip() + f"\n\nOnline registration request #{reg_request['id']} submitted via public portal.").strip(),
+            payload.get('photo_url'),
+        ),
+    )
+    member_id = cur.lastrowid
+
+    username = member_no.lower()
+    base = username
+    i = 1
+    while db.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone():
+        i += 1
+        username = f"{base}-{i}"
+    temp_password = 'gazebo123'
+    cur = db.execute(
+        """INSERT INTO users (username, password_hash, member_id, must_change_pw, is_active)
+           VALUES (?, ?, ?, 1, 1)""",
+        (username, generate_password_hash(temp_password), member_id),
+    )
+    user_id = cur.lastrowid
+    return {
+        'member_id': member_id,
+        'user_id': user_id,
+        'member_no': member_no,
+        'username': username,
+        'temp_password': temp_password,
+        'full_name': full_name,
+        'phone': (payload.get('whatsapp_no') or phone or '').strip(),
+    }
 
 
 def _operational_fund_snapshot(db):
@@ -981,6 +1066,20 @@ def approvals():
             d['request_nok_address'] = (payload.get('nok_address') or '').strip()
             pending_profile_changes.append(d)
 
+    pending_registration_requests = []
+    if role in ('SECRETARY', 'IT_ADMIN'):
+        pending_registration_requests = db.execute(
+            """SELECT rr.*, 
+                      (SELECT COUNT(DISTINCT user_id) FROM registration_request_approvals ra
+                        WHERE ra.request_id=rr.id AND ra.decision='APPROVE') AS approval_count,
+                      EXISTS(SELECT 1 FROM registration_request_approvals ra
+                              WHERE ra.request_id=rr.id AND ra.user_id=?) AS already_approved
+                 FROM registration_requests rr
+                WHERE rr.status='Pending'
+                ORDER BY rr.created_at DESC""",
+            (user_id,),
+        ).fetchall()
+
     approved_loan_history = []
     if role in ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE', 'IT_ADMIN'):
         rows = db.execute(
@@ -1051,6 +1150,31 @@ def approvals():
                 LIMIT 10"""
         ).fetchall()
 
+    approved_registration_history = []
+    if role in ('SECRETARY', 'IT_ADMIN'):
+        rows = db.execute(
+            """SELECT rr.*, COALESCE(m.member_no, '-') AS member_no,
+                      COALESCE(m.full_name, rr.full_name) AS enrolled_name
+                 FROM registration_requests rr
+                 LEFT JOIN members m ON m.id = rr.created_member_id
+                WHERE rr.status='Approved'
+                ORDER BY rr.approved_at DESC
+                LIMIT 10"""
+        ).fetchall()
+        for row in rows:
+            item = dict(row)
+            approvals = db.execute(
+                """SELECT COALESCE(m.full_name, u.username) AS approver_name
+                     FROM registration_request_approvals ra
+                     JOIN users u ON u.id = ra.user_id
+                     LEFT JOIN members m ON m.id = u.member_id
+                    WHERE ra.request_id=? AND ra.decision='APPROVE'
+                    ORDER BY ra.created_at ASC""",
+                (row['id'],),
+            ).fetchall()
+            item['approver_names'] = [r['approver_name'] for r in approvals]
+            approved_registration_history.append(item)
+
     # Recent notifications (last 30, including already-read)
     notifications = db.execute(
         """SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 30""",
@@ -1065,7 +1189,8 @@ def approvals():
         sum(1 for a in pending_amendments if not a['already_approved']) +
         len(pending_expenses) +
         sum(1 for l in pending_loans if not l['already_approved']) +
-        len(pending_profile_changes)
+        len(pending_profile_changes) +
+        sum(1 for r in pending_registration_requests if not r['already_approved'])
     )
 
     return render_template(
@@ -1074,13 +1199,87 @@ def approvals():
         pending_expenses=pending_expenses,
         pending_loans=pending_loans,
         pending_profile_changes=pending_profile_changes,
+        pending_registration_requests=pending_registration_requests,
         approved_loan_history=approved_loan_history,
         approved_amendment_history=approved_amendment_history,
         approved_expense_history=approved_expense_history,
         approved_profile_history=approved_profile_history,
+        approved_registration_history=approved_registration_history,
         notifications=notifications,
         total_pending=total_pending,
     )
+
+
+@bp.route('/approvals/registration-requests/<int:request_id>/approve', methods=['POST'])
+@role_required('SECRETARY', 'IT_ADMIN')
+def approve_registration_request(request_id):
+    db = get_db()
+    reg_request = db.execute(
+        "SELECT * FROM registration_requests WHERE id=? AND status='Pending'",
+        (request_id,),
+    ).fetchone()
+    if not reg_request:
+        flash('Registration request not found or already processed.', 'warning')
+        return redirect(url_for('admin.approvals'))
+
+    already = db.execute(
+        "SELECT 1 FROM registration_request_approvals WHERE request_id=? AND user_id=?",
+        (request_id, session['user_id']),
+    ).fetchone()
+    if already:
+        flash('You already approved this registration request.', 'info')
+        return redirect(url_for('admin.approvals'))
+
+    db.execute(
+        """INSERT INTO registration_request_approvals (request_id, user_id, decision)
+           VALUES (?, ?, 'APPROVE')""",
+        (request_id, session['user_id']),
+    )
+    approvals = db.execute(
+        "SELECT COUNT(DISTINCT user_id) c FROM registration_request_approvals WHERE request_id=? AND decision='APPROVE'",
+        (request_id,),
+    ).fetchone()['c']
+
+    if approvals >= int(reg_request['approvals_required'] or 2):
+        try:
+            created = _create_member_and_user_from_registration_request(db, reg_request)
+        except ValueError as exc:
+            db.rollback()
+            flash(str(exc), 'danger')
+            return redirect(url_for('admin.approvals'))
+
+        db.execute(
+            """UPDATE registration_requests
+                  SET status='Approved', approved_at=CURRENT_TIMESTAMP,
+                      created_member_id=?, created_user_id=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?""",
+            (created['member_id'], created['user_id'], request_id),
+        )
+        db.commit()
+        log_action(
+            'APPROVE_REGISTRATION_REQUEST',
+            'member',
+            created['member_id'],
+            f"Approved registration request #{request_id} and created {created['member_no']}",
+        )
+
+        wa_message = _registration_credentials_whatsapp_message(
+            created['full_name'],
+            created['member_no'],
+            created['username'],
+            created['temp_password'],
+        )
+        wa_url = build_whatsapp_link(created['phone'], wa_message)
+        if not wa_url:
+            flash('Registration approved and account created, but no valid WhatsApp number was available for credentials delivery.', 'warning')
+            return redirect(url_for('admin.approvals'))
+        flash('Registration approved. WhatsApp credentials message is opening.', 'success')
+        return _render_whatsapp_reset_redirect(wa_url, url_for('admin.approvals'))
+
+    remaining = int(reg_request['approvals_required'] or 2) - approvals
+    db.commit()
+    flash(f'Registration approval recorded. {remaining} more approval(s) required.', 'success')
+    return redirect(url_for('admin.approvals'))
 
 
 @bp.route('/approvals/profile-requests/<int:request_id>/approve', methods=['POST'])
@@ -3840,7 +4039,7 @@ def minutes_publish(minutes_id):
 def fines_list():
     db = get_db()
     rows = db.execute(
-        """SELECT f.*, m.member_no, m.full_name
+        """SELECT f.*, m.member_no, m.full_name, m.phone, m.whatsapp_no
              FROM fines f
              JOIN members m ON m.id = f.member_id
             ORDER BY f.fine_date DESC"""
@@ -3976,6 +4175,46 @@ def fines_pay(fine_id):
     return redirect(request.referrer or url_for('admin.fines_list'))
 
 
+@bp.route('/fines/<int:fine_id>/remind', methods=['POST'])
+@role_required('CHAIRMAN', 'SECRETARY', 'TREASURER', 'IT_ADMIN')
+def fines_remind(fine_id):
+    db = get_db()
+    fine = db.execute(
+        """SELECT f.*, m.full_name, m.phone, m.whatsapp_no
+             FROM fines f JOIN members m ON m.id = f.member_id
+            WHERE f.id=?""",
+        (fine_id,),
+    ).fetchone()
+    if not fine:
+        flash('Fine not found.', 'danger')
+        return redirect(url_for('admin.fines_list'))
+    if fine['status'] == 'Paid':
+        flash('This fine is already paid — no reminder needed.', 'info')
+        return redirect(url_for('admin.fines_list'))
+
+    msg = (
+        f"Dear {fine['full_name']}, this is a reminder that you have an outstanding fine of "
+        f"{fmt_money(fine['amount'])} for: {fine['violation']}. "
+        f"Kindly settle this with the Treasurer at your earliest convenience. "
+        f"Unresolved fines may affect your standing in the club. — GAZEBO Investment Club"
+    )
+    _notify_member(db, fine['member_id'], 'Fine Payment Reminder', msg, url_for('member.profile'))
+    db.commit()
+    log_action('FINE_REMINDER', 'fine', fine_id,
+               f"Reminder sent for fine {fine_id} ({fmt_money(fine['amount'])}) to member {fine['member_id']}")
+    flash(f"Portal notification sent to {fine['full_name']}.", 'success')
+
+    phone = fine['whatsapp_no'] or fine['phone']
+    wa_url = build_whatsapp_link(phone, msg) if phone else None
+    if wa_url:
+        return render_template(
+            'admin/whatsapp_open.html',
+            wa_url=wa_url, wa_url_g1=None, wa_url_g2=None,
+            return_url=url_for('admin.fines_list'),
+        )
+    return redirect(url_for('admin.fines_list'))
+
+
 @bp.route('/fines/<int:fine_id>/delete', methods=['POST'])
 @role_required('TREASURER', 'IT_ADMIN')
 def fines_delete(fine_id):
@@ -4023,7 +4262,7 @@ def fees_list():
     # Members without a fee record this year
     paid_ids = {r['member_id'] for r in rows}
     pending = db.execute(
-        "SELECT * FROM members WHERE status='Active' ORDER BY member_no"
+        "SELECT id, member_no, full_name, phone, whatsapp_no FROM members WHERE status='Active' ORDER BY member_no"
     ).fetchall()
     pending = [m for m in pending if m['id'] not in paid_ids]
     
@@ -4102,6 +4341,51 @@ def fees_delete(fee_id):
     )
     db.commit()
     flash('Fee record deleted.', 'success')
+    return redirect(url_for('admin.fees_list', year=year))
+
+
+@bp.route('/fees/remind/<int:member_id>', methods=['POST'])
+@role_required('CHAIRMAN', 'SECRETARY', 'TREASURER', 'IT_ADMIN')
+def fees_remind(member_id):
+    year = int(request.form.get('year') or date.today().year)
+    db = get_db()
+    member = db.execute(
+        "SELECT id, full_name, phone, whatsapp_no FROM members WHERE id=? AND status='Active'",
+        (member_id,),
+    ).fetchone()
+    if not member:
+        flash('Member not found or not active.', 'danger')
+        return redirect(url_for('admin.fees_list', year=year))
+
+    # Confirm they haven't already paid
+    existing = db.execute(
+        "SELECT id FROM annual_fees WHERE member_id=? AND year=? AND status='Paid'",
+        (member_id, year),
+    ).fetchone()
+    if existing:
+        flash('This member has already paid their fee — no reminder sent.', 'info')
+        return redirect(url_for('admin.fees_list', year=year))
+
+    msg = (
+        f"Dear {member['full_name']}, this is a friendly reminder that your Annual Registration Fee "
+        f"of {fmt_money(Config.ANNUAL_FEE)} for {year} is still outstanding. "
+        f"Kindly make payment before 30 June {year} to maintain good standing. "
+        f"Please contact the Treasurer if you need assistance. — GAZEBO Investment Club"
+    )
+    _notify_member(db, member_id, f"Annual Fee Reminder – {year}", msg, url_for('member.profile'))
+    db.commit()
+    log_action('FEE_REMINDER', 'annual_fee', member_id,
+               f"Annual fee {year} reminder sent to member {member_id}")
+    flash(f"Portal notification sent to {member['full_name']}.", 'success')
+
+    phone = member['whatsapp_no'] or member['phone']
+    wa_url = build_whatsapp_link(phone, msg) if phone else None
+    if wa_url:
+        return render_template(
+            'admin/whatsapp_open.html',
+            wa_url=wa_url, wa_url_g1=None, wa_url_g2=None,
+            return_url=url_for('admin.fees_list', year=year),
+        )
     return redirect(url_for('admin.fees_list', year=year))
 
 
@@ -5545,3 +5829,669 @@ def reports_export(report_key):
 
     flash('Unknown report export requested.', 'warning')
     return redirect(url_for('admin.reports'))
+
+
+# ===========================================================================
+# MEMBER OFFBOARDING MODULE
+# ===========================================================================
+
+_OFFBOARD_ROLES = ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'IT_ADMIN')
+_OFFBOARD_WRITE_ROLES = ('CHAIRMAN', 'SECRETARY', 'TREASURER', 'IT_ADMIN')
+
+
+# _deduct_member_savings is imported from utils as deduct_member_savings
+# and aliased below for local use inside this module.
+_deduct_member_savings = deduct_member_savings
+
+
+def _offboarding_loan_check(db, member_id):
+    """Return active/pending loans for member, or empty list."""
+    return db.execute(
+        """SELECT l.*, m.full_name
+             FROM loans l
+             JOIN members m ON m.id = l.member_id
+            WHERE l.member_id=? AND l.status IN ('Active','Pending')""",
+        (member_id,),
+    ).fetchall()
+
+
+@bp.route('/offboarding')
+@role_required(*_OFFBOARD_ROLES)
+def offboarding_list():
+    db = get_db()
+    role = session.get('role')
+
+    exited_members = db.execute(
+        """SELECT m.*, ob.exit_date, ob.savings_at_exit, ob.penalty_amount,
+                  ob.net_refund, ob.reason, ob.payment_medium,
+                  u_proc.username AS processed_by_name
+             FROM members m
+             LEFT JOIN member_offboardings ob ON ob.member_id = m.id
+             LEFT JOIN users u_proc ON u_proc.id = ob.processed_by
+            WHERE m.status='Exited'
+            ORDER BY ob.exit_date DESC, m.member_no"""
+    ).fetchall()
+
+    active_members = db.execute(
+        "SELECT id, member_no, full_name, phone, join_date, status FROM members WHERE status='Active' ORDER BY member_no"
+    ).fetchall()
+
+    exited_count = len(exited_members)
+    total_penalties = db.execute(
+        "SELECT COALESCE(SUM(penalty_amount),0) s FROM member_offboardings"
+    ).fetchone()['s']
+    total_refunded = db.execute(
+        "SELECT COALESCE(SUM(net_refund),0) s FROM member_offboardings"
+    ).fetchone()['s']
+    total_savings_exited = db.execute(
+        "SELECT COALESCE(SUM(savings_at_exit),0) s FROM member_offboardings"
+    ).fetchone()['s']
+
+    return render_template(
+        'admin/offboarding.html',
+        exited_members=exited_members,
+        active_members=active_members,
+        exited_count=exited_count,
+        total_penalties=total_penalties,
+        total_refunded=total_refunded,
+        total_savings_exited=total_savings_exited,
+        can_write=(role in _OFFBOARD_WRITE_ROLES),
+        role=role,
+    )
+
+
+@bp.route('/offboarding/preview/<int:member_id>')
+@role_required(*_OFFBOARD_WRITE_ROLES)
+def offboarding_preview(member_id):
+    db = get_db()
+    member = db.execute(
+        "SELECT * FROM members WHERE id=? AND status='Active'",
+        (member_id,),
+    ).fetchone()
+    if not member:
+        flash('Member not found or is not currently active.', 'danger')
+        return redirect(url_for('admin.offboarding_list'))
+
+    total_savings = get_member_total_savings(db, member_id)
+    penalty = int(total_savings * 0.02)
+    net_refund = total_savings - penalty
+
+    active_loans = _offboarding_loan_check(db, member_id)
+    loan_outstanding = 0
+    loan_positions = []
+    for loan in active_loans:
+        repays = db.execute("SELECT * FROM loan_repayments WHERE loan_id=?", (loan['id'],)).fetchall()
+        pens = db.execute("SELECT * FROM loan_penalties WHERE loan_id=?", (loan['id'],)).fetchall()
+        pos = calculate_loan_position(loan, repays, pens)
+        loan_outstanding += pos['total_outstanding']
+        loan_positions.append({'loan': loan, 'pos': pos})
+
+    savings_after_loan = max(0, total_savings - loan_outstanding)
+    penalty_after_loan = int(savings_after_loan * 0.02)
+    net_after_loan = savings_after_loan - penalty_after_loan
+
+    return render_template(
+        'admin/offboarding.html',
+        preview_member=member,
+        total_savings=total_savings,
+        penalty=penalty,
+        net_refund=net_refund,
+        active_loans=active_loans,
+        loan_outstanding=loan_outstanding,
+        loan_positions=loan_positions,
+        savings_after_loan=savings_after_loan,
+        penalty_after_loan=penalty_after_loan,
+        net_after_loan=net_after_loan,
+        exited_members=[],
+        active_members=[],
+        exited_count=0,
+        total_penalties=0,
+        total_refunded=0,
+        total_savings_exited=0,
+        can_write=True,
+        role=session.get('role'),
+    )
+
+
+@bp.route('/offboarding/execute/<int:member_id>', methods=['POST'])
+@role_required(*_OFFBOARD_WRITE_ROLES)
+def offboarding_execute(member_id):
+    db = get_db()
+    member = db.execute(
+        "SELECT * FROM members WHERE id=? AND status='Active'",
+        (member_id,),
+    ).fetchone()
+    if not member:
+        flash('Member not found or is not currently active.', 'danger')
+        return redirect(url_for('admin.offboarding_list'))
+
+    reason = (request.form.get('reason') or '').strip()
+    payment_medium = (request.form.get('payment_medium') or '').strip()
+    payment_ref = (request.form.get('payment_ref') or '').strip()
+    notes = (request.form.get('notes') or '').strip()
+
+    if not reason:
+        flash('A reason for offboarding is required.', 'danger')
+        return redirect(url_for('admin.offboarding_preview', member_id=member_id))
+
+    # Block if there are active loans — must force-recover first
+    active_loans = _offboarding_loan_check(db, member_id)
+    if active_loans:
+        loan_nos = ', '.join(l['loan_no'] for l in active_loans)
+        flash(
+            f'Cannot offboard {member["full_name"]}: they have outstanding loan(s) [{loan_nos}]. '
+            'Use Forced Loan Recovery to clear the loan(s) first, then retry offboarding.',
+            'danger',
+        )
+        return redirect(url_for('admin.offboarding_preview', member_id=member_id))
+
+    total_savings = get_member_total_savings(db, member_id)
+    penalty_amount = int(total_savings * 0.02)
+    net_refund = total_savings - penalty_amount
+
+    today_str = date.today().isoformat()
+
+    # Record the offboarding
+    db.execute(
+        """INSERT INTO member_offboardings
+           (member_id, reason, exit_date, savings_at_exit, outstanding_loan_cleared,
+            penalty_amount, net_refund, payment_medium, payment_ref, processed_by, notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (member_id, reason, today_str, total_savings, 0,
+         penalty_amount, net_refund, payment_medium, payment_ref,
+         session['user_id'], notes),
+    )
+
+    # Record exit penalty as club income (2%)
+    if penalty_amount > 0:
+        inc_no = _next_doc_no(db, 'operational_incomes', 'income_no', 'GIC-INC')
+        db.execute(
+            """INSERT INTO operational_incomes
+               (income_no, income_date, amount, source, notes, recorded_by)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (inc_no, today_str, penalty_amount, 'Exit Penalty',
+             f"2% exit penalty from offboarding of {member['full_name']} ({member['member_no']})",
+             session['user_id']),
+        )
+
+    # Change member status to Exited
+    old_no = member['member_no']
+    archived_no = _next_archived_member_no(db, old_no)
+    db.execute(
+        """UPDATE members
+              SET status='Exited', member_no=?, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+        (archived_no, member_id),
+    )
+
+    # Disable all user logins for this member
+    db.execute(
+        "UPDATE users SET is_active=0 WHERE member_id=?",
+        (member_id,),
+    )
+
+    db.commit()
+
+    # Notify all committee members
+    _notify_roles(
+        db,
+        ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
+        'Member Offboarded',
+        (f"{member['full_name']} ({old_no}) has been offboarded. "
+         f"Savings refunded: {fmt_money(net_refund)} (after {fmt_money(penalty_amount)} exit penalty). "
+         f"Reason: {reason}"),
+        url_for('admin.offboarding_list'),
+        exclude_user_id=session['user_id'],
+    )
+    db.commit()
+
+    log_action(
+        'MEMBER_OFFBOARDED', 'member', member_id,
+        f"Offboarded {old_no} → {archived_no}. Savings: {fmt_money(total_savings)}, "
+        f"Penalty: {fmt_money(penalty_amount)}, Refund: {fmt_money(net_refund)}. Reason: {reason}",
+    )
+
+    flash(
+        f'{member["full_name"]} ({old_no}) has been successfully offboarded. '
+        f'Net refund: {fmt_money(net_refund)} (savings {fmt_money(total_savings)} '
+        f'minus 2% exit penalty {fmt_money(penalty_amount)}). '
+        f'Login access has been disabled.',
+        'success',
+    )
+    return redirect(url_for('admin.offboarding_list'))
+
+
+# ===========================================================================
+# FORCED LOAN RECOVERY
+# ===========================================================================
+
+@bp.route('/loans/<int:loan_id>/force-recover', methods=['GET', 'POST'])
+@role_required('TREASURER', 'IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'COMMITTEE')
+def force_recover(loan_id):
+    db = get_db()
+    role = session.get('role')
+    loan = db.execute(
+        """SELECT l.*, m.full_name AS borrower_name, m.member_no AS borrower_no,
+                  m.phone AS borrower_phone, m.whatsapp_no AS borrower_wa,
+                  g1.full_name AS g1_name, g1.member_no AS g1_no,
+                  g1.phone AS g1_phone, g1.whatsapp_no AS g1_wa, g1.id AS g1_id,
+                  g2.full_name AS g2_name, g2.member_no AS g2_no,
+                  g2.phone AS g2_phone, g2.whatsapp_no AS g2_wa, g2.id AS g2_id
+             FROM loans l
+             JOIN members m ON m.id = l.member_id
+             LEFT JOIN members g1 ON g1.id = l.guarantor1_id
+             LEFT JOIN members g2 ON g2.id = l.guarantor2_id
+            WHERE l.id=? AND l.status IN ('Active','Defaulted')""",
+        (loan_id,),
+    ).fetchone()
+    if not loan:
+        flash('Loan not found or not eligible for forced recovery.', 'danger')
+        return redirect(url_for('admin.loans_list'))
+
+    repays = db.execute("SELECT * FROM loan_repayments WHERE loan_id=?", (loan_id,)).fetchall()
+    penalties = db.execute("SELECT * FROM loan_penalties WHERE loan_id=?", (loan_id,)).fetchall()
+    pos = calculate_loan_position(loan, repays, penalties)
+    total_owed = int(pos['total_outstanding'])
+
+    # Savings balances
+    borrower_savings = get_member_total_savings(db, loan['member_id'])
+    g1_savings = get_member_total_savings(db, loan['g1_id']) if loan['g1_id'] else 0
+    g2_savings = get_member_total_savings(db, loan['g2_id']) if loan['g2_id'] else 0
+
+    # Calculate recovery plan
+    from_borrower = min(borrower_savings, total_owed)
+    shortfall_after_borrower = total_owed - from_borrower
+
+    # Split remainder between guarantors proportionally (by their available savings)
+    g_total_savings = g1_savings + g2_savings
+    if shortfall_after_borrower > 0 and g_total_savings > 0:
+        if loan['g1_id'] and loan['g2_id']:
+            if g_total_savings > 0:
+                from_g1_raw = int(shortfall_after_borrower * g1_savings / g_total_savings)
+                from_g2_raw = shortfall_after_borrower - from_g1_raw
+            else:
+                from_g1_raw = from_g2_raw = shortfall_after_borrower // 2
+            from_g1 = min(from_g1_raw, g1_savings)
+            from_g2 = min(from_g2_raw, g2_savings)
+        elif loan['g1_id']:
+            from_g1 = min(shortfall_after_borrower, g1_savings)
+            from_g2 = 0
+        else:
+            from_g1 = 0
+            from_g2 = min(shortfall_after_borrower, g2_savings)
+    else:
+        from_g1 = from_g2 = 0
+
+    total_recoverable = from_borrower + from_g1 + from_g2
+    final_shortfall = total_owed - total_recoverable
+    needs_guarantors = (from_g1 > 0 or from_g2 > 0)
+
+    # Existing recovery record (if any)
+    recovery = db.execute(
+        "SELECT * FROM forced_loan_recoveries WHERE loan_id=?", (loan_id,)
+    ).fetchone()
+
+    # Existing consents
+    g1_consent = None
+    g2_consent = None
+    if loan['g1_id']:
+        g1_consent = db.execute(
+            "SELECT * FROM guarantor_consents WHERE loan_id=? AND guarantor_id=?",
+            (loan_id, loan['g1_id']),
+        ).fetchone()
+    if loan['g2_id']:
+        g2_consent = db.execute(
+            "SELECT * FROM guarantor_consents WHERE loan_id=? AND guarantor_id=?",
+            (loan_id, loan['g2_id']),
+        ).fetchone()
+
+    if request.method == 'POST':
+        action = (request.form.get('action') or '').strip()
+
+        # --- ACTION: Request guarantor consent ---
+        if action == 'request_consent':
+            if role not in ('TREASURER', 'IT_ADMIN', 'CHAIRMAN'):
+                flash('Only the Treasurer or Chairman can initiate forced recovery.', 'danger')
+                return redirect(url_for('admin.force_recover', loan_id=loan_id))
+
+            # Create recovery record (PENDING_CONSENT)
+            if not recovery:
+                db.execute(
+                    """INSERT INTO forced_loan_recoveries
+                       (loan_id, triggered_by, recovery_from_borrower,
+                        recovery_from_g1, recovery_from_g2, total_recovered,
+                        shortfall, status)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING_CONSENT')""",
+                    (loan_id, session['user_id'], from_borrower, from_g1, from_g2,
+                     total_recoverable, final_shortfall),
+                )
+            else:
+                db.execute(
+                    """UPDATE forced_loan_recoveries
+                          SET triggered_by=?, recovery_from_borrower=?, recovery_from_g1=?,
+                              recovery_from_g2=?, total_recovered=?, shortfall=?,
+                              status='PENDING_CONSENT'
+                        WHERE loan_id=?""",
+                    (session['user_id'], from_borrower, from_g1, from_g2,
+                     total_recoverable, final_shortfall, loan_id),
+                )
+
+            # Create/reset consent records for guarantors
+            consent_link = url_for('member.guarantor_consent', loan_id=loan_id, _external=True)
+            if loan['g1_id'] and from_g1 > 0:
+                db.execute(
+                    """INSERT OR REPLACE INTO guarantor_consents
+                       (loan_id, guarantor_id, amount_requested, consent_status, dispute_raised)
+                       VALUES (?, ?, ?, 'PENDING', 0)""",
+                    (loan_id, loan['g1_id'], from_g1),
+                )
+                _notify_member(
+                    db, loan['g1_id'],
+                    '⚠️ Forced Loan Recovery — Your Consent Required',
+                    (f"**ACTION REQUIRED — LOAN RECOVERY NOTICE**\n\n"
+                     f"You guaranteed loan {loan['loan_no']} for {loan['borrower_name']} ({loan['borrower_no']}).\n"
+                     f"This loan has defaulted. The committee has resolved to initiate forced recovery.\n\n"
+                     f"**Your role:** Guarantor\n"
+                     f"**Amount to be deducted from your savings:** {fmt_money(from_g1)}\n\n"
+                     f"Please log in and go to My Loans → Guarantor Consent to accept or dispute this deduction.\n"
+                     f"Accepting will automatically deduct the amount and clear this obligation.\n"
+                     f"Declining will raise a formal dispute for committee resolution."),
+                    url_for('member.guarantor_consent', loan_id=loan_id),
+                )
+                # WhatsApp message for guarantor 1
+                wa_msg_g1 = (
+                    f"*GAZEBO GIC — FORCED LOAN RECOVERY NOTICE*\n\n"
+                    f"Dear {loan['g1_name']},\n\n"
+                    f"You are a guarantor on loan *{loan['loan_no']}* for {loan['borrower_name']}. "
+                    f"This loan has defaulted and the committee has resolved to recover it.\n\n"
+                    f"*Amount to be deducted from your savings:* {fmt_money(from_g1)}\n\n"
+                    f"*Action Required:* Please log in to the system and accept or dispute this deduction.\n"
+                    f"System: {Config.APP_URL}\n\n"
+                    "Your prompt attention is required. Thank you."
+                )
+                if loan['g1_phone']:
+                    db.execute(
+                        """INSERT INTO notifications (user_id, title, message, link)
+                           SELECT u.id, ?, ?, ?
+                             FROM users u WHERE u.member_id=? AND u.is_active=1 LIMIT 1""",
+                        ('WA Recovery Notice G1 Sent', f"WhatsApp sent to {loan['g1_name']}: {loan['g1_phone']}",
+                         url_for('admin.force_recover', loan_id=loan_id),
+                         session['user_id']),
+                    )
+
+            if loan['g2_id'] and from_g2 > 0:
+                db.execute(
+                    """INSERT OR REPLACE INTO guarantor_consents
+                       (loan_id, guarantor_id, amount_requested, consent_status, dispute_raised)
+                       VALUES (?, ?, ?, 'PENDING', 0)""",
+                    (loan_id, loan['g2_id'], from_g2),
+                )
+                _notify_member(
+                    db, loan['g2_id'],
+                    '⚠️ Forced Loan Recovery — Your Consent Required',
+                    (f"**ACTION REQUIRED — LOAN RECOVERY NOTICE**\n\n"
+                     f"You guaranteed loan {loan['loan_no']} for {loan['borrower_name']} ({loan['borrower_no']}).\n"
+                     f"This loan has defaulted. The committee has resolved to initiate forced recovery.\n\n"
+                     f"**Your role:** Guarantor\n"
+                     f"**Amount to be deducted from your savings:** {fmt_money(from_g2)}\n\n"
+                     f"Please log in and go to My Loans → Guarantor Consent to accept or dispute this deduction.\n"
+                     f"Accepting will automatically deduct the amount and clear this obligation.\n"
+                     f"Declining will raise a formal dispute for committee resolution."),
+                    url_for('member.guarantor_consent', loan_id=loan_id),
+                )
+
+            db.commit()
+            log_action(
+                'FORCED_RECOVERY_CONSENT_SENT', 'loan', loan_id,
+                f"Consent requests sent for forced recovery of {loan['loan_no']}. "
+                f"Borrower: {fmt_money(from_borrower)}, G1: {fmt_money(from_g1)}, G2: {fmt_money(from_g2)}",
+            )
+            # Notify all committee about initiation
+            _notify_roles(
+                db,
+                ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
+                'Forced Recovery Initiated',
+                f"Forced recovery initiated for loan {loan['loan_no']} ({loan['borrower_name']}). "
+                f"Total owed: {fmt_money(total_owed)}. Consent requests sent to guarantors.",
+                url_for('admin.force_recover', loan_id=loan_id),
+                exclude_user_id=session['user_id'],
+            )
+            db.commit()
+            flash(
+                f'Consent requests sent to guarantors. '
+                f'The Treasurer can execute full recovery once consents are received.',
+                'success',
+            )
+
+            # Build WhatsApp links for the treasurer to send manually
+            wa_g1_url = None
+            wa_g2_url = None
+            if loan['g1_id'] and from_g1 > 0 and (loan['g1_phone'] or loan['g1_wa']):
+                wa_g1_url = build_whatsapp_link(
+                    loan['g1_wa'] or loan['g1_phone'],
+                    f"*GAZEBO GIC — FORCED LOAN RECOVERY NOTICE*\n\n"
+                    f"Dear {loan['g1_name']},\n\n"
+                    f"You guaranteed loan *{loan['loan_no']}* for {loan['borrower_name']}. "
+                    f"This loan has defaulted. The committee has resolved to force-recover it.\n\n"
+                    f"*Amount to be deducted from your savings:* {fmt_money(from_g1)}\n\n"
+                    f"Please log in to {Config.APP_URL} and go to My Loans → Guarantor Consent "
+                    f"to accept or dispute this action. Your prompt response is required.\n\nThank you.",
+                )
+            if loan['g2_id'] and from_g2 > 0 and (loan['g2_phone'] or loan['g2_wa']):
+                wa_g2_url = build_whatsapp_link(
+                    loan['g2_wa'] or loan['g2_phone'],
+                    f"*GAZEBO GIC — FORCED LOAN RECOVERY NOTICE*\n\n"
+                    f"Dear {loan['g2_name']},\n\n"
+                    f"You guaranteed loan *{loan['loan_no']}* for {loan['borrower_name']}. "
+                    f"This loan has defaulted. The committee has resolved to force-recover it.\n\n"
+                    f"*Amount to be deducted from your savings:* {fmt_money(from_g2)}\n\n"
+                    f"Please log in to {Config.APP_URL} and go to My Loans → Guarantor Consent "
+                    f"to accept or dispute this action. Your prompt response is required.\n\nThank you.",
+                )
+            if wa_g1_url or wa_g2_url:
+                return render_template(
+                    'admin/whatsapp_open.html',
+                    wa_url=wa_g1_url or wa_g2_url,
+                    wa_url_g1=wa_g1_url,
+                    wa_url_g2=wa_g2_url,
+                    return_url=url_for('admin.force_recover', loan_id=loan_id),
+                )
+            return redirect(url_for('admin.force_recover', loan_id=loan_id))
+
+        # --- ACTION: Execute forced recovery ---
+        if action == 'execute':
+            if role not in ('TREASURER', 'IT_ADMIN', 'CHAIRMAN'):
+                flash('Only the Treasurer or Chairman can execute forced recovery.', 'danger')
+                return redirect(url_for('admin.force_recover', loan_id=loan_id))
+
+            # Deduct from borrower
+            actual_from_borrower, b_periods = _deduct_member_savings(db, loan['member_id'], from_borrower)
+
+            # Deduct from guarantors (only if they consented or treasurer overrides)
+            actual_from_g1 = 0
+            actual_from_g2 = 0
+            g1_periods = []
+            g2_periods = []
+
+            override = request.form.get('override_consent') == '1'
+
+            if from_g1 > 0 and loan['g1_id']:
+                g1_cons = db.execute(
+                    "SELECT consent_status FROM guarantor_consents WHERE loan_id=? AND guarantor_id=?",
+                    (loan_id, loan['g1_id']),
+                ).fetchone()
+                g1_accepted = g1_cons and g1_cons['consent_status'] == 'ACCEPTED'
+                if g1_accepted or override:
+                    actual_from_g1, g1_periods = _deduct_member_savings(db, loan['g1_id'], from_g1)
+                    if g1_cons:
+                        db.execute(
+                            "UPDATE guarantor_consents SET consent_status='ACCEPTED', consent_at=CURRENT_TIMESTAMP WHERE loan_id=? AND guarantor_id=?",
+                            (loan_id, loan['g1_id']),
+                        )
+
+            if from_g2 > 0 and loan['g2_id']:
+                g2_cons = db.execute(
+                    "SELECT consent_status FROM guarantor_consents WHERE loan_id=? AND guarantor_id=?",
+                    (loan_id, loan['g2_id']),
+                ).fetchone()
+                g2_accepted = g2_cons and g2_cons['consent_status'] == 'ACCEPTED'
+                if g2_accepted or override:
+                    actual_from_g2, g2_periods = _deduct_member_savings(db, loan['g2_id'], from_g2)
+                    if g2_cons:
+                        db.execute(
+                            "UPDATE guarantor_consents SET consent_status='ACCEPTED', consent_at=CURRENT_TIMESTAMP WHERE loan_id=? AND guarantor_id=?",
+                            (loan_id, loan['g2_id']),
+                        )
+
+            total_actual = actual_from_borrower + actual_from_g1 + actual_from_g2
+            actual_shortfall = total_owed - total_actual
+            narrative = (
+                f"Forced Recovery — Loan {loan['loan_no']}. "
+                f"Borrower deduction: {fmt_money(actual_from_borrower)}, "
+                f"G1 deduction: {fmt_money(actual_from_g1)}, "
+                f"G2 deduction: {fmt_money(actual_from_g2)}. "
+                f"Total recovered: {fmt_money(total_actual)}"
+            )
+            if actual_shortfall > 0:
+                narrative += f". Unrecovered shortfall: {fmt_money(actual_shortfall)}"
+
+            # Record the repayment to clear the loan
+            db.execute(
+                """INSERT INTO loan_repayments
+                   (loan_id, amount, principal_part, interest_part, penalty_part,
+                    payment_date, payment_method, notes, recorded_by)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (loan_id, total_actual,
+                 min(total_actual, int(pos['outstanding_principal'])),
+                 min(max(0, total_actual - int(pos['outstanding_principal'])), int(pos['outstanding_interest'])),
+                 0,
+                 date.today().isoformat(), 'Forced Recovery', narrative,
+                 session['user_id']),
+            )
+
+            # Mark loan as Cleared
+            db.execute(
+                """UPDATE loans SET status='Cleared', cleared_date=?, notes=?
+                    WHERE id=?""",
+                (date.today().isoformat(), narrative, loan_id),
+            )
+
+            # Update recovery record
+            db.execute(
+                """INSERT OR REPLACE INTO forced_loan_recoveries
+                   (loan_id, triggered_by, recovery_from_borrower, recovery_from_g1,
+                    recovery_from_g2, total_recovered, shortfall, status, narrative, executed_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 'COMPLETED', ?, CURRENT_TIMESTAMP)""",
+                (loan_id, session['user_id'], actual_from_borrower, actual_from_g1,
+                 actual_from_g2, total_actual, actual_shortfall, narrative),
+            )
+            db.commit()
+
+            # Notify borrower
+            borrower_arrears_months = len(b_periods)
+            _notify_member(
+                db, loan['member_id'],
+                '⚠️ Forced Loan Recovery — Your Savings Deducted',
+                (f"**FORCED RECOVERY NOTICE**\n\n"
+                 f"Your defaulted loan *{loan['loan_no']}* has been forcibly recovered by the Treasurer "
+                 f"as resolved by the committee.\n\n"
+                 f"**Your role:** Borrower\n"
+                 f"**Amount deducted from your savings:** {fmt_money(actual_from_borrower)}\n"
+                 f"**Periods affected (now in arrears):** {borrower_arrears_months} month(s) — "
+                 f"{', '.join(b_periods[:5])}{'...' if len(b_periods) > 5 else ''}\n\n"
+                 f"You are required to repay {fmt_money(actual_from_borrower)} in savings contributions "
+                 f"over the coming months to restore your savings hygiene. "
+                 f"Please contact the Treasurer to arrange a repayment plan."),
+                url_for('member.loans'),
+            )
+
+            # Notify guarantor 1
+            if actual_from_g1 > 0 and loan['g1_id']:
+                g1_arrears_months = len(g1_periods)
+                _notify_member(
+                    db, loan['g1_id'],
+                    '⚠️ Guarantor Recovery Executed — Savings Deducted',
+                    (f"**GUARANTOR RECOVERY NOTICE**\n\n"
+                     f"As guarantor on loan *{loan['loan_no']}* for {loan['borrower_name']} ({loan['borrower_no']}), "
+                     f"your savings have been partially used to recover this defaulted loan.\n\n"
+                     f"**Your role:** Guarantor\n"
+                     f"**Amount deducted from your savings:** {fmt_money(actual_from_g1)}\n"
+                     f"**Periods now in arrears:** {g1_arrears_months} month(s) — "
+                     f"{', '.join(g1_periods[:5])}{'...' if len(g1_periods) > 5 else ''}\n\n"
+                     f"You are obligated to rebuild your savings to cover these {g1_arrears_months} month(s). "
+                     f"Each month you must contribute the standard {fmt_money(Config.MONTHLY_SAVINGS_AMOUNT)} "
+                     f"PLUS catch-up on {fmt_money(actual_from_g1)} in arrears. "
+                     f"Please contact the Treasurer immediately to confirm your repayment plan."),
+                    url_for('member.savings_statement'),
+                )
+
+            # Notify guarantor 2
+            if actual_from_g2 > 0 and loan['g2_id']:
+                g2_arrears_months = len(g2_periods)
+                _notify_member(
+                    db, loan['g2_id'],
+                    '⚠️ Guarantor Recovery Executed — Savings Deducted',
+                    (f"**GUARANTOR RECOVERY NOTICE**\n\n"
+                     f"As guarantor on loan *{loan['loan_no']}* for {loan['borrower_name']} ({loan['borrower_no']}), "
+                     f"your savings have been partially used to recover this defaulted loan.\n\n"
+                     f"**Your role:** Guarantor\n"
+                     f"**Amount deducted from your savings:** {fmt_money(actual_from_g2)}\n"
+                     f"**Periods now in arrears:** {g2_arrears_months} month(s) — "
+                     f"{', '.join(g2_periods[:5])}{'...' if len(g2_periods) > 5 else ''}\n\n"
+                     f"You are obligated to rebuild your savings to cover these {g2_arrears_months} month(s). "
+                     f"Each month you must contribute the standard {fmt_money(Config.MONTHLY_SAVINGS_AMOUNT)} "
+                     f"PLUS catch-up on {fmt_money(actual_from_g2)} in arrears. "
+                     f"Please contact the Treasurer immediately to confirm your repayment plan."),
+                    url_for('member.savings_statement'),
+                )
+
+            # Notify all committee
+            _notify_roles(
+                db,
+                ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
+                'Forced Recovery Executed',
+                (f"Loan {loan['loan_no']} ({loan['borrower_name']}) forcibly recovered. "
+                 f"Total owed: {fmt_money(total_owed)}. Recovered: {fmt_money(total_actual)}. "
+                 f"Shortfall: {fmt_money(actual_shortfall)}."),
+                url_for('admin.loan_detail', loan_id=loan_id),
+                exclude_user_id=session['user_id'],
+            )
+            db.commit()
+
+            log_action(
+                'FORCED_RECOVERY_EXECUTED', 'loan', loan_id,
+                f"Forced recovery of {loan['loan_no']}. Recovered {fmt_money(total_actual)} "
+                f"/ {fmt_money(total_owed)}. Shortfall: {fmt_money(actual_shortfall)}.",
+            )
+            flash(
+                f'Forced recovery executed for loan {loan["loan_no"]}. '
+                f'Total recovered: {fmt_money(total_actual)} of {fmt_money(total_owed)} owed. '
+                + (f'Unrecovered shortfall: {fmt_money(actual_shortfall)}. ' if actual_shortfall > 0 else '')
+                + 'Loan marked Cleared. Affected members have been notified.',
+                'success' if actual_shortfall == 0 else 'warning',
+            )
+            return redirect(url_for('admin.loan_detail', loan_id=loan_id))
+
+        flash('Invalid action.', 'warning')
+        return redirect(url_for('admin.force_recover', loan_id=loan_id))
+
+    # GET — show recovery preview page
+    return render_template(
+        'admin/force_recovery.html',
+        loan=loan,
+        pos=pos,
+        total_owed=total_owed,
+        borrower_savings=borrower_savings,
+        g1_savings=g1_savings,
+        g2_savings=g2_savings,
+        from_borrower=from_borrower,
+        from_g1=from_g1,
+        from_g2=from_g2,
+        total_recoverable=total_recoverable,
+        final_shortfall=final_shortfall,
+        needs_guarantors=needs_guarantors,
+        recovery=recovery,
+        g1_consent=g1_consent,
+        g2_consent=g2_consent,
+        role=role,
+    )

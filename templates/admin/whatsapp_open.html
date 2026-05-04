@@ -5,18 +5,35 @@
 <div class="row justify-content-center">
   <div class="col-lg-6">
     <div class="card" id="waOpenCard" data-wa-url="{{ wa_url }}">
-      <div class="card-header"><i class="ph ph-whatsapp-logo"></i> Sending Credentials Message</div>
+      <div class="card-header"><i class="ph ph-whatsapp-logo"></i> WhatsApp Message</div>
       <div class="card-body">
-        <p class="mb-2">WhatsApp should open automatically with the reset credentials message.</p>
-        <p class="small text-muted mb-3">If it does not open, use the button below.</p>
-        <div class="d-flex gap-2 flex-wrap">
+        <p class="mb-2">WhatsApp should open automatically. If it does not, use the buttons below.</p>
+
+        {% if wa_url_g1 or wa_url_g2 %}
+        {# Dual-guarantor forced recovery flow #}
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          {% if wa_url_g1 %}
+          <a class="btn btn-success" href="{{ wa_url_g1 }}" target="_blank" rel="noopener noreferrer">
+            <i class="ph ph-whatsapp-logo"></i> Open WhatsApp — Guarantor 1
+          </a>
+          {% endif %}
+          {% if wa_url_g2 %}
+          <a class="btn btn-success" href="{{ wa_url_g2 }}" target="_blank" rel="noopener noreferrer">
+            <i class="ph ph-whatsapp-logo"></i> Open WhatsApp — Guarantor 2
+          </a>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="d-flex gap-2 flex-wrap mb-3">
           <a class="btn btn-success" href="{{ wa_url }}" target="_blank" rel="noopener noreferrer">
             <i class="ph ph-whatsapp-logo"></i> Open WhatsApp
           </a>
-          <a class="btn btn-outline-secondary" href="{{ return_url }}">
-            <i class="ph ph-arrow-left"></i> Back to System
-          </a>
         </div>
+        {% endif %}
+
+        <a class="btn btn-outline-secondary" href="{{ return_url }}">
+          <i class="ph ph-arrow-left"></i> Back to System
+        </a>
       </div>
     </div>
   </div>
@@ -24,10 +41,8 @@
 
 <script>
 (function () {
-  var waUrl = document.getElementById('waOpenCard').getAttribute('data-wa-url') || '';
-  if (waUrl) {
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
-  }
+  var first = '{{ wa_url_g1 if wa_url_g1 else wa_url }}';
+  if (first) window.open(first, '_blank', 'noopener,noreferrer');
 })();
 </script>
 {% endblock %}

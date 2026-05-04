@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Member Offboarding{% endblock %}
+{% block topbar %}Member Offboarding{% endblock %}
+{% block content %}
+<style>
+.ob-root{font-family:'Manrope',sans-serif}
+.ob-hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);border-radius:16px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden}
+.ob-hero::after{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none}
+.ob-hero h1{margin:0;font-size:22px;font-weight:800;color:#fff}
+.ob-hero .sub{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.6)}
+.ob-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+.ob-tile{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.ob-tile .tile-label{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.ob-tile .tile-val{font-size:22px;font-weight:800;color:#0f172a;line-height:1}
+.ob-tile .tile-sub{font-size:11px;color:#94a3b8;margin-top:4px}
+.ob-tile.danger .tile-val{color:#dc2626}
+.ob-tile.gold .tile-val{color:#b45309}
+.ob-tile.green .tile-val{color:#059669}
+.ob-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:20px;overflow:hidden}
+.ob-card-head{display:flex;align-items:center;gap:10px;padding:14px 20px;font-size:13px;font-weight:700;color:#374151;border-bottom:1px solid #f1f5f9;background:#f8fafc}
+.ob-card-head i{font-size:16px;color:#6366f1}
+.ob-card-head.red{background:#fef2f2;border-color:#fee2e2}
+.ob-card-head.red i{color:#dc2626}
+.ob-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.ob-tbl th{padding:10px 14px;background:#f8fafc;color:#374151;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.ob-tbl td{padding:10px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.ob-tbl tbody tr:last-child td{border-bottom:none}
+.ob-tbl tbody tr:hover td{background:#f8fafc}
+.ob-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.ob-badge.exited{background:#fef2f2;color:#dc2626}
+.ob-badge.active{background:#f0fdf4;color:#059669}
+.ob-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;border:none}
+.ob-btn.primary{background:#dc2626;color:#fff}
+.ob-btn.primary:hover{background:#b91c1c;color:#fff}
+.ob-btn.outline{background:#fff;color:#374151;border:1px solid #d1d5db}
+.ob-btn.outline:hover{background:#f9fafb}
+.ob-btn.view{background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd}
+.ob-btn.view:hover{background:#e0f2fe}
+.ob-btn.disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed;pointer-events:none}
+
+/* Preview card */
+.ob-preview{background:#fff;border-radius:14px;border:2px solid #fca5a5;padding:28px;margin-bottom:22px}
+.ob-preview-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.ob-preview-head h2{margin:0;font-size:18px;font-weight:800;color:#0f172a}
+.ob-calc-row{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-radius:8px;margin-bottom:8px;font-size:14px}
+.ob-calc-row.savings{background:#f0fdf4;color:#166534}
+.ob-calc-row.penalty{background:#fef2f2;color:#991b1b}
+.ob-calc-row.refund{background:#f0f9ff;color:#075985;font-weight:700;font-size:15px}
+.ob-calc-row.warn{background:#fffbeb;color:#92400e}
+.ob-calc-label{font-weight:600}
+.ob-calc-val{font-weight:800;font-family:'Space Grotesk',sans-serif}
+.ob-alert-loan{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.ob-alert-loan i{color:#dc2626;font-size:20px;flex-shrink:0;margin-top:2px}
+</style>
+
+<div class="ob-root">
+
+  {% if preview_member %}
+  <!-- ======================== PREVIEW MODE ======================== -->
+  <div class="ob-hero">
+    <div>
+      <h1><i class="ph ph-user-minus"></i> Offboarding Preview</h1>
+      <div class="sub">Review the financial impact before confirming offboarding for {{ preview_member.full_name }}</div>
+    </div>
+    <a href="{{ url_for('admin.offboarding_list') }}" class="ob-btn outline ms-auto"><i class="ph ph-arrow-left"></i> Back</a>
+  </div>
+
+  <div class="ob-preview">
+    <div class="ob-preview-head">
+      <div style="width:44px;height:44px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center">
+        <i class="ph ph-user" style="font-size:22px;color:#dc2626"></i>
+      </div>
+      <div>
+        <h2>{{ preview_member.full_name }}</h2>
+        <div style="font-size:12px;color:#64748b">{{ preview_member.member_no }} &middot; {{ preview_member.phone or 'No phone' }}</div>
+      </div>
+    </div>
+
+    {% if active_loans %}
+    <div class="ob-alert-loan">
+      <i class="ph ph-warning-octagon"></i>
+      <div>
+        <strong style="font-size:14px;color:#dc2626">Outstanding Loan(s) — Must Be Cleared First</strong>
+        <p style="margin:6px 0 0;font-size:13px">This member has {{ active_loans|length }} active/pending loan(s). You must use <strong>Forced Loan Recovery</strong> to clear these loans before offboarding can proceed.</p>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          {% for lp in loan_positions %}
+          <a href="{{ url_for('admin.force_recover', loan_id=lp.loan.id) }}" class="ob-btn primary" style="font-size:12px">
+            <i class="ph ph-coins"></i> Recover {{ lp.loan.loan_no }} ({{ fmt_money(lp.pos.total_outstanding) }} owed)
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <h4 style="font-size:13px;font-weight:700;color:#374151;margin:20px 0 10px">Financial Summary</h4>
+    <div class="ob-calc-row savings">
+      <span class="ob-calc-label"><i class="ph ph-piggy-bank"></i> Total Savings on Record</span>
+      <span class="ob-calc-val">{{ total_savings|money }}</span>
+    </div>
+    {% if active_loans %}
+    <div class="ob-calc-row warn">
+      <span class="ob-calc-label"><i class="ph ph-warning"></i> Outstanding Loan Balance</span>
+      <span class="ob-calc-val">{{ loan_outstanding|money }}</span>
+    </div>
+    <div class="ob-calc-row savings">
+      <span class="ob-calc-label"><i class="ph ph-piggy-bank"></i> Savings after Loan Clearance</span>
+      <span class="ob-calc-val">{{ savings_after_loan|money }}</span>
+    </div>
+    <div class="ob-calc-row penalty">
+      <span class="ob-calc-label"><i class="ph ph-percent"></i> 2% Exit Penalty (on {{ savings_after_loan|money }})</span>
+      <span class="ob-calc-val">- {{ penalty_after_loan|money }}</span>
+    </div>
+    <div class="ob-calc-row refund">
+      <span class="ob-calc-label"><i class="ph ph-hand-coins"></i> Net Refund to Member</span>
+      <span class="ob-calc-val">{{ net_after_loan|money }}</span>
+    </div>
+    {% else %}
+    <div class="ob-calc-row penalty">
+      <span class="ob-calc-label"><i class="ph ph-percent"></i> 2% Exit Penalty (club retention)</span>
+      <span class="ob-calc-val">- {{ penalty|money }}</span>
+    </div>
+    <div class="ob-calc-row refund">
+      <span class="ob-calc-label"><i class="ph ph-hand-coins"></i> Net Refund to Member</span>
+      <span class="ob-calc-val">{{ net_refund|money }}</span>
+    </div>
+    {% endif %}
+
+    {% if not active_loans and can_write %}
+    <hr style="margin:20px 0">
+    <form method="post" action="{{ url_for('admin.offboarding_execute', member_id=preview_member.id) }}"
+          onsubmit="return confirm('Confirm offboarding of {{ preview_member.full_name }}? This action will disable their login and change their status to EXITED. This cannot be undone.');">
+      <div class="row g-3">
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Reason for Offboarding <span class="text-danger">*</span></label>
+          <textarea name="reason" class="form-control" rows="3" required placeholder="e.g. Voluntary resignation, relocation, policy violation..."></textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Payment Medium</label>
+          <select name="payment_medium" class="form-select">
+            <option value="">— Select —</option>
+            <option>Mobile Money (MTN)</option>
+            <option>Mobile Money (Airtel)</option>
+            <option>Bank Transfer</option>
+            <option>Cash</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Payment Reference</label>
+          <input type="text" name="payment_ref" class="form-control" placeholder="Transaction ID or cheque no.">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold">Additional Notes</label>
+          <input type="text" name="notes" class="form-control" placeholder="Optional internal notes">
+        </div>
+        <div class="col-12 d-flex gap-2 mt-2">
+          <button type="submit" class="ob-btn primary"><i class="ph ph-user-minus"></i> Confirm Offboarding</button>
+          <a href="{{ url_for('admin.offboarding_list') }}" class="ob-btn outline">Cancel</a>
+        </div>
+      </div>
+    </form>
+    {% elif active_loans %}
+    <div style="padding:12px 0">
+      <a href="{{ url_for('admin.offboarding_list') }}" class="ob-btn outline"><i class="ph ph-arrow-left"></i> Back to Offboarding</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <!-- ======================== LIST MODE ======================== -->
+  <div class="ob-hero">
+    <div>
+      <h1><i class="ph ph-user-minus"></i> Member Offboarding</h1>
+      <div class="sub">Manage formal member exits &middot; 2% exit penalty retained by club</div>
+    </div>
+  </div>
+
+  <!-- Tiles -->
+  <div class="ob-tiles">
+    <div class="ob-tile danger">
+      <div class="tile-label">Exited Members</div>
+      <div class="tile-val">{{ exited_count }}</div>
+      <div class="tile-sub">Total offboarded to date</div>
+    </div>
+    <div class="ob-tile gold">
+      <div class="tile-label">Exit Penalties Collected</div>
+      <div class="tile-val">{{ total_penalties|money }}</div>
+      <div class="tile-sub">2% retained by club on exits</div>
+    </div>
+    <div class="ob-tile">
+      <div class="tile-label">Total Savings Exited</div>
+      <div class="tile-val">{{ total_savings_exited|money }}</div>
+      <div class="tile-sub">Gross savings at time of exits</div>
+    </div>
+    <div class="ob-tile green">
+      <div class="tile-label">Total Refunded</div>
+      <div class="tile-val">{{ total_refunded|money }}</div>
+      <div class="tile-sub">Net paid to exited members</div>
+    </div>
+  </div>
+
+  <!-- Active members — initiate offboarding -->
+  {% if can_write %}
+  <div class="ob-card mb-4">
+    <div class="ob-card-head">
+      <i class="ph ph-users-three"></i> Active Members — Initiate Offboarding
+      <span class="ms-auto" style="font-size:11px;color:#94a3b8">{{ active_members|length }} active</span>
+    </div>
+    <div class="table-responsive">
+      <table class="ob-tbl">
+        <thead>
+          <tr>
+            <th>Member No</th>
+            <th>Full Name</th>
+            <th>Phone</th>
+            <th>Join Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in active_members %}
+          <tr>
+            <td><strong>{{ m.member_no }}</strong></td>
+            <td>{{ m.full_name }}</td>
+            <td>{{ m.phone or '—' }}</td>
+            <td>{{ m.join_date|datefmt }}</td>
+            <td>
+              {% if role not in ('COMMITTEE',) %}
+              <a href="{{ url_for('admin.offboarding_preview', member_id=m.id) }}" class="ob-btn primary" style="font-size:12px">
+                <i class="ph ph-user-minus"></i> Offboard
+              </a>
+              {% else %}
+              <span class="ob-btn disabled" style="font-size:12px"><i class="ph ph-lock"></i> Read Only</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No active members.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Exited members history -->
+  <div class="ob-card">
+    <div class="ob-card-head red">
+      <i class="ph ph-user-minus"></i> Exited Members
+      <span class="ms-auto" style="font-size:11px;color:#94a3b8">{{ exited_count }} record(s)</span>
+    </div>
+    {% if exited_members %}
+    <div class="table-responsive">
+      <table class="ob-tbl">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Exit Date</th>
+            <th>Savings at Exit</th>
+            <th>Penalty (2%)</th>
+            <th>Net Refund</th>
+            <th>Payment Medium</th>
+            <th>Reason</th>
+            <th>Processed By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in exited_members %}
+          <tr>
+            <td>
+              <strong>{{ m.full_name }}</strong><br>
+              <span style="font-size:11px;color:#64748b">{{ m.member_no }}</span>
+            </td>
+            <td>{{ m.exit_date|datefmt if m.exit_date else '—' }}</td>
+            <td>{{ m.savings_at_exit|money if m.savings_at_exit else '—' }}</td>
+            <td style="color:#dc2626">{{ m.penalty_amount|money if m.penalty_amount else '—' }}</td>
+            <td style="color:#059669;font-weight:700">{{ m.net_refund|money if m.net_refund else '—' }}</td>
+            <td>{{ m.payment_medium or '—' }}</td>
+            <td style="max-width:200px;white-space:pre-wrap;font-size:12px">{{ m.reason or '—' }}</td>
+            <td style="font-size:12px;color:#64748b">{{ m.processed_by_name or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="ph ph-user-minus" style="font-size:40px;opacity:.3"></i>
+      <div class="mt-2">No members have been offboarded yet.</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

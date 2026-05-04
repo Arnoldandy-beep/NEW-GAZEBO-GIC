@@ -30,6 +30,10 @@
       <button type="submit" class="btn btn-primary w-100">Sign in</button>
     </form>
 
+    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success w-100 mt-2">
+      Start New Member Registration
+    </a>
+
     <div class="text-center mt-3">
       <small class="text-muted">{{ CONFIG.CLUB_LOCATION }} &middot; Established Aug 2025</small>
     </div>

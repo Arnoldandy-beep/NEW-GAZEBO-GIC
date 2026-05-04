@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Guarantor Consent — {{ loan.loan_no }}{% endblock %}
+{% block topbar %}Guarantor Recovery Consent{% endblock %}
+{% block content %}
+<style>
+.gc-root{font-family:'Manrope',sans-serif;max-width:700px;margin:0 auto}
+.gc-hero{background:linear-gradient(135deg,#1a1a2e 0%,#7f1d1d 100%);border-radius:16px;padding:26px 30px;margin-bottom:24px}
+.gc-hero h1{margin:0;font-size:20px;font-weight:800;color:#fff}
+.gc-hero .sub{margin:5px 0 0;font-size:13px;color:rgba(255,255,255,.65)}
+.gc-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:28px;margin-bottom:20px}
+.gc-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px}
+.gc-row:last-child{border-bottom:none}
+.gc-row .label{color:#64748b;font-weight:600}
+.gc-row .val{font-weight:700;color:#0f172a}
+.gc-amount-box{background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:20px;text-align:center;margin:20px 0}
+.gc-amount-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#dc2626;margin-bottom:6px}
+.gc-amount-val{font-size:32px;font-weight:900;color:#dc2626;font-family:'Space Grotesk',sans-serif}
+.gc-arrears-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px 16px;font-size:13px;color:#92400e;margin:16px 0}
+.gc-arrears-note strong{display:block;margin-bottom:4px;font-size:14px}
+.gc-btn-row{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.gc-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;text-decoration:none;transition:all .15s}
+.gc-btn.accept{background:#059669;color:#fff}
+.gc-btn.accept:hover{background:#047857;color:#fff}
+.gc-btn.decline{background:#fff;color:#dc2626;border:2px solid #fca5a5}
+.gc-btn.decline:hover{background:#fef2f2}
+.gc-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700}
+.gc-badge.pending{background:#fef3c7;color:#92400e}
+.gc-badge.accepted{background:#d1fae5;color:#065f46}
+.gc-badge.declined{background:#fee2e2;color:#991b1b}
+.gc-declined-box{padding:16px;border-radius:10px;background:#fef2f2;border:1px solid #fca5a5;margin-top:8px}
+</style>
+
+<div class="gc-root">
+
+  <div class="gc-hero">
+    <h1><i class="ph ph-warning-octagon"></i> Guarantor Recovery Consent</h1>
+    <div class="sub">Loan {{ loan.loan_no }} &middot; Borrower: {{ loan.borrower_name }} ({{ loan.borrower_no }})</div>
+  </div>
+
+  {% if consent.consent_status != 'PENDING' %}
+  <!-- Already responded -->
+  <div class="gc-card">
+    <div style="text-align:center;padding:16px 0">
+      {% if consent.consent_status == 'ACCEPTED' %}
+      <i class="ph ph-check-circle" style="font-size:52px;color:#059669"></i>
+      <h3 style="margin:14px 0 6px;font-size:18px;font-weight:800;color:#065f46">You Accepted</h3>
+      <p style="color:#166534;font-size:14px;margin:0">
+        You accepted the recovery deduction of <strong>{{ consent.amount_requested|money }}</strong>.<br>
+        This amount has been deducted from your savings. Please catch up on your arrears over the coming months.
+      </p>
+      {% else %}
+      <i class="ph ph-x-circle" style="font-size:52px;color:#dc2626"></i>
+      <h3 style="margin:14px 0 6px;font-size:18px;font-weight:800;color:#991b1b">You Declined</h3>
+      <p style="color:#dc2626;font-size:14px;margin:0">
+        You declined this deduction. A formal dispute has been raised and the committee has been notified.<br>
+        An impromptu meeting will be convened to resolve this matter.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+  <div style="text-align:center">
+    <a href="{{ url_for('member.loans') }}" class="gc-btn accept">
+      <i class="ph ph-arrow-left"></i> Back to My Loans
+    </a>
+  </div>
+
+  {% else %}
+  <!-- Consent required -->
+  <div class="gc-card">
+    <h3 style="margin:0 0 16px;font-size:16px;font-weight:800;color:#0f172a">
+      <i class="ph ph-warning" style="color:#dc2626"></i> Action Required — Recovery Consent
+    </h3>
+    <p style="font-size:13.5px;color:#374151;margin-bottom:16px">
+      You are a guarantor on the loan below. The loan has defaulted and the committee has resolved to initiate forced recovery.
+      As guarantor, you are partially responsible for covering the shortfall not met by the borrower's savings.
+    </p>
+
+    <div class="gc-row"><span class="label">Loan Reference</span><span class="val">{{ loan.loan_no }}</span></div>
+    <div class="gc-row"><span class="label">Borrower</span><span class="val">{{ loan.borrower_name }} ({{ loan.borrower_no }})</span></div>
+    <div class="gc-row"><span class="label">Your Role</span><span class="val">Guarantor</span></div>
+    <div class="gc-row"><span class="label">Consent Status</span>
+      <span><span class="gc-badge pending"><i class="ph ph-hourglass"></i> Awaiting Your Response</span></span>
+    </div>
+
+    <div class="gc-amount-box">
+      <div class="gc-amount-label">Amount to Be Deducted from Your Savings</div>
+      <div class="gc-amount-val">{{ consent.amount_requested|money }}</div>
+      <div style="font-size:12px;color:#dc2626;margin-top:6px">This will be removed from your savings record</div>
+    </div>
+
+    <div class="gc-arrears-note">
+      <strong><i class="ph ph-warning-octagon"></i> Savings Arrears — Important Notice</strong>
+      Accepting this deduction will reduce your savings total by <strong>{{ consent.amount_requested|money }}</strong>.
+      This will clear savings records starting from your most recent months going backwards, creating
+      <strong>{{ (consent.amount_requested // 100000) + (1 if consent.amount_requested % 100000 > 0 else 0) }} month(s)</strong>
+      of arrears (estimated). You will be required to pay the standard
+      <strong>{{ CONFIG.MONTHLY_SAVINGS_AMOUNT|money }}/month</strong> AND catch up on these arrears in future contributions.
+    </div>
+
+    <form method="post" action="{{ url_for('member.guarantor_consent', loan_id=loan.id) }}"
+          id="consentForm">
+      <input type="hidden" name="decision" id="decisionInput" value="">
+
+      <div id="declineSection" style="display:none;margin-top:16px">
+        <label class="form-label fw-bold" style="color:#dc2626">
+          <i class="ph ph-warning"></i> Reason for Declining (required)
+        </label>
+        <textarea name="dispute_notes" id="disputeNotes" class="form-control" rows="3"
+                  placeholder="Please state why you are declining this recovery deduction..."></textarea>
+        <div style="font-size:12px;color:#64748b;margin-top:6px">
+          Declining will raise a formal dispute. All committee members will be notified and an impromptu meeting will be called.
+        </div>
+      </div>
+
+      <div class="gc-btn-row">
+        <button type="button" class="gc-btn accept" onclick="submitConsent('ACCEPT')">
+          <i class="ph ph-check-circle"></i> Accept &amp; Allow Deduction
+        </button>
+        <button type="button" class="gc-btn decline" onclick="toggleDecline()">
+          <i class="ph ph-x-circle"></i> Decline &amp; Raise Dispute
+        </button>
+      </div>
+
+      <div id="declineConfirmBtn" style="display:none;margin-top:12px">
+        <button type="button" class="gc-btn decline" onclick="submitConsent('DECLINE')">
+          <i class="ph ph-seal-warning"></i> Confirm Decline &amp; Submit Dispute
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function submitConsent(decision) {
+  if (decision === 'ACCEPT') {
+    if (!confirm(
+      'Are you sure you want to ACCEPT the deduction of '
+      + '{{ consent.amount_requested|money }}' + ' from your savings?\n\n'
+      + 'This will immediately reduce your savings record and create arrears you must catch up on. '
+      + 'This action cannot be undone.'
+    )) return;
+  }
+  if (decision === 'DECLINE') {
+    const notes = document.getElementById('disputeNotes').value.trim();
+    if (!notes) {
+      alert('Please enter a reason for declining before submitting.');
+      return;
+    }
+    if (!confirm(
+      'Confirm that you are DECLINING this deduction?\n\n'
+      + 'A formal dispute will be raised and ALL committee members will be notified immediately. '
+      + 'An impromptu meeting will be called to resolve this matter.'
+    )) return;
+  }
+  document.getElementById('decisionInput').value = decision;
+  document.getElementById('consentForm').submit();
+}
+function toggleDecline() {
+  const sec = document.getElementById('declineSection');
+  const btn = document.getElementById('declineConfirmBtn');
+  const show = sec.style.display === 'none';
+  sec.style.display = show ? 'block' : 'none';
+  btn.style.display = show ? 'block' : 'none';
+  if (show) sec.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+</script>
+{% endblock %}

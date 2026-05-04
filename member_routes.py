@@ -19,6 +19,7 @@ from utils import (
     calculate_loan_position, calculate_due_date,
     determine_loan_security,
     calculate_member_max_eligible_loan,
+    notify_roles, notify_user, notify_member, deduct_member_savings,
 )
 from config import Config
 
@@ -737,3 +738,128 @@ def profile_next_of_kin_request():
 def profile_upload_national_id_copy():
     flash('National ID copies are managed by the Secretary or IT Admin from your member record.', 'info')
     return redirect(url_for('member.profile'))
+
+
+# ===========================================================================
+# GUARANTOR CONSENT — for forced loan recovery
+# ===========================================================================
+@bp.route('/guarantor-consent/<int:loan_id>', methods=['GET', 'POST'])
+@login_required
+def guarantor_consent(loan_id):
+    db = get_db()
+    member_id = session.get('member_id')
+
+    loan = db.execute(
+        """SELECT l.*, m.full_name AS borrower_name, m.member_no AS borrower_no,
+                  g1.full_name AS g1_name, g1.id AS g1_id,
+                  g2.full_name AS g2_name, g2.id AS g2_id
+             FROM loans l
+             JOIN members m ON m.id = l.member_id
+             LEFT JOIN members g1 ON g1.id = l.guarantor1_id
+             LEFT JOIN members g2 ON g2.id = l.guarantor2_id
+            WHERE l.id=?""",
+        (loan_id,),
+    ).fetchone()
+    if not loan:
+        flash('Loan not found.', 'danger')
+        return redirect(url_for('member.loans'))
+
+    # Confirm the logged-in member is a guarantor on this loan
+    if member_id not in (loan['g1_id'], loan['g2_id']):
+        flash('You are not a guarantor on this loan.', 'danger')
+        return redirect(url_for('member.loans'))
+
+    consent = db.execute(
+        "SELECT * FROM guarantor_consents WHERE loan_id=? AND guarantor_id=?",
+        (loan_id, member_id),
+    ).fetchone()
+    if not consent:
+        flash('No consent request found for your account on this loan.', 'info')
+        return redirect(url_for('member.loans'))
+
+    recovery = db.execute(
+        "SELECT * FROM forced_loan_recoveries WHERE loan_id=?", (loan_id,)
+    ).fetchone()
+
+    if request.method == 'POST':
+        decision = (request.form.get('decision') or '').strip()
+        dispute_notes = (request.form.get('dispute_notes') or '').strip()
+
+        if consent['consent_status'] != 'PENDING':
+            flash('This consent request has already been responded to.', 'info')
+            return redirect(url_for('member.loans'))
+
+        if decision == 'ACCEPT':
+            # Deduct savings immediately
+            actual, periods = deduct_member_savings(db, member_id, consent['amount_requested'])
+            db.execute(
+                """UPDATE guarantor_consents
+                      SET consent_status='ACCEPTED', consent_at=CURRENT_TIMESTAMP
+                    WHERE loan_id=? AND guarantor_id=?""",
+                (loan_id, member_id),
+            )
+            db.commit()
+
+            # Notify Treasurer/Chairman that this guarantor accepted
+            notify_roles(
+                db,
+                ['TREASURER', 'IT_ADMIN', 'CHAIRMAN'],
+                'Guarantor Consent Accepted',
+                (f"{session.get('full_name')} accepted the forced recovery deduction of "
+                 f"{fmt_money(consent['amount_requested'])} for loan {loan['loan_no']}. "
+                 f"{len(periods)} savings period(s) cleared. "
+                 f"The Treasurer can now execute the full recovery."),
+                url_for('admin.force_recover', loan_id=loan_id),
+            )
+            db.commit()
+            flash(
+                f'You have accepted the recovery deduction of {fmt_money(consent["amount_requested"])}. '
+                f'{len(periods)} savings period(s) have been cleared from your record. '
+                f'Please ensure you catch up on these arrears in the coming months.',
+                'success',
+            )
+
+        elif decision == 'DECLINE':
+            db.execute(
+                """UPDATE guarantor_consents
+                      SET consent_status='DECLINED', consent_at=CURRENT_TIMESTAMP,
+                          dispute_raised=1, dispute_notes=?
+                    WHERE loan_id=? AND guarantor_id=?""",
+                (dispute_notes or 'Declined without reason given.', loan_id, member_id),
+            )
+            db.commit()
+
+            # Notify ALL committee members — impromptu meeting required
+            notify_roles(
+                db,
+                ['IT_ADMIN', 'CHAIRMAN', 'SECRETARY', 'TREASURER', 'COMMITTEE'],
+                'Recovery Dispute — Guarantor Declined',
+                (f"**DISPUTE RAISED — COMMITTEE ACTION REQUIRED**\n\n"
+                 f"{session.get('full_name')} has DECLINED the forced recovery deduction of "
+                 f"{fmt_money(consent['amount_requested'])} on loan {loan['loan_no']} "
+                 f"({loan['borrower_name']}).\n\n"
+                 f"Reason given: {dispute_notes or 'None provided'}\n\n"
+                 f"An impromptu committee meeting must be convened to resolve this dispute. "
+                 f"Please coordinate via the usual channels immediately."),
+                url_for('admin.force_recover', loan_id=loan_id),
+            )
+            db.commit()
+            flash(
+                'You have declined the recovery deduction. A dispute has been raised and '
+                'all committee members have been notified. An impromptu meeting will be called '
+                'to find a resolution. Please await further communication from the committee.',
+                'warning',
+            )
+
+        else:
+            flash('Invalid response. Please select Accept or Decline.', 'danger')
+            return redirect(url_for('member.guarantor_consent', loan_id=loan_id))
+
+        return redirect(url_for('member.loans'))
+
+    return render_template(
+        'member/guarantor_consent.html',
+        loan=loan,
+        consent=consent,
+        recovery=recovery,
+    )

@@ -234,6 +234,55 @@ CREATE INDEX IF NOT EXISTS idx_member_profile_change_member
 ON member_profile_change_requests(member_id, request_type, created_at);
 
 -- ============================================================
+-- MEMBER REGISTRATION REQUESTS - public onboarding workflow
+-- ============================================================
+CREATE TABLE IF NOT EXISTS registration_requests (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name          TEXT NOT NULL,
+    surname             TEXT NOT NULL,
+    other_names         TEXT,
+    full_name           TEXT NOT NULL,
+    phone               TEXT NOT NULL,
+    whatsapp_no         TEXT,
+    email               TEXT,
+    national_id         TEXT NOT NULL,
+    photo_url           TEXT,
+    nid_copy_url        TEXT,
+    signature_url       TEXT,
+    payload_json        TEXT NOT NULL,
+    status              TEXT DEFAULT 'Pending',   -- Pending / Approved / Rejected
+    approvals_required  INTEGER DEFAULT 2,
+    created_member_id   INTEGER,
+    created_user_id     INTEGER,
+    approved_at         TIMESTAMP,
+    rejected_reason     TEXT,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_member_id) REFERENCES members(id),
+    FOREIGN KEY (created_user_id) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_registration_requests_status
+ON registration_requests(status, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_registration_requests_identity
+ON registration_requests(national_id, phone, created_at);
+
+CREATE TABLE IF NOT EXISTS registration_request_approvals (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id      INTEGER NOT NULL,
+    user_id         INTEGER NOT NULL,
+    decision        TEXT NOT NULL DEFAULT 'APPROVE',
+    comment         TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES registration_requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_registration_request_approval_unique
+ON registration_request_approvals(request_id, user_id);
+
+-- ============================================================
 -- LOAN REPAYMENTS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS loan_repayments (
@@ -438,6 +487,72 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_by      INTEGER,
     FOREIGN KEY (updated_by) REFERENCES users(id)
 );
+
+-- ============================================================
+-- MEMBER OFFBOARDINGS - formal member exit records
+-- ============================================================
+CREATE TABLE IF NOT EXISTS member_offboardings (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id           INTEGER NOT NULL,
+    reason              TEXT NOT NULL,
+    exit_date           DATE NOT NULL,
+    savings_at_exit     INTEGER NOT NULL DEFAULT 0,
+    outstanding_loan_cleared INTEGER NOT NULL DEFAULT 0,
+    penalty_amount      INTEGER NOT NULL DEFAULT 0,   -- 2% of savings_at_exit
+    net_refund          INTEGER NOT NULL DEFAULT 0,   -- savings_at_exit - penalty
+    payment_medium      TEXT,
+    payment_ref         TEXT,
+    processed_by        INTEGER NOT NULL,
+    notes               TEXT,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id),
+    FOREIGN KEY (processed_by) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_offboardings_member ON member_offboardings(member_id);
+CREATE INDEX IF NOT EXISTS idx_offboardings_date ON member_offboardings(exit_date);
+
+-- ============================================================
+-- FORCED LOAN RECOVERIES
+-- ============================================================
+CREATE TABLE IF NOT EXISTS forced_loan_recoveries (
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    loan_id                 INTEGER NOT NULL,
+    triggered_by            INTEGER NOT NULL,
+    recovery_from_borrower  INTEGER NOT NULL DEFAULT 0,
+    recovery_from_g1        INTEGER NOT NULL DEFAULT 0,
+    recovery_from_g2        INTEGER NOT NULL DEFAULT 0,
+    total_recovered         INTEGER NOT NULL DEFAULT 0,
+    shortfall               INTEGER NOT NULL DEFAULT 0,
+    status                  TEXT NOT NULL DEFAULT 'PENDING_CONSENT',
+    narrative               TEXT,
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    executed_at             TIMESTAMP,
+    FOREIGN KEY (loan_id) REFERENCES loans(id),
+    FOREIGN KEY (triggered_by) REFERENCES users(id),
+    UNIQUE (loan_id)
+);
+
+-- ============================================================
+-- GUARANTOR CONSENTS - for forced recovery
+-- ============================================================
+CREATE TABLE IF NOT EXISTS guarantor_consents (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    loan_id             INTEGER NOT NULL,
+    guarantor_id        INTEGER NOT NULL,
+    amount_requested    INTEGER NOT NULL DEFAULT 0,
+    consent_status      TEXT NOT NULL DEFAULT 'PENDING',   -- PENDING / ACCEPTED / DECLINED
+    consent_at          TIMESTAMP,
+    dispute_raised      INTEGER NOT NULL DEFAULT 0,
+    dispute_notes       TEXT,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (loan_id) REFERENCES loans(id),
+    FOREIGN KEY (guarantor_id) REFERENCES members(id),
+    UNIQUE (loan_id, guarantor_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_guarantor_consents_loan ON guarantor_consents(loan_id);
+CREATE INDEX IF NOT EXISTS idx_guarantor_consents_guarantor ON guarantor_consents(guarantor_id, consent_status);
 """
 
 
@@ -507,4 +622,119 @@ def _apply_migrations(conn):
     conn.execute(
         """CREATE INDEX IF NOT EXISTS idx_member_profile_change_member
            ON member_profile_change_requests(member_id, request_type, created_at)"""
+    )
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS registration_requests (
+               id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+               first_name          TEXT NOT NULL,
+               surname             TEXT NOT NULL,
+               other_names         TEXT,
+               full_name           TEXT NOT NULL,
+               phone               TEXT NOT NULL,
+               whatsapp_no         TEXT,
+               email               TEXT,
+               national_id         TEXT NOT NULL,
+               photo_url           TEXT,
+               nid_copy_url        TEXT,
+               signature_url       TEXT,
+               payload_json        TEXT NOT NULL,
+               status              TEXT DEFAULT 'Pending',
+               approvals_required  INTEGER DEFAULT 2,
+               created_member_id   INTEGER,
+               created_user_id     INTEGER,
+               approved_at         TIMESTAMP,
+               rejected_reason     TEXT,
+               created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               FOREIGN KEY (created_member_id) REFERENCES members(id),
+               FOREIGN KEY (created_user_id) REFERENCES users(id)
+           )"""
+    )
+    conn.execute(
+        """CREATE INDEX IF NOT EXISTS idx_registration_requests_status
+           ON registration_requests(status, created_at)"""
+    )
+    conn.execute(
+        """CREATE INDEX IF NOT EXISTS idx_registration_requests_identity
+           ON registration_requests(national_id, phone, created_at)"""
+    )
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS registration_request_approvals (
+               id              INTEGER PRIMARY KEY AUTOINCREMENT,
+               request_id      INTEGER NOT NULL,
+               user_id         INTEGER NOT NULL,
+               decision        TEXT NOT NULL DEFAULT 'APPROVE',
+               comment         TEXT,
+               created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               FOREIGN KEY (request_id) REFERENCES registration_requests(id) ON DELETE CASCADE,
+               FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+           )"""
+    )
+    conn.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_registration_request_approval_unique
+           ON registration_request_approvals(request_id, user_id)"""
+    )
+    # members.whatsapp_no — needed for guarantor WhatsApp notifications
+    if not _column_exists(conn, 'members', 'whatsapp_no'):
+        conn.execute("ALTER TABLE members ADD COLUMN whatsapp_no TEXT")
+    # New offboarding + recovery tables (idempotent)
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS member_offboardings (
+               id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+               member_id           INTEGER NOT NULL,
+               reason              TEXT NOT NULL,
+               exit_date           DATE NOT NULL,
+               savings_at_exit     INTEGER NOT NULL DEFAULT 0,
+               outstanding_loan_cleared INTEGER NOT NULL DEFAULT 0,
+               penalty_amount      INTEGER NOT NULL DEFAULT 0,
+               net_refund          INTEGER NOT NULL DEFAULT 0,
+               payment_medium      TEXT,
+               payment_ref         TEXT,
+               processed_by        INTEGER NOT NULL,
+               notes               TEXT,
+               created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               FOREIGN KEY (member_id) REFERENCES members(id),
+               FOREIGN KEY (processed_by) REFERENCES users(id)
+           )"""
+    )
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS forced_loan_recoveries (
+               id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+               loan_id                 INTEGER NOT NULL,
+               triggered_by            INTEGER NOT NULL,
+               recovery_from_borrower  INTEGER NOT NULL DEFAULT 0,
+               recovery_from_g1        INTEGER NOT NULL DEFAULT 0,
+               recovery_from_g2        INTEGER NOT NULL DEFAULT 0,
+               total_recovered         INTEGER NOT NULL DEFAULT 0,
+               shortfall               INTEGER NOT NULL DEFAULT 0,
+               status                  TEXT NOT NULL DEFAULT 'PENDING_CONSENT',
+               narrative               TEXT,
+               created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               executed_at             TIMESTAMP,
+               FOREIGN KEY (loan_id) REFERENCES loans(id),
+               FOREIGN KEY (triggered_by) REFERENCES users(id)
+           )"""
+    )
+    conn.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_forced_recovery_loan
+           ON forced_loan_recoveries(loan_id)"""
+    )
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS guarantor_consents (
+               id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+               loan_id             INTEGER NOT NULL,
+               guarantor_id        INTEGER NOT NULL,
+               amount_requested    INTEGER NOT NULL DEFAULT 0,
+               consent_status      TEXT NOT NULL DEFAULT 'PENDING',
+               consent_at          TIMESTAMP,
+               dispute_raised      INTEGER NOT NULL DEFAULT 0,
+               dispute_notes       TEXT,
+               created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               FOREIGN KEY (loan_id) REFERENCES loans(id),
+               FOREIGN KEY (guarantor_id) REFERENCES members(id)
+           )"""
+    )
+    conn.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_guarantor_consents_unique
+           ON guarantor_consents(loan_id, guarantor_id)"""
     )

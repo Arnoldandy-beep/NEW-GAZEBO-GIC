@@ -414,6 +414,9 @@
                 <form method="post" action="{{ url_for('admin.fines_pay', fine_id=f.id) }}" class="d-inline">
                   <button type="submit" class="btn btn-sm btn-outline-success"><i class="ph ph-check"></i> Mark paid</button>
                 </form>
+                <form method="post" action="{{ url_for('admin.fines_remind', fine_id=f.id) }}" class="d-inline" onsubmit="return confirm('Send fine reminder to {{ f.full_name }} via portal notification and WhatsApp?');">
+                  <button type="submit" class="btn btn-sm btn-outline-warning" title="Send reminder via portal + WhatsApp"><i class="ph ph-bell-ringing"></i> Remind</button>
+                </form>
                 {% else %}
                 <span class="badge-pill badge-unpaid" style="font-size:10px">Unpaid</span>
                 {% endif %}

@@ -385,7 +385,12 @@
 {% endif %}
 
 <!-- ================================================================
-     5. APPROVAL HISTORY
+     5. PENDING PUBLIC REGISTRATION REQUESTS
+     ================================================================ -->
+{# Online public registration is suspended — section hidden #}
+
+<!-- ================================================================
+     6. APPROVAL HISTORY
      ================================================================ -->
 {% if approved_loan_history %}
 <div class="ap-section">
@@ -411,6 +416,36 @@
           <td><span class="ap-chip approved">{{ l.status }}</span></td>
           <td>{{ l.approver_names|join(', ') if l.approver_names else '-' }}</td>
           <td>{{ (l.approved_date or l.updated_at)|datetimefmt }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if approved_registration_history %}
+<div class="ap-section">
+  <div class="ap-section-head slate">
+    <i class="ph ph-clock-counter-clockwise"></i> Approved Registration History
+  </div>
+  <div class="table-responsive">
+    <table class="ap-tbl">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Member No.</th>
+          <th>Approved By</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in approved_registration_history %}
+        <tr>
+          <td><strong>{{ r.enrolled_name }}</strong><br><span class="text-muted" style="font-size:11px">{{ r.phone }}</span></td>
+          <td>{{ r.member_no }}</td>
+          <td>{{ r.approver_names|join(', ') if r.approver_names else '-' }}</td>
+          <td>{{ r.approved_at|datetimefmt if r.approved_at else '-' }}</td>
         </tr>
         {% endfor %}
       </tbody>

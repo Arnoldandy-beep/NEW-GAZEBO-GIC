@@ -3,7 +3,7 @@ GAZEBO Investment Club - Authentication routes
 """
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
-    session, flash, current_app
+    session, flash
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta
@@ -253,6 +253,19 @@ def login():
             return redirect(url_for('member.dashboard'))
 
     return render_template('auth/login.html')
+
+
+@bp.route('/register', methods=['GET'])
+def register():
+    # Online self-registration is temporarily suspended.
+    # Prospective members must submit a completed paper form to the Club Secretary.
+    flash(
+        'Online self-registration is currently suspended. '
+        'Please obtain a membership application form from the Club Secretary, '
+        'complete it, and submit it in person for processing.',
+        'info',
+    )
+    return redirect(url_for('auth.login'))
 
 
 @bp.route('/logout')
