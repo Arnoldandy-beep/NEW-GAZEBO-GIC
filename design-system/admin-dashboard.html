@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin &amp; Leadership Dashboard — GIC-MS Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="css/gic-theme.css">
+</head>
+<body>
+
+<!-- shared gradient defs for inline charts -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="gicBarNavy" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#2c5680"/><stop offset="100%" stop-color="#16324f"/>
+  </linearGradient>
+  <linearGradient id="gicBarGold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#dcae51"/><stop offset="100%" stop-color="#c9922a"/>
+  </linearGradient>
+  <linearGradient id="gicAreaGold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#c9922a" stop-opacity=".32"/><stop offset="100%" stop-color="#c9922a" stop-opacity="0"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="gic-shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="gic-sidebar">
+    <div class="gic-brand">
+      <div class="gic-brand-mark">GIC</div>
+      <div>
+        <div class="gic-brand-name">GAZEBO</div>
+        <div class="gic-brand-sub">Investment Club</div>
+      </div>
+    </div>
+
+    <div class="gic-sb-user">
+      <div class="gic-avatar">AK</div>
+      <div style="min-width:0">
+        <div class="name">Arnold Katerega</div>
+        <div style="margin-top:4px"><span class="gic-role chairman">Chairman</span></div>
+      </div>
+    </div>
+
+    <nav class="gic-nav">
+      <div class="gic-nav-section">Command</div>
+      <a class="gic-nav-link active" href="#"><i class="ph ph-gauge"></i> Dashboard</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-check-square-offset"></i> My Approvals <span class="gic-nav-count">7</span></a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-bell-ringing"></i> Notifications <span class="gic-nav-count soft">12</span></a>
+
+      <div class="gic-nav-section">Operations</div>
+      <a class="gic-nav-link" href="#"><i class="ph ph-users-three"></i> Members</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-bank"></i> Savings</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-hand-coins"></i> Loans</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-warning-octagon"></i> Late Savings Fines</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-receipt"></i> Annual Fees</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-wallet"></i> Expenses</a>
+
+      <div class="gic-nav-section">Governance</div>
+      <a class="gic-nav-link" href="#"><i class="ph ph-notepad"></i> Minutes</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-chart-line-up"></i> Dividends</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-chart-bar"></i> Financial Statements</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-shield-check"></i> Audit Log</a>
+      <a class="gic-nav-link" href="#"><i class="ph ph-gear-six"></i> Settings</a>
+
+      <div class="gic-nav-section">My Member View</div>
+      <a class="gic-nav-link" href="member-dashboard.html"><i class="ph ph-house-line"></i> My Dashboard</a>
+    </nav>
+
+    <div class="gic-sb-foot">
+      GAZEBO Investment Club<br>Kampala, Uganda · Cycle 2026
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="gic-main">
+    <header class="gic-topbar">
+      <div>
+        <div class="crumb">Leadership · Command Centre</div>
+        <h1>Club Overview</h1>
+      </div>
+      <div class="gic-topbar-right">
+        <div class="gic-search"><i class="ph ph-magnifying-glass"></i> Search members, loans, receipts…</div>
+        <div class="gic-segment gic-no-print">
+          <button class="active">This month</button><button>Quarter</button><button>Cycle</button>
+        </div>
+        <button class="gic-icon-btn" data-theme-toggle><i class="ph ph-moon-stars"></i></button>
+        <button class="gic-icon-btn"><i class="ph ph-bell"></i><span class="dot"></span></button>
+        <button class="gic-icon-btn"><i class="ph ph-export"></i></button>
+      </div>
+    </header>
+
+    <main class="gic-page">
+
+      <!-- ---------- HERO ---------- -->
+      <section class="gic-hero">
+        <span class="gic-orb gold"></span><span class="gic-orb blue"></span>
+        <span class="gic-ring r1"></span><span class="gic-ring r2"></span>
+        <div class="gic-hero-grid">
+          <div>
+            <div class="gic-eyebrow">Club savings pool · Cycle 2026</div>
+            <div class="gic-hero-figure mt-2"><span class="gic-ugx">UGX</span>284,650,000</div>
+            <div class="gic-row wrap mt-3">
+              <span class="gic-chip solid-gold"><i class="ph-fill ph-trend-up"></i> +8.4% vs. last month</span>
+              <span class="gic-chip" style="background:rgba(255,255,255,.10);color:#e8edf5;border-color:rgba(255,255,255,.18)">
+                <i class="ph ph-calendar-check"></i> Month 8 of 12
+              </span>
+              <span class="gic-chip" style="background:rgba(255,255,255,.10);color:#e8edf5;border-color:rgba(255,255,255,.18)">
+                <i class="ph ph-users-three"></i> 42 active members
+              </span>
+            </div>
+            <p class="sub">Good afternoon, Arnold. Collections are ahead of schedule this month — 7 items need a leadership decision before Friday's sitting.</p>
+          </div>
+          <div class="gic-hero-stats">
+            <div class="gic-hero-stat"><div class="k">Deployed in loans</div><div class="v">176.4M</div></div>
+            <div class="gic-hero-stat"><div class="k">Available to lend</div><div class="v">79.7M</div></div>
+            <div class="gic-hero-stat"><div class="k">Book value / member</div><div class="v">6.78M</div></div>
+            <div class="gic-hero-stat"><div class="k">Projected dividend</div><div class="v">14.2%</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- KPI ROW ---------- -->
+      <section class="gic-kpi-grid mb-5">
+        <div class="gic-kpi is-info">
+          <div class="gic-kpi-top">
+            <span class="gic-kpi-label">Loan portfolio deployed</span>
+            <span class="gic-kpi-ico"><i class="ph ph-hand-coins"></i></span>
+          </div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>176.4M</div>
+          <div class="gic-kpi-sub"><span class="gic-delta up"><i class="ph ph-arrow-up-right"></i> 6.1%</span> 69% of pool utilised</div>
+          <div class="gic-meter thin mt-3"><div class="fill" style="width:69%"></div></div>
+        </div>
+
+        <div class="gic-kpi is-positive">
+          <div class="gic-kpi-top">
+            <span class="gic-kpi-label">Available to lend</span>
+            <span class="gic-kpi-ico"><i class="ph ph-vault"></i></span>
+          </div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>79.7M</div>
+          <div class="gic-kpi-sub"><i class="ph ph-info"></i> After 12.5M reserve floor</div>
+          <div class="gic-meter thin green mt-3"><div class="fill" style="width:31%"></div></div>
+        </div>
+
+        <div class="gic-kpi is-danger">
+          <div class="gic-kpi-top">
+            <span class="gic-kpi-label">At risk &amp; overdue</span>
+            <span class="gic-kpi-ico"><i class="ph ph-warning-octagon"></i></span>
+          </div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>9.2M</div>
+          <div class="gic-kpi-sub"><span class="gic-delta down"><i class="ph ph-arrow-down-right"></i> 1.4%</span> 5 loans · 5.2% of book</div>
+          <div class="gic-meter thin red mt-3"><div class="fill" style="width:5.2%"></div></div>
+        </div>
+
+        <div class="gic-kpi">
+          <div class="gic-kpi-top">
+            <span class="gic-kpi-label">Fees &amp; fines revenue</span>
+            <span class="gic-kpi-ico"><i class="ph ph-coins"></i></span>
+          </div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>3.42M</div>
+          <div class="gic-kpi-sub">Processing 2.15M · Fines 1.27M</div>
+          <svg class="gic-chart gic-kpi-spark" viewBox="0 0 200 34" height="34" preserveAspectRatio="none" aria-label="Fee revenue trend, rising">
+            <polyline class="line-main" points="2,26 30,22 58,25 86,17 114,19 142,12 170,14 198,5"/>
+          </svg>
+        </div>
+
+        <div class="gic-kpi is-warning">
+          <div class="gic-kpi-top">
+            <span class="gic-kpi-label">Pending approvals</span>
+            <span class="gic-kpi-ico"><i class="ph ph-check-square-offset"></i></span>
+          </div>
+          <div class="gic-kpi-value">7</div>
+          <div class="gic-kpi-sub"><i class="ph ph-clock-countdown"></i> Oldest waiting 3 days</div>
+        </div>
+
+        <div class="gic-kpi is-purple">
+          <div class="gic-kpi-top">
+            <span class="gic-kpi-label">Active vs. cleared loans</span>
+            <span class="gic-kpi-ico"><i class="ph ph-arrows-left-right"></i></span>
+          </div>
+          <div class="gic-kpi-value">23 <span style="font-size:18px;color:var(--gic-text-faint);font-weight:600">/ 68</span></div>
+          <div class="gic-kpi-sub">68 cleared this cycle · 74.7% clearance</div>
+          <div class="gic-meter-split mt-3">
+            <span style="width:25.3%;background:linear-gradient(90deg,#7fa9f3,var(--gic-blue))"></span>
+            <span style="width:74.7%;background:linear-gradient(90deg,#37d49b,var(--gic-green))"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- MAIN GRID ---------- -->
+      <div class="gic-grid main-side mb-5">
+
+        <!-- LEFT COLUMN -->
+        <div class="gic-stack">
+
+          <!-- Cash flow -->
+          <section class="gic-card">
+            <div class="gic-card-head">
+              <i class="ph ph-chart-bar"></i>
+              <h2>Monthly cash flow</h2>
+              <span class="gic-chip neutral">FY 2026</span>
+              <div class="right">
+                <span class="gic-legend" style="margin:0">
+                  <span class="li"><span class="sw" style="background:#16324f"></span> Savings in</span>
+                  <span class="li"><span class="sw" style="background:#c9922a"></span> Loans out</span>
+                  <span class="li"><span class="sw" style="background:var(--gic-green)"></span> Net position</span>
+                </span>
+              </div>
+            </div>
+            <div class="gic-card-body">
+              <svg class="gic-chart" viewBox="0 0 720 200" height="238" role="img" aria-label="Monthly cash flow: savings in, loans out and net position, January to August">
+                <line class="grid-line" x1="42" y1="170" x2="710" y2="170"/>
+                <line class="grid-line" x1="42" y1="132" x2="710" y2="132"/>
+                <line class="grid-line" x1="42" y1="95"  x2="710" y2="95"/>
+                <line class="grid-line" x1="42" y1="57"  x2="710" y2="57"/>
+                <line class="grid-line" x1="42" y1="20"  x2="710" y2="20"/>
+                <text class="axis-text" x="8" y="174">0</text>
+                <text class="axis-text" x="8" y="136">7M</text>
+                <text class="axis-text" x="4" y="99">13M</text>
+                <text class="axis-text" x="4" y="61">20M</text>
+                <text class="axis-text" x="4" y="24">26M</text>
+
+                <g>
+                  <rect class="bar-a" x="52"  y="65"  width="26" height="105" rx="5"/><rect class="bar-b" x="82"  y="98"  width="26" height="72"  rx="5"/>
+                  <rect class="bar-a" x="134" y="58"  width="26" height="112" rx="5"/><rect class="bar-b" x="164" y="83"  width="26" height="87"  rx="5"/>
+                  <rect class="bar-a" x="216" y="67"  width="26" height="103" rx="5"/><rect class="bar-b" x="246" y="105" width="26" height="65"  rx="5"/>
+                  <rect class="bar-a" x="298" y="49"  width="26" height="121" rx="5"/><rect class="bar-b" x="328" y="64"  width="26" height="106" rx="5"/>
+                  <rect class="bar-a" x="380" y="52"  width="26" height="118" rx="5"/><rect class="bar-b" x="410" y="84"  width="26" height="86"  rx="5"/>
+                  <rect class="bar-a" x="462" y="40"  width="26" height="130" rx="5"/><rect class="bar-b" x="492" y="73"  width="26" height="97"  rx="5"/>
+                  <rect class="bar-a" x="544" y="37"  width="26" height="133" rx="5"/><rect class="bar-b" x="574" y="92"  width="26" height="78"  rx="5"/>
+                  <rect class="bar-a" x="626" y="27"  width="26" height="143" rx="5"/><rect class="bar-b" x="656" y="59"  width="26" height="111" rx="5"/>
+                </g>
+
+                <polyline class="line-main" style="stroke:var(--gic-green)"
+                  points="80,137 162,145 244,132 326,155 408,138 490,137 572,115 654,138"/>
+                <g class="point" style="stroke:var(--gic-green)">
+                  <circle cx="80" cy="137" r="4"/><circle cx="162" cy="145" r="4"/><circle cx="244" cy="132" r="4"/>
+                  <circle cx="326" cy="155" r="4"/><circle cx="408" cy="138" r="4"/><circle cx="490" cy="137" r="4"/>
+                  <circle cx="572" cy="115" r="5"/><circle cx="654" cy="138" r="4"/>
+                </g>
+
+                <text class="axis-text" x="68"  y="190">Jan</text><text class="axis-text" x="150" y="190">Feb</text>
+                <text class="axis-text" x="232" y="190">Mar</text><text class="axis-text" x="314" y="190">Apr</text>
+                <text class="axis-text" x="396" y="190">May</text><text class="axis-text" x="478" y="190">Jun</text>
+                <text class="axis-text" x="560" y="190">Jul</text><text class="axis-text" x="642" y="190">Aug</text>
+              </svg>
+            </div>
+            <div class="gic-card-foot gic-row wrap">
+              <span><b>Net inflow YTD</b> · <span class="gic-num">UGX 46.8M</span></span>
+              <span class="gic-faint">|</span>
+              <span class="gic-muted">Best collection month: <b>July</b> (98% on-time)</span>
+              <span class="gic-spacer"></span>
+              <a href="#">Open financial statements <i class="ph ph-arrow-right"></i></a>
+            </div>
+          </section>
+
+          <!-- Portfolio split + compliance -->
+          <div class="gic-grid c2">
+            <section class="gic-card">
+              <div class="gic-card-head"><i class="ph ph-chart-donut"></i><h2>Loan portfolio</h2></div>
+              <div class="gic-card-body gic-row" style="gap:20px;align-items:center">
+                <svg class="gic-chart" viewBox="0 0 140 140" width="140" height="140" style="flex:0 0 140px" role="img" aria-label="Loan portfolio donut: 62% deployed, 28% available, 10% at risk">
+                  <g transform="rotate(-90 70 70)" fill="none" stroke-width="16" stroke-linecap="butt">
+                    <circle class="donut-track" cx="70" cy="70" r="54" stroke-width="16"/>
+                    <circle cx="70" cy="70" r="54" stroke="#16324f" stroke-dasharray="210.4 128.9" stroke-dashoffset="0"/>
+                    <circle cx="70" cy="70" r="54" stroke="#c9922a" stroke-dasharray="95 244.3" stroke-dashoffset="-210.4"/>
+                    <circle cx="70" cy="70" r="54" stroke="#b91c1c" stroke-dasharray="33.9 305.4" stroke-dashoffset="-305.4"/>
+                  </g>
+                  <text class="value-text" x="70" y="68" text-anchor="middle" font-size="22">69%</text>
+                  <text class="label-text" x="70" y="86" text-anchor="middle">utilised</text>
+                </svg>
+                <div style="flex:1;min-width:0">
+                  <div class="gic-row between" style="font-size:13px"><span><span class="gic-legend" style="margin:0"><span class="li"><span class="sw" style="background:#16324f"></span> Deployed</span></span></span><b class="gic-num">176.4M</b></div>
+                  <div class="gic-divider-h" style="margin:10px 0"></div>
+                  <div class="gic-row between" style="font-size:13px"><span class="gic-legend" style="margin:0"><span class="li"><span class="sw" style="background:#c9922a"></span> Available</span></span><b class="gic-num">79.7M</b></div>
+                  <div class="gic-divider-h" style="margin:10px 0"></div>
+                  <div class="gic-row between" style="font-size:13px"><span class="gic-legend" style="margin:0"><span class="li"><span class="sw" style="background:var(--gic-red)"></span> At risk</span></span><b class="gic-num" style="color:var(--gic-red)">9.2M</b></div>
+                  <div class="mt-4"><span class="gic-chip success"><i class="ph ph-shield-check"></i> Within 75% exposure policy</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="gic-card">
+              <div class="gic-card-head"><i class="ph ph-users-four"></i><h2>Membership &amp; compliance</h2></div>
+              <div class="gic-card-body">
+                <div class="gic-row between mb-3">
+                  <div>
+                    <div class="gic-kpi-label">Active members</div>
+                    <div class="gic-num" style="font-size:26px;font-weight:700">42 <span class="gic-delta up" style="vertical-align:middle"><i class="ph ph-arrow-up-right"></i> 3 new</span></div>
+                  </div>
+                  <svg class="gic-chart" viewBox="0 0 120 44" width="120" height="44" aria-label="Member growth trend">
+                    <path class="area-main" d="M2,38 L20,34 L38,33 L56,28 L74,24 L92,18 L118,10 L118,42 L2,42 Z"/>
+                    <polyline class="line-main" points="2,38 20,34 38,33 56,28 74,24 92,18 118,10"/>
+                  </svg>
+                </div>
+                <div class="gic-divider-h"></div>
+                <div class="mb-3">
+                  <div class="gic-row between mb-2" style="font-size:12.5px"><span class="gic-muted">Savings compliance (Aug)</span><b>88%</b></div>
+                  <div class="gic-meter green"><div class="fill" style="width:88%"></div></div>
+                  <div class="gic-list-meta">37 paid · 3 pending · 2 defaulted</div>
+                </div>
+                <div class="mb-3">
+                  <div class="gic-row between mb-2" style="font-size:12.5px"><span class="gic-muted">Annual fees settled</span><b>95%</b></div>
+                  <div class="gic-meter gold"><div class="fill" style="width:95%"></div></div>
+                </div>
+                <div>
+                  <div class="gic-row between mb-2" style="font-size:12.5px"><span class="gic-muted">Guarantor coverage on open loans</span><b>72%</b></div>
+                  <div class="gic-meter amber"><div class="fill" style="width:72%"></div></div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Loans needing attention -->
+          <section class="gic-card">
+            <div class="gic-card-head">
+              <i class="ph ph-warning-diamond"></i>
+              <h2>Loans needing attention</h2>
+              <span class="gic-chip danger">5 overdue</span>
+              <div class="right"><a href="#" class="gic-btn subtle sm"><i class="ph ph-funnel"></i> Filter</a><a href="#" class="gic-btn ghost sm">View all loans</a></div>
+            </div>
+            <div class="gic-table-wrap">
+              <table class="gic-table">
+                <thead>
+                  <tr><th>Member</th><th>Purpose</th><th class="num">Principal</th><th class="num">Outstanding</th><th>Due</th><th>Status</th><th class="num">Repaid</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr class="row-flag-danger">
+                    <td><div class="gic-cell-user"><div class="gic-avatar">NM</div><div class="meta"><div class="n">Nakato Miriam</div><div class="s">GIC-0042 · Committee</div></div></div></td>
+                    <td>School fees</td>
+                    <td class="num">3,000,000</td>
+                    <td class="num strong">2,340,000</td>
+                    <td>12 Jul 2026</td>
+                    <td><span class="gic-chip overdue"><i class="ph-fill ph-warning-circle"></i> 31 days late</span></td>
+                    <td class="num"><div class="gic-meter thin red" style="width:70px;display:inline-block;vertical-align:middle"><div class="fill" style="width:22%"></div></div> <span class="gic-faint">22%</span></td>
+                    <td class="text-right"><a href="#" class="gic-btn subtle sm"><i class="ph ph-whatsapp-logo"></i> Remind</a></td>
+                  </tr>
+                  <tr class="row-flag-danger">
+                    <td><div class="gic-cell-user"><div class="gic-avatar">OP</div><div class="meta"><div class="n">Okello Peter</div><div class="s">GIC-0017 · Member</div></div></div></td>
+                    <td>Business stock</td>
+                    <td class="num">5,000,000</td>
+                    <td class="num strong">4,100,000</td>
+                    <td>28 Jul 2026</td>
+                    <td><span class="gic-chip overdue"><i class="ph-fill ph-warning-circle"></i> 15 days late</span></td>
+                    <td class="num"><div class="gic-meter thin red" style="width:70px;display:inline-block;vertical-align:middle"><div class="fill" style="width:18%"></div></div> <span class="gic-faint">18%</span></td>
+                    <td class="text-right"><a href="#" class="gic-btn subtle sm"><i class="ph ph-whatsapp-logo"></i> Remind</a></td>
+                  </tr>
+                  <tr class="row-flag-warning">
+                    <td><div class="gic-cell-user"><div class="gic-avatar">BS</div><div class="meta"><div class="n">Byaruhanga Sam</div><div class="s">GIC-0008 · Treasurer</div></div></div></td>
+                    <td>Land purchase</td>
+                    <td class="num">8,000,000</td>
+                    <td class="num strong">3,200,000</td>
+                    <td>05 Sep 2026</td>
+                    <td><span class="gic-chip pending"><i class="ph ph-clock-countdown"></i> Due in 6 days</span></td>
+                    <td class="num"><div class="gic-meter thin amber" style="width:70px;display:inline-block;vertical-align:middle"><div class="fill" style="width:60%"></div></div> <span class="gic-faint">60%</span></td>
+                    <td class="text-right"><a href="#" class="gic-btn subtle sm"><i class="ph ph-eye"></i> Open</a></td>
+                  </tr>
+                  <tr class="row-flag-success">
+                    <td><div class="gic-cell-user"><div class="gic-avatar">AK</div><div class="meta"><div class="n">Atim Grace</div><div class="s">GIC-0031 · Member</div></div></div></td>
+                    <td>Medical</td>
+                    <td class="num">1,500,000</td>
+                    <td class="num strong">180,000</td>
+                    <td>19 Sep 2026</td>
+                    <td><span class="gic-chip active"><i class="ph ph-arrow-bend-down-right"></i> On track</span></td>
+                    <td class="num"><div class="gic-meter thin green" style="width:70px;display:inline-block;vertical-align:middle"><div class="fill" style="width:88%"></div></div> <span class="gic-faint">88%</span></td>
+                    <td class="text-right"><a href="#" class="gic-btn subtle sm"><i class="ph ph-eye"></i> Open</a></td>
+                  </tr>
+                  <tr class="row-flag-warning">
+                    <td><div class="gic-cell-user"><div class="gic-avatar">KJ</div><div class="meta"><div class="n">Kiwanuka John</div><div class="s">GIC-0025 · Member</div></div></div></td>
+                    <td>Boda purchase</td>
+                    <td class="num">2,400,000</td>
+                    <td class="num strong">1,080,000</td>
+                    <td>02 Sep 2026</td>
+                    <td><span class="gic-chip pending"><i class="ph ph-clock-countdown"></i> Grace period</span></td>
+                    <td class="num"><div class="gic-meter thin amber" style="width:70px;display:inline-block;vertical-align:middle"><div class="fill" style="width:55%"></div></div> <span class="gic-faint">55%</span></td>
+                    <td class="text-right"><a href="#" class="gic-btn subtle sm"><i class="ph ph-eye"></i> Open</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="gic-card-foot gic-row between">
+              <span class="gic-muted">Showing 5 of 23 active loans</span>
+              <a href="#">Export recovery list <i class="ph ph-download-simple"></i></a>
+            </div>
+          </section>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="gic-stack">
+
+          <!-- Approvals queue -->
+          <section class="gic-card">
+            <div class="gic-card-head">
+              <i class="ph ph-check-square-offset"></i><h2>Approvals queue</h2>
+              <div class="right"><span class="gic-chip warning">7 waiting</span></div>
+            </div>
+            <div class="gic-list">
+              <div class="gic-list-item">
+                <div class="gic-list-ico gold"><i class="ph ph-hand-coins"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>Loan request · UGX 4,000,000</b></div>
+                  <div class="gic-list-meta">Namuli Sarah · 2 of 3 signatures · 3 days waiting</div>
+                  <div class="gic-row mt-3" style="gap:6px">
+                    <button class="gic-btn success sm"><i class="ph ph-check"></i> Approve</button>
+                    <button class="gic-btn ghost sm">Review</button>
+                  </div>
+                </div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico purple"><i class="ph ph-user-plus"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>New member onboarding</b></div>
+                  <div class="gic-list-meta">Tumusiime Ivan · NID &amp; photo attached</div>
+                  <div class="gic-row mt-3" style="gap:6px">
+                    <button class="gic-btn success sm"><i class="ph ph-check"></i> Approve</button>
+                    <button class="gic-btn ghost sm">Review</button>
+                  </div>
+                </div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico blue"><i class="ph ph-receipt"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>Expense claim · UGX 320,000</b></div>
+                  <div class="gic-list-meta">Meeting refreshments · Secretary</div>
+                  <div class="gic-row mt-3" style="gap:6px">
+                    <button class="gic-btn success sm"><i class="ph ph-check"></i> Approve</button>
+                    <button class="gic-btn ghost sm">Review</button>
+                  </div>
+                </div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico amber"><i class="ph ph-warning-octagon"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>Fine waiver request · UGX 20,000</b></div>
+                  <div class="gic-list-meta">Okello Peter · Late savings, July</div>
+                  <div class="gic-row mt-3" style="gap:6px">
+                    <button class="gic-btn success sm"><i class="ph ph-check"></i> Approve</button>
+                    <button class="gic-btn ghost sm">Review</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="gic-card-foot text-center"><a href="#">See all 7 approvals</a></div>
+          </section>
+
+          <!-- Alerts -->
+          <section class="gic-card">
+            <div class="gic-card-head"><i class="ph ph-bell-ringing"></i><h2>Alerts</h2><div class="right"><a href="#" style="font-size:12.5px">Mark all read</a></div></div>
+            <div class="gic-card-body gic-stack" style="gap:10px">
+              <div class="gic-alert danger">
+                <i class="ph-fill ph-warning-octagon"></i>
+                <div><div class="t">2 loans crossed 30 days overdue</div><div class="gic-muted">Recovery policy requires guarantor notice this week.</div></div>
+              </div>
+              <div class="gic-alert warning">
+                <i class="ph ph-clock-countdown"></i>
+                <div><div class="t">3 members haven't saved for August</div><div class="gic-muted">Fines auto-post on 31 Aug at 23:59.</div></div>
+              </div>
+              <div class="gic-alert info">
+                <i class="ph ph-notepad"></i>
+                <div><div class="t">Minutes of 12 Aug awaiting signature</div><div class="gic-muted">Chairman &amp; Secretary sign-off pending.</div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Activity feed -->
+          <section class="gic-card">
+            <div class="gic-card-head"><i class="ph ph-pulse"></i><h2>Recent activity</h2><div class="right"><span class="gic-chip neutral">Live</span></div></div>
+            <div class="gic-list gic-scroll-y" style="max-height:330px">
+              <div class="gic-list-item">
+                <div class="gic-list-ico green"><i class="ph ph-arrow-down-left"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>Namuli Sarah</b> saved <b>UGX 500,000</b></div>
+                  <div class="gic-list-meta">Receipt #GIC-4821 · MTN MoMo</div>
+                </div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">4m ago</span><span class="gic-chip paid">Paid</span></div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico blue"><i class="ph ph-hand-coins"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>Wasswa Denis</b> repaid <b>UGX 750,000</b></div>
+                  <div class="gic-list-meta">Loan GIC-L-118 · 3 instalments left</div>
+                </div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">22m ago</span></div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico gold"><i class="ph ph-file-plus"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>Treasurer</b> posted July fee reconciliation</div>
+                  <div class="gic-list-meta">14 receipts matched · 0 exceptions</div>
+                </div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">1h ago</span></div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico red"><i class="ph ph-warning-octagon"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title">Fine of <b>UGX 20,000</b> issued to <b>Okello Peter</b></div>
+                  <div class="gic-list-meta">Late savings · Auto-rule L-02</div>
+                </div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">3h ago</span><span class="gic-chip overdue">Unpaid</span></div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico purple"><i class="ph ph-user-check"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title"><b>Tumusiime Ivan</b> completed onboarding form</div>
+                  <div class="gic-list-meta">Awaiting committee approval</div>
+                </div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">5h ago</span></div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico green"><i class="ph ph-seal-check"></i></div>
+                <div class="gic-list-body">
+                  <div class="gic-list-title">Loan <b>GIC-L-104</b> fully cleared</div>
+                  <div class="gic-list-meta">Atim Grace · 6 months, 0 arrears</div>
+                </div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">Yesterday</span><span class="gic-chip cleared">Cleared</span></div>
+              </div>
+            </div>
+            <div class="gic-card-foot text-center"><a href="#">Open audit log</a></div>
+          </section>
+
+          <!-- Dividend projection -->
+          <section class="gic-card">
+            <div class="gic-card-head"><i class="ph ph-chart-line-up"></i><h2>Dividend projection</h2></div>
+            <div class="gic-card-body">
+              <div class="gic-kpi feature" style="box-shadow:none">
+                <div class="gic-kpi-top">
+                  <span class="gic-kpi-label">Distributable surplus</span>
+                  <span class="gic-kpi-ico"><i class="ph ph-gift"></i></span>
+                </div>
+                <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>40.4M</div>
+                <div class="gic-kpi-sub">Interest 34.8M · Fees 3.4M · Fines 2.2M</div>
+              </div>
+              <div class="gic-row between mt-4" style="font-size:12.5px">
+                <span class="gic-muted">Cycle progress</span><b>67%</b>
+              </div>
+              <div class="gic-meter gold mt-2"><div class="fill" style="width:67%"></div></div>
+              <div class="gic-list-meta mt-3"><i class="ph ph-info"></i> Final split confirmed at the December AGM.</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="gic-page" style="padding-top:0">
+      <div class="gic-row between gic-muted" style="font-size:12px;border-top:1px solid var(--gic-border);padding-top:14px">
+        <span>© 2026 GAZEBO Investment Club · Kampala, Uganda</span>
+        <span><a href="index.html">Design system</a> · Admin dashboard mockup</span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script src="js/theme.js"></script>
+</body>
+</html>

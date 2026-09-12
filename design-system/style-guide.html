@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brand Board &amp; Style Guide — GIC-MS Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="css/gic-theme.css">
+<style>
+  .board{max-width:1320px;margin:0 auto;padding:26px 22px 80px}
+  .board-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+  .span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-7{grid-column:span 7}
+  .span-6{grid-column:span 6}.span-5{grid-column:span 5}.span-4{grid-column:span 4}.span-3{grid-column:span 3}
+  @media (max-width:1080px){.board-grid > *{grid-column:span 12 !important}}
+  .swatch-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px}
+  .type-row{display:flex;align-items:baseline;gap:16px;padding:11px 0;border-bottom:1px solid var(--gic-divider);flex-wrap:wrap}
+  .type-row:last-child{border-bottom:none}
+  .type-row .spec{margin-left:auto}
+  .sp-bar{background:linear-gradient(90deg,var(--gic-gold-400),var(--gic-gold-600));height:14px;border-radius:4px}
+  .icon-tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border:1px solid var(--gic-border);border-radius:var(--gic-r-md);background:var(--gic-surface);font-size:10.5px;color:var(--gic-text-muted);text-align:center}
+  .icon-tile i{font-size:24px;color:var(--gic-ink-800)}
+  [data-theme="dark"] .icon-tile i{color:var(--gic-gold-400)}
+  pre.tokens{
+    margin:0;padding:16px 18px;border-radius:var(--gic-r-md);overflow:auto;
+    background:var(--gic-ink-950);color:#cfe0f5;font-family:var(--gic-font-mono);font-size:11.8px;line-height:1.75;
+  }
+  pre.tokens .c{color:#7c93b3}
+  pre.tokens .k{color:#dcae51}
+  .do-dont{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){.do-dont{grid-template-columns:1fr}}
+  .shadow-demo{height:82px;border-radius:var(--gic-r-md);background:var(--gic-surface);border:1px solid var(--gic-border);display:grid;place-items:center;font-size:11.5px;color:var(--gic-text-muted);font-weight:700}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <div class="gic-row wrap mb-6" style="gap:14px">
+    <a href="index.html" class="gic-btn ghost sm"><i class="ph ph-arrow-left"></i> Design system</a>
+    <div>
+      <div class="gic-eyebrow">Deliverable 4</div>
+      <h1>GIC-MS brand board &amp; style guide</h1>
+    </div>
+    <span class="gic-spacer"></span>
+    <button class="gic-btn ghost sm" data-theme-toggle><i class="ph ph-moon-stars"></i> <span data-theme-label>Dark mode</span></button>
+    <button class="gic-btn ghost sm gic-no-print" onclick="window.print()"><i class="ph ph-printer"></i> Print</button>
+  </div>
+
+  <!-- Masthead -->
+  <section class="gic-hero mb-5">
+    <span class="gic-orb gold"></span><span class="gic-orb blue"></span>
+    <span class="gic-ring r1"></span><span class="gic-ring r2"></span>
+    <div class="gic-hero-grid">
+      <div>
+        <div class="gic-row" style="gap:14px">
+          <div class="gic-brand-mark" style="width:56px;height:56px;border-radius:16px;font-size:17px">GIC</div>
+          <div>
+            <div class="gic-eyebrow">Design language</div>
+            <div style="font-family:var(--gic-font-display);font-size:28px;font-weight:700;color:#fff;line-height:1.15;margin-top:2px">Gazebo Premium</div>
+          </div>
+        </div>
+        <p class="sub">A member-owned savings club is not a bank. The system should read as <b>trustworthy and precise</b> like a financial institution, but <b>warm and collective</b> like the people who fund it — deep navy for authority, gold for shared reward, generous rounding and soft light for approachability.</p>
+      </div>
+      <div class="gic-hero-stats">
+        <div class="gic-hero-stat"><div class="k">Base unit</div><div class="v">4px</div></div>
+        <div class="gic-hero-stat"><div class="k">Card radius</div><div class="v">18px</div></div>
+        <div class="gic-hero-stat"><div class="k">Icon set</div><div class="v">Phosphor</div></div>
+        <div class="gic-hero-stat"><div class="k">Themes</div><div class="v">2</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="board-grid">
+
+    <!-- COLOUR -->
+    <section class="gic-card span-8">
+      <div class="gic-card-head"><i class="ph ph-palette"></i><h2>Colour tokens</h2><div class="right"><span class="gic-chip neutral">WCAG AA on surface</span></div></div>
+      <div class="gic-card-body">
+        <div class="gic-eyebrow mb-3">Core — navy ink</div>
+        <div class="swatch-row mb-5">
+          <div class="gic-swatch"><div class="chip" style="background:#0a1526"></div><div class="meta"><div class="n">ink-950</div><div class="h">#0a1526</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#0d1b30"></div><div class="meta"><div class="n">ink-900</div><div class="h">#0d1b30</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#16324f"></div><div class="meta"><div class="n">ink-800 · primary</div><div class="h">#16324f</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#1d4166"></div><div class="meta"><div class="n">ink-700</div><div class="h">#1d4166</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#2c5680"></div><div class="meta"><div class="n">ink-600</div><div class="h">#2c5680</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#5a7794"></div><div class="meta"><div class="n">ink-400</div><div class="h">#5a7794</div></div></div>
+        </div>
+
+        <div class="gic-eyebrow mb-3">Signature — gold</div>
+        <div class="swatch-row mb-5">
+          <div class="gic-swatch"><div class="chip" style="background:#8a6316"></div><div class="meta"><div class="n">gold-700</div><div class="h">#8a6316</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#a8761c"></div><div class="meta"><div class="n">gold-600 · text</div><div class="h">#a8761c</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#c9922a"></div><div class="meta"><div class="n">gold-500 · accent</div><div class="h">#c9922a</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#dcae51"></div><div class="meta"><div class="n">gold-400</div><div class="h">#dcae51</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#f0d79b"></div><div class="meta"><div class="n">gold-200</div><div class="h">#f0d79b</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#fdf6e7"></div><div class="meta"><div class="n">gold-50</div><div class="h">#fdf6e7</div></div></div>
+        </div>
+
+        <div class="gic-eyebrow mb-3">Functional accents</div>
+        <div class="swatch-row mb-5">
+          <div class="gic-swatch"><div class="chip" style="background:#2f6fe0"></div><div class="meta"><div class="n">blue · active</div><div class="h">#2f6fe0</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#17a06b"></div><div class="meta"><div class="n">green · settled</div><div class="h">#17a06b</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#d97706"></div><div class="meta"><div class="n">amber · attention</div><div class="h">#d97706</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#b91c1c"></div><div class="meta"><div class="n">red · breach</div><div class="h">#b91c1c</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#7c3aed"></div><div class="meta"><div class="n">purple · system</div><div class="h">#7c3aed</div></div></div>
+          <div class="gic-swatch"><div class="chip" style="background:#0d9488"></div><div class="meta"><div class="n">teal · committee</div><div class="h">#0d9488</div></div></div>
+        </div>
+
+        <div class="gic-grid c2">
+          <div>
+            <div class="gic-eyebrow mb-3">Light surfaces</div>
+            <div class="swatch-row">
+              <div class="gic-swatch"><div class="chip" style="background:#ffffff"></div><div class="meta"><div class="n">surface</div><div class="h">#ffffff</div></div></div>
+              <div class="gic-swatch"><div class="chip" style="background:#f8fafc"></div><div class="meta"><div class="n">surface-2</div><div class="h">#f8fafc</div></div></div>
+              <div class="gic-swatch"><div class="chip" style="background:#f4f7fb"></div><div class="meta"><div class="n">app bg</div><div class="h">#f4f7fb</div></div></div>
+              <div class="gic-swatch"><div class="chip" style="background:#e2e8f0"></div><div class="meta"><div class="n">border</div><div class="h">#e2e8f0</div></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="gic-eyebrow mb-3">Dark surfaces</div>
+            <div class="swatch-row">
+              <div class="gic-swatch"><div class="chip" style="background:#0a1526"></div><div class="meta"><div class="n">app bg</div><div class="h">#0a1526</div></div></div>
+              <div class="gic-swatch"><div class="chip" style="background:#0d1b30"></div><div class="meta"><div class="n">surface</div><div class="h">#0d1b30</div></div></div>
+              <div class="gic-swatch"><div class="chip" style="background:#112340"></div><div class="meta"><div class="n">surface-2</div><div class="h">#112340</div></div></div>
+              <div class="gic-swatch"><div class="chip" style="background:#e8edf5"></div><div class="meta"><div class="n">text</div><div class="h">#e8edf5</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gic-alert info mt-5"><i class="ph ph-info"></i><div>
+          <div class="t">Gold is a signature, not a workhorse</div>
+          <div class="gic-muted">Gold carries brand identity, money-moving actions and reward states. Cap it at roughly 10% of any screen; never use it for body text on white (use <b>gold-600</b> and only above 12px/700).</div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- TYPOGRAPHY -->
+    <section class="gic-card span-4">
+      <div class="gic-card-head"><i class="ph ph-text-aa"></i><h2>Typography</h2></div>
+      <div class="gic-card-body">
+        <div style="font-family:var(--gic-font-display);font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1">Space Grotesk</div>
+        <div class="gic-muted" style="font-size:12.5px;margin-top:4px">Headings, KPI figures, currency. Geometric, slightly technical — reads as precise.</div>
+        <div class="gic-divider-h"></div>
+        <div style="font-family:var(--gic-font-body);font-size:32px;font-weight:700;line-height:1.1">Manrope</div>
+        <div class="gic-muted" style="font-size:12.5px;margin-top:4px">Body, labels, tables, forms. Open apertures keep dense tables legible at 13px.</div>
+        <div class="gic-divider-h"></div>
+        <div class="type-row"><span style="font-family:var(--gic-font-display);font-size:34px;font-weight:700;letter-spacing:-.02em">Display</span><span class="gic-spec spec">34 / 1.12 / 700</span></div>
+        <div class="type-row"><span style="font-family:var(--gic-font-display);font-size:24px;font-weight:700">Page title</span><span class="gic-spec spec">24 / 1.2 / 700</span></div>
+        <div class="type-row"><span style="font-family:var(--gic-font-display);font-size:19px;font-weight:600">Section</span><span class="gic-spec spec">19 / 1.25 / 600</span></div>
+        <div class="type-row"><span style="font-size:14.5px">Body copy</span><span class="gic-spec spec">14.5 / 1.55 / 400</span></div>
+        <div class="type-row"><span style="font-size:13px">Table &amp; meta</span><span class="gic-spec spec">13 / 1.45 / 500</span></div>
+        <div class="type-row"><span class="gic-eyebrow">Eyebrow label</span><span class="gic-spec spec">10.5 / .12em / 700</span></div>
+        <div class="type-row"><span class="gic-num" style="font-size:26px;font-weight:700">UGX 284,650,000</span><span class="gic-spec spec">tabular-nums</span></div>
+        <div class="gic-alert warning mt-4" style="padding:10px 12px"><i class="ph ph-warning-circle"></i><div class="gic-muted" style="font-size:12.5px">All money uses <b>tabular figures</b> so columns align. Never letter-space numerals.</div></div>
+      </div>
+    </section>
+
+    <!-- SPACING -->
+    <section class="gic-card span-4">
+      <div class="gic-card-head"><i class="ph ph-ruler"></i><h2>Spacing rhythm</h2></div>
+      <div class="gic-card-body">
+        <p class="gic-muted" style="margin:0 0 14px">4px base. Use only these steps — no arbitrary pixel values.</p>
+        <div class="gic-stack" style="gap:9px">
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s1 4</span><div class="sp-bar" style="width:4px"></div><span class="gic-faint" style="font-size:11.5px">icon gaps</span></div>
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s2 8</span><div class="sp-bar" style="width:8px"></div><span class="gic-faint" style="font-size:11.5px">chip gaps</span></div>
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s3 12</span><div class="sp-bar" style="width:12px"></div><span class="gic-faint" style="font-size:11.5px">inline groups</span></div>
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s4 16</span><div class="sp-bar" style="width:16px"></div><span class="gic-faint" style="font-size:11.5px">grid gutter</span></div>
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s5 20</span><div class="sp-bar" style="width:20px"></div><span class="gic-faint" style="font-size:11.5px">section gap</span></div>
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s6 24</span><div class="sp-bar" style="width:24px"></div><span class="gic-faint" style="font-size:11.5px">page padding</span></div>
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s8 32</span><div class="sp-bar" style="width:32px"></div><span class="gic-faint" style="font-size:11.5px">major blocks</span></div>
+          <div class="gic-row"><span class="gic-spec" style="width:52px">s12 48</span><div class="sp-bar" style="width:48px"></div><span class="gic-faint" style="font-size:11.5px">page sections</span></div>
+        </div>
+        <div class="gic-divider-h"></div>
+        <div class="gic-eyebrow mb-3">Radii</div>
+        <div class="gic-row wrap" style="gap:10px">
+          <span class="gic-spec">xs 6 · inputs sm</span><span class="gic-spec">sm 10 · buttons</span>
+          <span class="gic-spec">md 14 · tiles</span><span class="gic-spec">lg 18 · cards</span>
+          <span class="gic-spec">xl 24 · hero</span><span class="gic-spec">pill 999 · chips</span>
+        </div>
+        <div class="gic-divider-h"></div>
+        <div class="gic-eyebrow mb-3">Density</div>
+        <p class="gic-muted" style="margin:0;font-size:12.5px">Admin screens: 12px row padding, 18px card padding, 16px gutters. Member screens: +25% — 16px rows, 18–20px card padding, 44px minimum tap targets.</p>
+      </div>
+    </section>
+
+    <!-- ELEVATION -->
+    <section class="gic-card span-4">
+      <div class="gic-card-head"><i class="ph ph-stack"></i><h2>Elevation &amp; surface</h2></div>
+      <div class="gic-card-body gic-stack">
+        <div class="shadow-demo" style="box-shadow:var(--gic-shadow-1)">shadow-1 · resting cards</div>
+        <div class="shadow-demo" style="box-shadow:var(--gic-shadow-2)">shadow-2 · hover, dropdowns</div>
+        <div class="shadow-demo" style="box-shadow:var(--gic-shadow-3)">shadow-3 · hero, modals</div>
+        <div class="shadow-demo" style="box-shadow:var(--gic-shadow-gold);border-color:var(--gic-gold-200)">shadow-gold · gold CTA only</div>
+        <p class="gic-muted" style="margin:0;font-size:12.5px">
+          Two-layer shadows tinted navy (<span class="gic-spec">rgba(13,27,48,…)</span>), never neutral black. In dark mode shadows deepen instead of lightening; separation comes from the
+          <span class="gic-spec">surface → surface-2 → surface-3</span> ladder plus a 12% white hairline.
+        </p>
+      </div>
+    </section>
+
+    <!-- ICONOGRAPHY -->
+    <section class="gic-card span-8">
+      <div class="gic-card-head"><i class="ph ph-shapes"></i><h2>Iconography — Phosphor</h2><div class="right"><span class="gic-chip neutral">Regular default · Light for decoration · Fill for status</span></div></div>
+      <div class="gic-card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:10px">
+          <div class="icon-tile"><i class="ph ph-bank"></i>Savings</div>
+          <div class="icon-tile"><i class="ph ph-hand-coins"></i>Loans</div>
+          <div class="icon-tile"><i class="ph ph-users-three"></i>Members</div>
+          <div class="icon-tile"><i class="ph ph-warning-octagon"></i>Fines</div>
+          <div class="icon-tile"><i class="ph ph-receipt"></i>Fees</div>
+          <div class="icon-tile"><i class="ph ph-notepad"></i>Minutes</div>
+          <div class="icon-tile"><i class="ph ph-chart-bar"></i>Statements</div>
+          <div class="icon-tile"><i class="ph ph-bell-ringing"></i>Notifications</div>
+          <div class="icon-tile"><i class="ph ph-check-square-offset"></i>Approvals</div>
+          <div class="icon-tile"><i class="ph ph-gift"></i>Dividends</div>
+          <div class="icon-tile"><i class="ph ph-shield-check"></i>Audit</div>
+          <div class="icon-tile"><i class="ph ph-gear-six"></i>Settings</div>
+        </div>
+        <div class="gic-grid c3 mt-5">
+          <div><div class="gic-eyebrow mb-2">Weights</div><p class="gic-muted" style="margin:0;font-size:12.5px"><b>ph</b> (regular) for navigation and buttons; <b>ph-light</b> for large decorative or empty-state glyphs; <b>ph-fill</b> only inside status chips and alerts where the icon must read at 12px.</p></div>
+          <div><div class="gic-eyebrow mb-2">Sizes</div><p class="gic-muted" style="margin:0;font-size:12.5px">12 in chips · 16 in buttons · 17 in sidebar · 18 in card headers · 21–24 in tile badges and quick actions. Always <span class="gic-spec">line-height:1</span> and <span class="gic-spec">vertical-align:-.125em</span>.</p></div>
+          <div><div class="gic-eyebrow mb-2">Colour</div><p class="gic-muted" style="margin:0;font-size:12.5px">Icons inherit text colour except card-header icons (gold-500) and tile badges, which take the tile's semantic tint on a 10–14% tinted square (11px radius).</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOKENS CODE -->
+    <section class="gic-card span-7">
+      <div class="gic-card-head"><i class="ph ph-code"></i><h2>Implementation</h2><div class="right"><span class="gic-spec">static/css/gic-theme.css</span></div></div>
+      <div class="gic-card-body">
+        <pre class="tokens"><span class="c">/* 1. Ship the token layer, keep Bootstrap 5 for the grid */</span>
+:root{
+  <span class="k">--gic-ink-800</span>:#16324f;  <span class="c">/* primary text / brand   */</span>
+  <span class="k">--gic-gold-500</span>:#c9922a; <span class="c">/* signature accent       */</span>
+  <span class="k">--gic-blue</span>:#2f6fe0;     <span class="k">--gic-green</span>:#17a06b;
+  <span class="k">--gic-amber</span>:#d97706;    <span class="k">--gic-red</span>:#b91c1c;
+  <span class="k">--gic-purple</span>:#7c3aed;
+  <span class="k">--gic-surface</span>:#ffffff;  <span class="k">--gic-bg</span>:#f4f7fb;
+  <span class="k">--gic-r-lg</span>:18px;        <span class="k">--gic-s4</span>:16px;
+}
+[data-theme=<span class="k">"dark"</span>]{ <span class="k">--gic-bg</span>:#0a1526; <span class="k">--gic-surface</span>:#0d1b30; <span class="k">--gic-text</span>:#e8edf5; }
+
+<span class="c">/* 2. base.html — one attribute drives the whole theme */</span>
+&lt;html lang="en" data-theme="{{ session.theme or 'light' }}"&gt;
+&lt;link rel="stylesheet" href="{{ url_for('static', filename='css/gic-theme.css') }}"&gt;
+&lt;script src="{{ url_for('static', filename='js/theme.js') }}"&gt;&lt;/script&gt;
+
+<span class="c">/* 3. Jinja macros to stop copy-paste drift */</span>
+{% macro kpi(label, value, state='', icon='ph-bank', sub='') %}
+&lt;div class="gic-kpi {{ state }}"&gt;
+  &lt;div class="gic-kpi-top"&gt;&lt;span class="gic-kpi-label"&gt;{{ label }}&lt;/span&gt;
+    &lt;span class="gic-kpi-ico"&gt;&lt;i class="ph {{ icon }}"&gt;&lt;/i&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;div class="gic-kpi-value"&gt;&lt;span class="gic-ugx"&gt;UGX&lt;/span&gt;{{ value }}&lt;/div&gt;
+  &lt;div class="gic-kpi-sub"&gt;{{ sub }}&lt;/div&gt;
+&lt;/div&gt;
+{% endmacro %}
+
+<span class="c">/* 4. Status → chip class map (single source of truth) */</span>
+STATUS_CHIP = {
+  'PENDING':'pending', 'ACTIVE':'active', 'CLEARED':'cleared',
+  'OVERDUE':'overdue', 'DECLINED':'neutral', 'EXITED':'neutral',
+  'PAID':'paid', 'UNPAID':'warning', 'DEFAULTED':'danger',
+}</pre>
+      </div>
+    </section>
+
+    <!-- PRINCIPLES -->
+    <section class="gic-card span-5">
+      <div class="gic-card-head"><i class="ph ph-compass"></i><h2>Principles &amp; guardrails</h2></div>
+      <div class="gic-card-body">
+        <div class="gic-timeline">
+          <div class="tl-item done"><b>Money first, chrome second</b><div class="gic-muted">The largest element on any screen is a number a member cares about.</div></div>
+          <div class="tl-item done"><b>Colour carries meaning, not decoration</b><div class="gic-muted">Green/amber/red are reserved for state. A card is never coloured just to look lively.</div></div>
+          <div class="tl-item done"><b>Cooperative, not corporate</b><div class="gic-muted">Real member names, receipts, meeting notices and streaks — the club is visible in the UI.</div></div>
+          <div class="tl-item done"><b>Dense for leadership, roomy for members</b><div class="gic-muted">Same components, two densities; never ship an admin table to a member's phone.</div></div>
+          <div class="tl-item pending"><b>Dark mode is first-class</b><div class="gic-muted">Every component is authored against tokens, so no screen needs a dark-specific override.</div></div>
+        </div>
+        <div class="gic-divider-h"></div>
+        <div class="do-dont">
+          <div style="border:1px solid color-mix(in srgb,var(--gic-green) 30%,transparent);border-radius:var(--gic-r-md);padding:12px;background:var(--gic-green-soft)">
+            <div class="gic-row mb-2" style="gap:6px;color:var(--gic-green);font-weight:800;font-size:12px"><i class="ph-fill ph-check-circle"></i> DO</div>
+            <ul class="gic-muted" style="margin:0;padding-left:17px;font-size:12.3px;line-height:1.7">
+              <li>One hero, one gold CTA per screen</li>
+              <li>Tabular figures for every amount</li>
+              <li>Status as a chip, never as raw text</li>
+              <li>Empty states with a next action</li>
+            </ul>
+          </div>
+          <div style="border:1px solid color-mix(in srgb,var(--gic-red) 30%,transparent);border-radius:var(--gic-r-md);padding:12px;background:var(--gic-red-soft)">
+            <div class="gic-row mb-2" style="gap:6px;color:var(--gic-red);font-weight:800;font-size:12px"><i class="ph-fill ph-x-circle"></i> DON'T</div>
+            <ul class="gic-muted" style="margin:0;padding-left:17px;font-size:12.3px;line-height:1.7">
+              <li>Gradient-fill KPI cards in rainbow colours</li>
+              <li>Mix icon sets (no Bootstrap Icons + Phosphor)</li>
+              <li>Stack more than two shadows levels</li>
+              <li>Use red for anything that isn't a breach</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MIGRATION -->
+    <section class="gic-card span-12">
+      <div class="gic-card-head"><i class="ph ph-path"></i><h2>Rollout across modules</h2><div class="right"><span class="gic-chip gold">Suggested order</span></div></div>
+      <div class="gic-table-wrap">
+        <table class="gic-table">
+          <thead><tr><th>Step</th><th>Module</th><th>What changes</th><th>Components used</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">1</td><td>Shell &amp; base.html</td><td>Token layer, sidebar, topbar, theme switch, fonts</td><td>Shell, topbar, theme.js</td><td><span class="gic-chip active">Half a session</span></td></tr>
+            <tr><td class="strong">2</td><td>Admin dashboard</td><td>Hero, KPI grid, cash-flow chart, approvals, feed</td><td>Hero, KPI, charts, list, table</td><td><span class="gic-chip active">One session</span></td></tr>
+            <tr><td class="strong">3</td><td>Member dashboard</td><td>Greeting hero, status card, quick actions, loan card</td><td>Hero compact, quick actions, donut</td><td><span class="gic-chip active">One session</span></td></tr>
+            <tr><td class="strong">4</td><td>Savings · Loans · Fines</td><td>List pages onto the table style + filter chips</td><td>Table, chips, KPI strip, empty states</td><td><span class="gic-chip pending">One session each</span></td></tr>
+            <tr><td class="strong">5</td><td>Members · Minutes · Notifications</td><td>Cards, feeds and detail pages</td><td>List, timeline, empty states</td><td><span class="gic-chip pending">One session</span></td></tr>
+            <tr><td class="strong">6</td><td>Statements · Settings</td><td>Report tables, print styles, form styling</td><td>Table, forms, switch, segment</td><td><span class="gic-chip pending">One session</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gic-card-foot gic-row between">
+        <span class="gic-muted">Estimates assume the token layer lands first — after that each module is mostly class swaps in Jinja templates.</span>
+        <a href="component-kit.html">Open component kit <i class="ph ph-arrow-right"></i></a>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="js/theme.js"></script>
+</body>
+</html>
