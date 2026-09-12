@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Component &amp; Theme Kit — GIC-MS Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="css/gic-theme.css">
+<style>
+  .wrap{max-width:1320px;margin:0 auto;padding:26px 22px 80px}
+  .kit-section{margin-top:42px}
+  .kit-section > header{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .kit-section > header p{margin:4px 0 0;max-width:74ch}
+  .kit-num{
+    font-family:var(--gic-font-display);font-size:12px;font-weight:700;color:var(--gic-gold-600);
+    background:var(--gic-gold-50);border-radius:8px;padding:3px 9px;
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="gicBarNavy" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2c5680"/><stop offset="100%" stop-color="#16324f"/></linearGradient>
+  <linearGradient id="gicBarGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dcae51"/><stop offset="100%" stop-color="#c9922a"/></linearGradient>
+  <linearGradient id="gicAreaGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c9922a" stop-opacity=".32"/><stop offset="100%" stop-color="#c9922a" stop-opacity="0"/></linearGradient>
+</defs></svg>
+
+<div class="wrap">
+
+  <div class="gic-row wrap mb-6" style="gap:14px">
+    <a href="index.html" class="gic-btn ghost sm"><i class="ph ph-arrow-left"></i> Design system</a>
+    <div>
+      <div class="gic-eyebrow">Deliverable 3</div>
+      <h1>Component &amp; theme kit</h1>
+      <p class="gic-muted" style="margin:5px 0 0;max-width:78ch">
+        Every pattern below renders in light and dark side by side. Apply the same classes across Loans, Savings,
+        Fines, Notifications, Minutes, Members, Financial Statements and Settings — no module-specific CSS.
+      </p>
+    </div>
+    <span class="gic-spacer"></span>
+    <button class="gic-btn ghost sm" data-theme-toggle><i class="ph ph-moon-stars"></i> <span data-theme-label>Dark mode</span></button>
+  </div>
+
+  <!-- 1 · HERO -->
+  <section class="kit-section">
+    <header><span class="kit-num">01</span><h2>Hero banner template</h2>
+      <p class="gic-muted">One per page, directly under the topbar. Slots: eyebrow, headline figure or title, status chips, supporting line, and up to four inline stats. Orbs and rings are decorative <span class="gic-spec">&lt;span&gt;</span>s — never images.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-hero compact">
+        <span class="gic-orb gold"></span><span class="gic-orb blue"></span>
+        <span class="gic-ring r1"></span><span class="gic-ring r2"></span>
+        <div class="gic-hero-grid">
+          <div>
+            <div class="gic-eyebrow">Loans module · Cycle 2026</div>
+            <div class="gic-hero-figure mt-2" style="font-size:30px"><span class="gic-ugx">UGX</span>176,400,000</div>
+            <div class="gic-row wrap mt-3">
+              <span class="gic-chip solid-gold"><i class="ph-fill ph-trend-up"></i> 69% utilised</span>
+              <span class="gic-chip" style="background:rgba(255,255,255,.10);color:#e8edf5;border-color:rgba(255,255,255,.18)">23 active loans</span>
+            </div>
+          </div>
+          <div class="gic-hero-stats">
+            <div class="gic-hero-stat"><div class="k">Available</div><div class="v">79.7M</div></div>
+            <div class="gic-hero-stat"><div class="k">At risk</div><div class="v">9.2M</div></div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <!-- 2 · KPI TILES -->
+  <section class="kit-section">
+    <header><span class="kit-num">02</span><h2>KPI / stat tiles</h2>
+      <p class="gic-muted">Default (gold rail) plus <span class="gic-spec">.is-positive</span> <span class="gic-spec">.is-warning</span> <span class="gic-spec">.is-danger</span> <span class="gic-spec">.is-info</span> <span class="gic-spec">.is-purple</span> and <span class="gic-spec">.feature</span>. Optional sparkline, meter or split meter in the footer slot.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-kpi-grid">
+        <div class="gic-kpi">
+          <div class="gic-kpi-top"><span class="gic-kpi-label">Club savings pool</span><span class="gic-kpi-ico"><i class="ph ph-bank"></i></span></div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>284.6M</div>
+          <div class="gic-kpi-sub"><span class="gic-delta up"><i class="ph ph-arrow-up-right"></i> 8.4%</span> vs. last month</div>
+        </div>
+        <div class="gic-kpi is-positive">
+          <div class="gic-kpi-top"><span class="gic-kpi-label">Collected this month</span><span class="gic-kpi-ico"><i class="ph ph-check-circle"></i></span></div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>18.5M</div>
+          <div class="gic-kpi-sub">37 of 42 members paid</div>
+          <div class="gic-meter thin green mt-3"><div class="fill" style="width:88%"></div></div>
+        </div>
+        <div class="gic-kpi is-warning">
+          <div class="gic-kpi-top"><span class="gic-kpi-label">Pending approvals</span><span class="gic-kpi-ico"><i class="ph ph-hourglass-medium"></i></span></div>
+          <div class="gic-kpi-value">7</div>
+          <div class="gic-kpi-sub"><i class="ph ph-clock-countdown"></i> Oldest 3 days</div>
+        </div>
+        <div class="gic-kpi is-danger">
+          <div class="gic-kpi-top"><span class="gic-kpi-label">Overdue loans</span><span class="gic-kpi-ico"><i class="ph ph-warning-octagon"></i></span></div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>9.2M</div>
+          <div class="gic-kpi-sub"><span class="gic-delta down"><i class="ph ph-arrow-down-right"></i> 1.4%</span> 5 loans</div>
+        </div>
+        <div class="gic-kpi is-info">
+          <div class="gic-kpi-top"><span class="gic-kpi-label">Processing fees</span><span class="gic-kpi-ico"><i class="ph ph-receipt"></i></span></div>
+          <div class="gic-kpi-value"><span class="gic-ugx">UGX</span>2.15M</div>
+          <svg class="gic-chart gic-kpi-spark" viewBox="0 0 200 30" height="30" preserveAspectRatio="none"><polyline class="line-main" points="2,24 34,20 66,22 98,14 130,16 162,9 198,4"/></svg>
+        </div>
+        <div class="gic-kpi feature">
+          <div class="gic-kpi-top"><span class="gic-kpi-label">Projected dividend</span><span class="gic-kpi-ico"><i class="ph ph-gift"></i></span></div>
+          <div class="gic-kpi-value">14.2%</div>
+          <div class="gic-kpi-sub">Distributable surplus UGX 40.4M</div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <!-- 3 · CHIPS -->
+  <section class="kit-section">
+    <header><span class="kit-num">03</span><h2>Status chips &amp; role badges</h2>
+      <p class="gic-muted">Pill shape, 11.5px, 700 weight, soft tinted background + 1px matching border. Meaning is fixed system-wide: green = settled, blue = in progress, amber = needs attention, red = breach, gold = club/reward, purple = system.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-card"><div class="gic-card-body">
+        <div class="gic-eyebrow mb-3">Lifecycle</div>
+        <div class="gic-row wrap" style="gap:8px">
+          <span class="gic-chip pending"><i class="ph ph-hourglass-medium"></i> Pending</span>
+          <span class="gic-chip active"><i class="ph ph-arrow-bend-down-right"></i> Active</span>
+          <span class="gic-chip cleared"><i class="ph-fill ph-check-circle"></i> Cleared</span>
+          <span class="gic-chip overdue"><i class="ph-fill ph-warning-circle"></i> Overdue</span>
+          <span class="gic-chip neutral"><i class="ph ph-prohibit"></i> Declined</span>
+          <span class="gic-chip neutral"><i class="ph ph-sign-out"></i> Exited</span>
+        </div>
+        <div class="gic-divider-h"></div>
+        <div class="gic-eyebrow mb-3">Payment</div>
+        <div class="gic-row wrap" style="gap:8px">
+          <span class="gic-chip paid"><span class="dot"></span> Paid</span>
+          <span class="gic-chip warning"><span class="dot"></span> Unpaid</span>
+          <span class="gic-chip danger"><span class="dot"></span> In arrears</span>
+          <span class="gic-chip gold"><i class="ph ph-star"></i> Dividend eligible</span>
+          <span class="gic-chip solid-gold"><i class="ph-fill ph-medal"></i> Top saver</span>
+          <span class="gic-chip solid-navy">Cycle 2026</span>
+        </div>
+        <div class="gic-divider-h"></div>
+        <div class="gic-eyebrow mb-3">Roles</div>
+        <div class="gic-row wrap" style="gap:8px">
+          <span class="gic-role it-admin">IT Admin</span>
+          <span class="gic-role chairman">Chairman</span>
+          <span class="gic-role secretary">Secretary</span>
+          <span class="gic-role treasurer">Treasurer</span>
+          <span class="gic-role committee">Committee</span>
+          <span class="gic-role member">Member</span>
+        </div>
+      </div></div>
+    </template>
+  </section>
+
+  <!-- 4 · BUTTONS -->
+  <section class="kit-section">
+    <header><span class="kit-num">04</span><h2>Buttons &amp; quick actions</h2>
+      <p class="gic-muted">Navy gradient = primary commit action. Gold = money-moving or celebratory action (deposit, repay, declare dividend) — at most one per view. Ghost/subtle for everything else.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-card"><div class="gic-card-body gic-stack">
+        <div class="gic-row wrap" style="gap:10px">
+          <button class="gic-btn primary"><i class="ph ph-check"></i> Approve loan</button>
+          <button class="gic-btn gold"><i class="ph ph-arrow-circle-up"></i> Record deposit</button>
+          <button class="gic-btn ghost"><i class="ph ph-funnel"></i> Filter</button>
+          <button class="gic-btn subtle"><i class="ph ph-download-simple"></i> Export</button>
+          <button class="gic-btn danger"><i class="ph ph-x"></i> Decline</button>
+          <button class="gic-btn ghost" disabled><i class="ph ph-lock-simple"></i> Locked</button>
+        </div>
+        <div class="gic-row wrap" style="gap:10px">
+          <button class="gic-btn primary lg"><i class="ph ph-paper-plane-tilt"></i> Submit for approval</button>
+          <button class="gic-btn ghost sm">Small ghost</button>
+          <span class="gic-segment"><button class="active">Month</button><button>Quarter</button><button>Cycle</button></span>
+        </div>
+        <div class="gic-qa-row">
+          <a class="gic-qa" href="#"><span class="ico"><i class="ph ph-plus-circle"></i></span> Deposit</a>
+          <a class="gic-qa blue" href="#"><span class="ico"><i class="ph ph-file-text"></i></span> Statement</a>
+          <a class="gic-qa green" href="#"><span class="ico"><i class="ph ph-hand-coins"></i></span> Apply loan</a>
+          <a class="gic-qa purple" href="#"><span class="ico"><i class="ph ph-bell"></i></span> Alerts</a>
+        </div>
+      </div></div>
+    </template>
+  </section>
+
+  <!-- 5 · TABLE -->
+  <section class="kit-section">
+    <header><span class="kit-num">05</span><h2>Data table</h2>
+      <p class="gic-muted">Sticky uppercase header, 12px row padding, hairline dividers, tabular-figure money columns right-aligned, and a 3px left rail (<span class="gic-spec">.row-flag-danger</span>) for rows that need action. Used identically in Members, Savings, Loans, Fines and Statements.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-card">
+        <div class="gic-card-head"><i class="ph ph-table"></i><h3>Savings register · August 2026</h3>
+          <div class="right"><span class="gic-chip neutral">42 members</span><button class="gic-btn subtle sm"><i class="ph ph-download-simple"></i> CSV</button></div>
+        </div>
+        <div class="gic-table-wrap">
+          <table class="gic-table">
+            <thead><tr><th>Member</th><th>Receipt</th><th>Channel</th><th class="num">Amount</th><th>Status</th><th class="num">Cycle total</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="gic-cell-user"><div class="gic-avatar">SN</div><div class="meta"><div class="n">Namuli Sarah</div><div class="s">GIC-0036</div></div></div></td>
+                <td>#GIC-4821</td><td>MTN MoMo</td><td class="num strong">500,000</td>
+                <td><span class="gic-chip paid"><span class="dot"></span> Paid</span></td><td class="num">4,000,000</td>
+              </tr>
+              <tr class="row-flag-warning">
+                <td><div class="gic-cell-user"><div class="gic-avatar">KJ</div><div class="meta"><div class="n">Kiwanuka John</div><div class="s">GIC-0025</div></div></div></td>
+                <td>—</td><td>—</td><td class="num strong">500,000</td>
+                <td><span class="gic-chip pending"><span class="dot"></span> Pending</span></td><td class="num">3,500,000</td>
+              </tr>
+              <tr class="row-flag-danger">
+                <td><div class="gic-cell-user"><div class="gic-avatar">OP</div><div class="meta"><div class="n">Okello Peter</div><div class="s">GIC-0017</div></div></div></td>
+                <td>—</td><td>—</td><td class="num strong">500,000</td>
+                <td><span class="gic-chip overdue"><span class="dot"></span> 2 months due</span></td><td class="num">3,000,000</td>
+              </tr>
+              <tr class="row-flag-success">
+                <td><div class="gic-cell-user"><div class="gic-avatar">AG</div><div class="meta"><div class="n">Atim Grace</div><div class="s">GIC-0031</div></div></div></td>
+                <td>#GIC-4817</td><td>Bank transfer</td><td class="num strong">750,000</td>
+                <td><span class="gic-chip paid"><span class="dot"></span> Paid + top-up</span></td><td class="num">4,750,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="gic-card-foot gic-row between"><span class="gic-muted">Page 1 of 11</span>
+          <span class="gic-row" style="gap:6px"><button class="gic-btn subtle sm"><i class="ph ph-caret-left"></i></button><button class="gic-btn subtle sm"><i class="ph ph-caret-right"></i></button></span>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <!-- 6 · CHARTS -->
+  <section class="kit-section">
+    <header><span class="kit-num">06</span><h2>Chart style</h2>
+      <p class="gic-muted">Three chart types only. Navy = money in / principal, gold = money out / interest, green = net or positive outcome, red = at risk. Rounded bar caps (5px), 2.5px line weight, hairline grid, no chart borders, no 3D, no legends inside the plot.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-grid c3">
+        <div class="gic-card"><div class="gic-card-head"><i class="ph ph-chart-bar"></i><h3>Bar — grouped</h3></div>
+          <div class="gic-card-body">
+            <svg class="gic-chart" viewBox="0 0 300 170" height="180" role="img" aria-label="Grouped bar chart of savings in versus loans out">
+              <line class="grid-line" x1="20" y1="140" x2="296" y2="140"/><line class="grid-line" x1="20" y1="100" x2="296" y2="100"/>
+              <line class="grid-line" x1="20" y1="60" x2="296" y2="60"/><line class="grid-line" x1="20" y1="20" x2="296" y2="20"/>
+              <rect class="bar-a" x="30" y="62" width="18" height="78" rx="5"/><rect class="bar-b" x="51" y="92" width="18" height="48" rx="5"/>
+              <rect class="bar-a" x="98" y="48" width="18" height="92" rx="5"/><rect class="bar-b" x="119" y="78" width="18" height="62" rx="5"/>
+              <rect class="bar-a" x="166" y="36" width="18" height="104" rx="5"/><rect class="bar-b" x="187" y="70" width="18" height="70" rx="5"/>
+              <rect class="bar-a" x="234" y="28" width="18" height="112" rx="5"/><rect class="bar-b" x="255" y="86" width="18" height="54" rx="5"/>
+              <text class="axis-text" x="40" y="157">May</text><text class="axis-text" x="108" y="157">Jun</text>
+              <text class="axis-text" x="176" y="157">Jul</text><text class="axis-text" x="244" y="157">Aug</text>
+            </svg>
+            <div class="gic-legend"><span class="li"><span class="sw" style="background:#16324f"></span> Savings in</span><span class="li"><span class="sw" style="background:#c9922a"></span> Loans out</span></div>
+          </div>
+        </div>
+
+        <div class="gic-card"><div class="gic-card-head"><i class="ph ph-chart-line"></i><h3>Line + area</h3></div>
+          <div class="gic-card-body">
+            <svg class="gic-chart" viewBox="0 0 300 170" height="180" role="img" aria-label="Line chart of pool growth with comparison line">
+              <line class="grid-line" x1="20" y1="140" x2="296" y2="140"/><line class="grid-line" x1="20" y1="100" x2="296" y2="100"/>
+              <line class="grid-line" x1="20" y1="60" x2="296" y2="60"/><line class="grid-line" x1="20" y1="20" x2="296" y2="20"/>
+              <path class="area-main" d="M24,118 L70,108 L116,96 L162,78 L208,62 L254,44 L292,30 L292,140 L24,140 Z"/>
+              <polyline class="line-main" points="24,118 70,108 116,96 162,78 208,62 254,44 292,30"/>
+              <polyline class="line-alt" points="24,126 70,120 116,114 162,104 208,96 254,86 292,78"/>
+              <g class="point"><circle cx="162" cy="78" r="4"/><circle cx="292" cy="30" r="5"/></g>
+              <text class="axis-text" x="20" y="157">Feb</text><text class="axis-text" x="150" y="157">May</text><text class="axis-text" x="272" y="157">Aug</text>
+            </svg>
+            <div class="gic-legend"><span class="li"><span class="sw" style="background:#c9922a"></span> This cycle</span><span class="li"><span class="sw" style="background:var(--gic-blue)"></span> Last cycle</span></div>
+          </div>
+        </div>
+
+        <div class="gic-card"><div class="gic-card-head"><i class="ph ph-chart-donut"></i><h3>Donut</h3></div>
+          <div class="gic-card-body text-center">
+            <svg class="gic-chart" viewBox="0 0 160 160" height="180" role="img" aria-label="Donut chart of fund allocation">
+              <g transform="rotate(-90 80 80)" fill="none" stroke-width="18" stroke-linecap="butt">
+                <circle class="donut-track" cx="80" cy="80" r="58" stroke-width="18"/>
+                <circle cx="80" cy="80" r="58" stroke="#16324f" stroke-dasharray="226 138"/>
+                <circle cx="80" cy="80" r="58" stroke="#c9922a" stroke-dasharray="102 262" stroke-dashoffset="-226"/>
+                <circle cx="80" cy="80" r="58" stroke="#b91c1c" stroke-dasharray="36 328" stroke-dashoffset="-328"/>
+              </g>
+              <text class="value-text" x="80" y="78" text-anchor="middle" font-size="24">69%</text>
+              <text class="label-text" x="80" y="97" text-anchor="middle">deployed</text>
+            </svg>
+            <div class="gic-legend" style="justify-content:center">
+              <span class="li"><span class="sw" style="background:#16324f"></span> Loans</span>
+              <span class="li"><span class="sw" style="background:#c9922a"></span> Reserve</span>
+              <span class="li"><span class="sw" style="background:#b91c1c"></span> At risk</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <!-- 7 · FORMS -->
+  <section class="kit-section">
+    <header><span class="kit-num">07</span><h2>Forms &amp; inputs</h2>
+      <p class="gic-muted">10px radius, 1px border, gold focus ring (the accent members already associate with action). Currency fields always use the <span class="gic-spec">UGX</span> prefix add-on so amounts are never ambiguous.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-card">
+        <div class="gic-card-head"><i class="ph ph-note-pencil"></i><h3>Record a savings deposit</h3></div>
+        <div class="gic-card-body">
+          <div class="gic-grid c2">
+            <div class="gic-field">
+              <label class="gic-label">Member <span class="req">*</span></label>
+              <select class="gic-select"><option>Namuli Sarah — GIC-0036</option><option>Okello Peter — GIC-0017</option></select>
+            </div>
+            <div class="gic-field">
+              <label class="gic-label">Amount <span class="req">*</span></label>
+              <div class="gic-input-group"><span class="prefix">UGX</span><input class="gic-input" value="500,000"></div>
+              <div class="gic-help">Monthly minimum is UGX 500,000.</div>
+            </div>
+            <div class="gic-field">
+              <label class="gic-label">Payment date</label>
+              <input class="gic-input" type="date" value="2026-08-27">
+            </div>
+            <div class="gic-field">
+              <label class="gic-label">Receipt / reference</label>
+              <input class="gic-input" placeholder="e.g. MoMo transaction ID">
+            </div>
+            <div class="gic-field">
+              <label class="gic-label">Channel</label>
+              <select class="gic-select"><option>MTN MoMo</option><option>Airtel Money</option><option>Bank transfer</option><option>Cash</option></select>
+            </div>
+            <div class="gic-field">
+              <label class="gic-label">Guarantor NIN</label>
+              <input class="gic-input is-invalid" value="CM9203...">
+              <div class="gic-help error"><i class="ph ph-warning-circle"></i> NIN must be 14 characters.</div>
+            </div>
+          </div>
+          <div class="gic-field">
+            <label class="gic-label">Note for the minutes</label>
+            <textarea class="gic-textarea" rows="2" placeholder="Optional context recorded in the audit log…"></textarea>
+          </div>
+          <div class="gic-row between wrap" style="gap:12px">
+            <label class="gic-switch"><input type="checkbox" checked><span class="track"></span> Notify member on WhatsApp</label>
+            <span class="gic-row" style="gap:8px"><button class="gic-btn ghost">Cancel</button><button class="gic-btn primary"><i class="ph ph-check"></i> Save deposit</button></span>
+          </div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <!-- 8 · ALERTS + EMPTY STATES -->
+  <section class="kit-section">
+    <header><span class="kit-num">08</span><h2>Alerts, empty states &amp; feeds</h2>
+      <p class="gic-muted">Empty-state illustrations are inline SVG built from the same geometry as the brand mark — a gazebo roof, coin stack and ledger — stroked with <span class="gic-spec">--gic-ink-400</span> and <span class="gic-spec">--gic-gold-500</span> so they re-colour automatically in dark mode.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-grid c2">
+        <div class="gic-stack">
+          <div class="gic-alert info"><i class="ph ph-info"></i><div><div class="t">Dividend preview is provisional</div><div class="gic-muted">Final figures are confirmed at the AGM.</div></div></div>
+          <div class="gic-alert success"><i class="ph-fill ph-check-circle"></i><div><div class="t">August reconciliation complete</div><div class="gic-muted">14 receipts matched, 0 exceptions.</div></div></div>
+          <div class="gic-alert warning"><i class="ph ph-clock-countdown"></i><div><div class="t">3 members haven't saved yet</div><div class="gic-muted">Fines post automatically on 31 Aug.</div></div></div>
+          <div class="gic-alert danger"><i class="ph-fill ph-warning-octagon"></i><div><div class="t">2 loans past 30 days overdue</div><div class="gic-muted">Guarantor notice required this week.</div></div></div>
+
+          <div class="gic-card">
+            <div class="gic-card-head"><i class="ph ph-pulse"></i><h3>Activity feed</h3></div>
+            <div class="gic-list">
+              <div class="gic-list-item">
+                <div class="gic-list-ico green"><i class="ph ph-arrow-down-left"></i></div>
+                <div class="gic-list-body"><div class="gic-list-title"><b>Namuli Sarah</b> saved <b>UGX 500,000</b></div><div class="gic-list-meta">Receipt #GIC-4821 · MTN MoMo</div></div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">4m</span><span class="gic-chip paid">Paid</span></div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico red"><i class="ph ph-warning-octagon"></i></div>
+                <div class="gic-list-body"><div class="gic-list-title">Fine issued to <b>Okello Peter</b></div><div class="gic-list-meta">Late savings · rule L-02</div></div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">3h</span><span class="gic-chip overdue">Unpaid</span></div>
+              </div>
+              <div class="gic-list-item">
+                <div class="gic-list-ico gold"><i class="ph ph-notepad"></i></div>
+                <div class="gic-list-body"><div class="gic-list-title"><b>Secretary</b> uploaded minutes for 12 Aug</div><div class="gic-list-meta">Awaiting two signatures</div></div>
+                <div class="gic-list-right"><span class="gic-faint" style="font-size:11.5px">1d</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gic-stack">
+          <div class="gic-card"><div class="gic-empty">
+            <svg width="128" height="104" viewBox="0 0 128 104" aria-hidden="true">
+              <ellipse class="gic-ill-base" cx="64" cy="92" rx="44" ry="7"/>
+              <path class="gic-ill-gold" d="M64 12 L104 40 H24 Z"/>
+              <path class="gic-ill-line" d="M34 40 v44 M94 40 v44 M34 84 h60"/>
+              <path class="gic-ill-line" d="M46 84 V62 h36 v22"/>
+              <circle class="gic-ill-fill-gold" cx="64" cy="54" r="9"/>
+              <path class="gic-ill-gold" d="M64 49 v10 M60.5 51.5 h7 M60.5 56.5 h7"/>
+            </svg>
+            <div class="t">No savings recorded yet</div>
+            <div class="d">Once the treasurer posts August contributions they'll appear here with receipts.</div>
+            <button class="gic-btn gold sm"><i class="ph ph-plus-circle"></i> Record first deposit</button>
+          </div></div>
+
+          <div class="gic-card"><div class="gic-empty">
+            <svg width="128" height="104" viewBox="0 0 128 104" aria-hidden="true">
+              <ellipse class="gic-ill-base" cx="64" cy="92" rx="40" ry="7"/>
+              <rect class="gic-ill-line" x="36" y="20" width="56" height="64" rx="7"/>
+              <path class="gic-ill-line" d="M48 38 h32 M48 52 h32 M48 66 h20"/>
+              <circle class="gic-ill-gold" cx="88" cy="72" r="15"/>
+              <path class="gic-ill-gold" d="M88 65 v14 M83 70 h10"/>
+            </svg>
+            <div class="t">No minutes for this period</div>
+            <div class="d">Meeting minutes uploaded by the Secretary will be listed here for every member to read.</div>
+            <button class="gic-btn ghost sm"><i class="ph ph-upload-simple"></i> Upload minutes</button>
+          </div></div>
+
+          <div class="gic-card"><div class="gic-empty">
+            <svg width="128" height="104" viewBox="0 0 128 104" aria-hidden="true">
+              <ellipse class="gic-ill-base" cx="64" cy="92" rx="40" ry="7"/>
+              <path class="gic-ill-gold" d="M64 22 a22 22 0 0 1 22 22 v14 l6 10 H36 l6-10 V44 a22 22 0 0 1 22-22z"/>
+              <path class="gic-ill-line" d="M56 72 a8 8 0 0 0 16 0"/>
+              <path class="gic-ill-line" d="M64 22 v-8"/>
+            </svg>
+            <div class="t">You're all caught up</div>
+            <div class="d">No unread notifications. We'll ping you when a savings, loan or meeting update lands.</div>
+          </div></div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <!-- 9 · SHELL -->
+  <section class="kit-section">
+    <header><span class="kit-num">09</span><h2>Navigation shell</h2>
+      <p class="gic-muted">Sidebar stays navy in both themes — it is the brand anchor. Active item gets a gold left rail, gold icon and a 12% gold wash. Topbar is translucent with a blur so content scrolls under it.</p>
+    </header>
+    <template data-kit>
+      <div class="gic-card" style="overflow:hidden">
+        <div style="display:flex;min-height:280px">
+          <div class="gic-sidebar" style="position:static;height:auto;width:230px">
+            <div class="gic-brand"><div class="gic-brand-mark">GIC</div><div><div class="gic-brand-name">GAZEBO</div><div class="gic-brand-sub">Investment Club</div></div></div>
+            <div class="gic-sb-user"><div class="gic-avatar">TN</div><div><div class="name">Tumwine Nora</div><div style="margin-top:4px"><span class="gic-role treasurer">Treasurer</span></div></div></div>
+            <nav class="gic-nav">
+              <div class="gic-nav-section">Operations</div>
+              <a class="gic-nav-link" href="#"><i class="ph ph-gauge"></i> Dashboard</a>
+              <a class="gic-nav-link active" href="#"><i class="ph ph-bank"></i> Savings</a>
+              <a class="gic-nav-link" href="#"><i class="ph ph-hand-coins"></i> Loans <span class="gic-nav-count">5</span></a>
+              <a class="gic-nav-link" href="#"><i class="ph ph-warning-octagon"></i> Fines</a>
+            </nav>
+          </div>
+          <div style="flex:1;min-width:0;background:var(--gic-bg)">
+            <div class="gic-topbar" style="position:static">
+              <div><div class="crumb">Operations · Savings</div><h1>Savings register</h1></div>
+              <div class="gic-topbar-right">
+                <div class="gic-search"><i class="ph ph-magnifying-glass"></i> Search…</div>
+                <button class="gic-icon-btn"><i class="ph ph-bell"></i><span class="dot"></span></button>
+              </div>
+            </div>
+            <div style="padding:18px">
+              <div class="gic-row wrap" style="gap:8px">
+                <span class="gic-chip solid-navy">All</span><span class="gic-chip neutral">Paid</span>
+                <span class="gic-chip neutral">Pending</span><span class="gic-chip neutral">In arrears</span>
+              </div>
+              <div class="gic-kpi-grid mt-4" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+                <div class="gic-kpi"><div class="gic-kpi-top"><span class="gic-kpi-label">Collected</span></div><div class="gic-kpi-value" style="font-size:20px">18.5M</div></div>
+                <div class="gic-kpi is-warning"><div class="gic-kpi-top"><span class="gic-kpi-label">Pending</span></div><div class="gic-kpi-value" style="font-size:20px">1.5M</div></div>
+                <div class="gic-kpi is-danger"><div class="gic-kpi-top"><span class="gic-kpi-label">Arrears</span></div><div class="gic-kpi-value" style="font-size:20px">1.0M</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+</div>
+
+<script>
+/* Render every [data-kit] template twice: once light, once dark. */
+document.querySelectorAll('template[data-kit]').forEach(function (tpl) {
+  var split = document.createElement('div');
+  split.className = 'gic-theme-split';
+  [['light', 'Light'], ['dark', 'Dark']].forEach(function (pair) {
+    var pane = document.createElement('div');
+    pane.className = 'gic-theme-pane';
+    pane.setAttribute('data-theme', pair[0]);
+    var label = document.createElement('div');
+    label.className = 'pane-label';
+    label.textContent = pair[1] + ' mode';
+    pane.appendChild(label);
+    pane.appendChild(tpl.content.cloneNode(true));
+    split.appendChild(pane);
+  });
+  tpl.parentNode.insertBefore(split, tpl.nextSibling);
+});
+</script>
+<script src="js/theme.js"></script>
+</body>
+</html>

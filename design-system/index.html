@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GIC-MS Design System — Gazebo Premium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="css/gic-theme.css">
+<style>
+  .wrap{max-width:1120px;margin:0 auto;padding:32px 22px 80px}
+  .tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+  .tile{display:block;text-decoration:none;color:inherit}
+  .tile .thumb{height:112px;border-radius:var(--gic-r-md);margin-bottom:14px;position:relative;overflow:hidden;
+    background:linear-gradient(120deg,var(--gic-ink-900),var(--gic-ink-700));}
+  .tile .thumb .o{position:absolute;border-radius:50%;filter:blur(26px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="gic-hero mb-6">
+    <span class="gic-orb gold"></span><span class="gic-orb blue"></span>
+    <span class="gic-ring r1"></span><span class="gic-ring r2"></span>
+    <div class="gic-hero-grid">
+      <div>
+        <div class="gic-row" style="gap:14px">
+          <div class="gic-brand-mark" style="width:52px;height:52px;border-radius:15px;font-size:16px">GIC</div>
+          <div>
+            <div class="gic-eyebrow">GAZEBO Investment Club · GIC-MS</div>
+            <div style="font-family:var(--gic-font-display);font-size:27px;font-weight:700;color:#fff;margin-top:2px">Gazebo Premium design system</div>
+          </div>
+        </div>
+        <p class="sub">Dashboards, components and tokens for a member-owned savings &amp; credit cooperative in Uganda. Navy authority, gold reward, warm cooperative detail — in light and dark.</p>
+      </div>
+      <div class="gic-hero-stats">
+        <div class="gic-hero-stat"><div class="k">Deliverables</div><div class="v">4</div></div>
+        <div class="gic-hero-stat"><div class="k">Themes</div><div class="v">Light + Dark</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gic-row between mb-4">
+    <h2>Deliverables</h2>
+    <button class="gic-btn ghost sm" data-theme-toggle><i class="ph ph-moon-stars"></i> <span data-theme-label>Dark mode</span></button>
+  </div>
+
+  <div class="tile-grid">
+    <a class="tile gic-card hoverable" href="admin-dashboard.html"><div class="gic-card-body">
+      <div class="thumb"><span class="o" style="width:140px;height:140px;background:rgba(201,146,42,.5);right:-30px;top:-50px"></span>
+        <i class="ph ph-gauge" style="position:absolute;left:18px;bottom:14px;font-size:40px;color:#e8edf5;opacity:.9"></i></div>
+      <span class="gic-chip gold mb-2">01</span>
+      <h3 class="mt-2">Admin &amp; leadership dashboard</h3>
+      <p class="gic-muted" style="margin:6px 0 0;font-size:13px">Executive command centre: pool total, portfolio health, cash-flow, approvals queue, activity feed, compliance snapshot.</p>
+    </div></a>
+
+    <a class="tile gic-card hoverable" href="member-dashboard.html"><div class="gic-card-body">
+      <div class="thumb"><span class="o" style="width:150px;height:150px;background:rgba(23,160,107,.45);right:-40px;bottom:-60px"></span>
+        <i class="ph ph-device-mobile" style="position:absolute;left:18px;bottom:14px;font-size:40px;color:#e8edf5;opacity:.9"></i></div>
+      <span class="gic-chip gold mb-2">02</span>
+      <h3 class="mt-2">Member personal dashboard</h3>
+      <p class="gic-muted" style="margin:6px 0 0;font-size:13px">Mobile-first: greeting, monthly savings status, balance trend, loan &amp; next payment, fines, dividend outlook, quick actions.</p>
+    </div></a>
+
+    <a class="tile gic-card hoverable" href="component-kit.html"><div class="gic-card-body">
+      <div class="thumb"><span class="o" style="width:150px;height:150px;background:rgba(47,111,224,.5);right:-30px;top:-60px"></span>
+        <i class="ph ph-squares-four" style="position:absolute;left:18px;bottom:14px;font-size:40px;color:#e8edf5;opacity:.9"></i></div>
+      <span class="gic-chip gold mb-2">03</span>
+      <h3 class="mt-2">Component &amp; theme kit</h3>
+      <p class="gic-muted" style="margin:6px 0 0;font-size:13px">Hero, KPI tiles, tables, chips, charts, forms, alerts, empty states and the nav shell — every pattern in light and dark side by side.</p>
+    </div></a>
+
+    <a class="tile gic-card hoverable" href="style-guide.html"><div class="gic-card-body">
+      <div class="thumb"><span class="o" style="width:150px;height:150px;background:rgba(124,58,237,.45);right:-30px;bottom:-60px"></span>
+        <i class="ph ph-palette" style="position:absolute;left:18px;bottom:14px;font-size:40px;color:#e8edf5;opacity:.9"></i></div>
+      <span class="gic-chip gold mb-2">04</span>
+      <h3 class="mt-2">Brand board &amp; style guide</h3>
+      <p class="gic-muted" style="margin:6px 0 0;font-size:13px">Colour tokens, type pairing, spacing rhythm, radii, elevation, Phosphor icon rules, implementation snippets and rollout order.</p>
+    </div></a>
+  </div>
+
+  <section class="gic-card mt-6">
+    <div class="gic-card-head"><i class="ph ph-plugs"></i><h2>How to use this in the Flask app</h2></div>
+    <div class="gic-card-body gic-stack" style="gap:12px">
+      <div class="gic-row" style="gap:10px;align-items:flex-start"><span class="gic-chip solid-navy">1</span>
+        <span class="gic-muted">Copy <span class="gic-spec">design-system/css/gic-theme.css</span> and <span class="gic-spec">design-system/js/theme.js</span> into <span class="gic-spec">static/</span>. They are dependency-free and sit alongside Bootstrap 5.</span></div>
+      <div class="gic-row" style="gap:10px;align-items:flex-start"><span class="gic-chip solid-navy">2</span>
+        <span class="gic-muted">Add <span class="gic-spec">data-theme</span> to the <span class="gic-spec">&lt;html&gt;</span> tag in <span class="gic-spec">templates/base.html</span> and link the stylesheet after Bootstrap.</span></div>
+      <div class="gic-row" style="gap:10px;align-items:flex-start"><span class="gic-chip solid-navy">3</span>
+        <span class="gic-muted">Rebuild each module's markup with the <span class="gic-spec">.gic-*</span> classes shown in the component kit; charts are inline SVG, so no charting library is required.</span></div>
+      <div class="gic-row" style="gap:10px;align-items:flex-start"><span class="gic-chip solid-navy">4</span>
+        <span class="gic-muted">Keep the status → chip mapping in one Python dict (see the style guide) so every module renders the same badge for the same state.</span></div>
+    </div>
+  </section>
+</div>
+<script src="js/theme.js"></script>
+</body>
+</html>
